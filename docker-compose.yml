@@ -1,0 +1,53 @@
+services:
+  # Telegram Bot
+  bot:
+    build: .
+    container_name: shawarma-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - BOT_TOKEN=${BOT_TOKEN}
+      - DATABASE_URL=postgresql://shawarma_user:shawarma_pass@postgres:5432/shawarma_db
+    depends_on:
+      - postgres
+    networks:
+      - shawarma-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: shawarma-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=shawarma_db
+      - POSTGRES_USER=shawarma_user
+      - POSTGRES_PASSWORD=shawarma_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - shawarma-network
+
+  # pgAdmin (опционально, для управления БД)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: shawarma-pgadmin
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    networks:
+      - shawarma-network
+
+volumes:
+  postgres_data:
+
+networks:
+  shawarma-network:
+    driver: bridge
