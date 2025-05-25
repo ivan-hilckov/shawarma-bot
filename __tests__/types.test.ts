@@ -112,12 +112,18 @@ describe("Types Module", () => {
       const config: Config = {
         BOT_TOKEN: "test_token",
         NODE_ENV: "test",
+        REDIS_URL: "redis://localhost:6379",
+        DATABASE_URL: "postgresql://localhost:5432/test",
       };
 
       expect(config.BOT_TOKEN).toBe("test_token");
       expect(config.NODE_ENV).toBe("test");
+      expect(config.REDIS_URL).toBe("redis://localhost:6379");
+      expect(config.DATABASE_URL).toBe("postgresql://localhost:5432/test");
       expect(typeof config.BOT_TOKEN).toBe("string");
       expect(typeof config.NODE_ENV).toBe("string");
+      expect(typeof config.REDIS_URL).toBe("string");
+      expect(typeof config.DATABASE_URL).toBe("string");
     });
   });
 });

@@ -224,12 +224,19 @@ describe("Handlers Module", () => {
 
       expect(getItemById).toHaveBeenCalledWith("1");
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining("Вы выбрали: Тестовая шаурма"),
+        expect.stringContaining("✅ Тестовая шаурма"),
         expect.objectContaining({
           chat_id: 123456,
           message_id: 1,
           reply_markup: expect.objectContaining({
-            inline_keyboard: expect.any(Array),
+            inline_keyboard: expect.arrayContaining([
+              expect.arrayContaining([
+                expect.objectContaining({
+                  text: "🛒 Добавить в корзину",
+                  callback_data: "add_to_cart_1",
+                }),
+              ]),
+            ]),
           }),
         })
       );

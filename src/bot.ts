@@ -7,6 +7,15 @@ import {
   handleAbout,
   handleItemSelection,
   handleBackToMenu,
+  handleAddToCart,
+  handleViewCart,
+  handleIncreaseQuantity,
+  handleDecreaseQuantity,
+  handleRemoveFromCart,
+  handleClearCart,
+  handleCheckout,
+  handleMyOrders,
+  handleOrderDetails,
 } from "./handlers";
 import { BotInstance, BotMessage, BotCallbackQuery } from "./types";
 
@@ -54,6 +63,14 @@ bot.on("message", (msg: BotMessage) => {
       handleAbout(bot, msg);
       break;
 
+    case "🛒 Корзина":
+      handleViewCart(bot, msg);
+      break;
+
+    case "📋 Мои заказы":
+      handleMyOrders(bot, msg);
+      break;
+
     default:
       // Если сообщение не распознано, показываем помощь
       bot.sendMessage(
@@ -72,6 +89,24 @@ bot.on("callback_query", (query: BotCallbackQuery) => {
   try {
     if (data?.startsWith("item_")) {
       handleItemSelection(bot, query);
+    } else if (data?.startsWith("add_to_cart_")) {
+      handleAddToCart(bot, query);
+    } else if (data === "view_cart") {
+      handleViewCart(bot, query);
+    } else if (data?.startsWith("increase_")) {
+      handleIncreaseQuantity(bot, query);
+    } else if (data?.startsWith("decrease_")) {
+      handleDecreaseQuantity(bot, query);
+    } else if (data?.startsWith("remove_")) {
+      handleRemoveFromCart(bot, query);
+    } else if (data === "clear_cart") {
+      handleClearCart(bot, query);
+    } else if (data === "checkout") {
+      handleCheckout(bot, query);
+    } else if (data === "my_orders") {
+      handleMyOrders(bot, query);
+    } else if (data?.startsWith("order_details_")) {
+      handleOrderDetails(bot, query);
     } else if (data === "back_to_menu") {
       handleBackToMenu(bot, query);
     } else {

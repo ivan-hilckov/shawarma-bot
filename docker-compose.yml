@@ -8,8 +8,10 @@ services:
       - NODE_ENV=production
       - BOT_TOKEN=${BOT_TOKEN}
       - DATABASE_URL=postgresql://shawarma_user:shawarma_pass@postgres:5432/shawarma_db
+      - REDIS_URL=redis://redis:6379
     depends_on:
       - postgres
+      - redis
     networks:
       - shawarma-network
 
@@ -27,6 +29,16 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
+    networks:
+      - shawarma-network
+
+  # Redis (для корзины и сессий)
+  redis:
+    image: redis:7-alpine
+    container_name: shawarma-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
     networks:
       - shawarma-network
 

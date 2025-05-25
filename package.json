@@ -16,7 +16,10 @@
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f bot",
-    "docker:restart": "docker-compose restart bot"
+    "docker:restart": "docker-compose restart bot",
+    "debug": "node --inspect ts-node src/bot.ts",
+    "debug:brk": "node --inspect-brk ts-node src/bot.ts",
+    "debug:prod": "node --inspect dist/bot.js"
   },
   "keywords": [
     "telegram",
@@ -28,8 +31,12 @@
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
+    "@types/pg": "^8.15.2",
+    "@types/redis": "^4.0.10",
     "dotenv": "^16.5.0",
-    "node-telegram-bot-api": "^0.66.0"
+    "node-telegram-bot-api": "^0.66.0",
+    "pg": "^8.16.0",
+    "redis": "^5.1.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

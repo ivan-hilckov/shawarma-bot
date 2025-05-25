@@ -3,6 +3,8 @@ import TelegramBot from "node-telegram-bot-api";
 export interface Config {
   BOT_TOKEN: string;
   NODE_ENV: string;
+  REDIS_URL: string;
+  DATABASE_URL: string;
 }
 
 export interface MenuItem {
