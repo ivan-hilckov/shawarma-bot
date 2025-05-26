@@ -59,6 +59,11 @@ describe("DatabaseService", () => {
       expect(Pool).toHaveBeenCalledWith({
         connectionString: expect.any(String),
         ssl: false,
+        max: 20,
+        min: 2,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+        maxUses: 7500,
       });
     });
 
@@ -250,27 +255,22 @@ describe("DatabaseService", () => {
 
   describe("getUserOrders", () => {
     it("должен возвращать заказы пользователя", async () => {
-      const mockOrderRow = {
-        id: 42,
+      const mockRow = {
+        order_id: 42,
         user_id: 123,
         total_price: "500.00",
         status: "pending",
         created_at: new Date(),
         user_name: "Test User",
-      };
-
-      const mockItemRow = {
         menu_item_id: 1,
-        name: "Тестовая шаурма",
-        description: "Описание",
-        price: "250.00",
         quantity: 2,
+        item_price: "250.00",
+        item_name: "Тестовая шаурма",
+        item_description: "Описание",
         category: "shawarma",
       };
 
-      mockClient.query
-        .mockResolvedValueOnce({ rows: [mockOrderRow] }) // SELECT orders
-        .mockResolvedValueOnce({ rows: [mockItemRow] }); // SELECT order_items
+      mockClient.query.mockResolvedValueOnce({ rows: [mockRow] });
 
       const result = await databaseService.getUserOrders(123, 5);
 
@@ -344,8 +344,7 @@ describe("DatabaseService", () => {
 
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith(
-        "Database connection test failed:",
-        expect.any(Error)
+        expect.stringContaining("Database connection test failed")
       );
       expect(mockClient.release).toHaveBeenCalled();
 

@@ -14,8 +14,16 @@ services:
       - NOTIFICATIONS_CHAT_ID=${NOTIFICATIONS_CHAT_ID}
       - ADMIN_USER_IDS=${ADMIN_USER_IDS}
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'node', '-e', 'process.exit(0)']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - shawarma-network
 
@@ -32,7 +40,13 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5432:5432"
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U shawarma_user -d shawarma_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - shawarma-network
 
@@ -42,7 +56,13 @@ services:
     container_name: shawarma-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - shawarma-network
 
@@ -55,7 +75,7 @@ services:
       - PGADMIN_DEFAULT_EMAIL=admin@example.com
       - PGADMIN_DEFAULT_PASSWORD=admin123
     ports:
-      - "8080:80"
+      - '8080:80'
     depends_on:
       - postgres
     networks:

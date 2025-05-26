@@ -1,9 +1,11 @@
 import { Pool, PoolClient } from "pg";
 import { CartItem, Order } from "./types";
 import config from "./config";
+import { createLogger } from "./logger";
 
-class DatabaseService {
+export class DatabaseService {
   private pool: Pool;
+  private logger = createLogger("DatabaseService");
 
   constructor() {
     // Отключаем SSL для Docker окружения (когда DATABASE_URL содержит @postgres:)
@@ -15,14 +17,20 @@ class DatabaseService {
         config.NODE_ENV === "production" && !isDockerEnvironment
           ? { rejectUnauthorized: false }
           : false,
+      // Настройки connection pooling
+      max: 20, // максимальное количество соединений в пуле
+      min: 2, // минимальное количество соединений
+      idleTimeoutMillis: 30000, // время ожидания перед закрытием неактивного соединения
+      connectionTimeoutMillis: 2000, // время ожидания подключения
+      maxUses: 7500, // максимальное количество использований соединения
     });
 
     this.pool.on("error", (err) => {
-      console.error("PostgreSQL Pool Error:", err);
+      this.logger.error("PostgreSQL Pool Error", { error: err.message });
     });
 
     this.pool.on("connect", () => {
-      console.log("Connected to PostgreSQL");
+      this.logger.info("Connected to PostgreSQL");
     });
   }
 
@@ -179,60 +187,74 @@ class DatabaseService {
     }
   }
 
-  // Получение заказов пользователя
+  // Получение заказов пользователя (оптимизированный запрос без N+1)
   async getUserOrders(userId: number, limit: number = 10): Promise<Order[]> {
     const client = await this.getClient();
     try {
-      const ordersResult = await client.query(
+      // Получаем все заказы и их элементы одним запросом
+      const result = await client.query(
         `
-        SELECT o.*, u.first_name as user_name
+        SELECT
+          o.id as order_id,
+          o.user_id,
+          o.total_price,
+          o.status,
+          o.created_at,
+          u.first_name as user_name,
+          oi.menu_item_id,
+          oi.quantity,
+          oi.price as item_price,
+          mi.name as item_name,
+          mi.description as item_description,
+          c.name as category
         FROM orders o
         JOIN users u ON o.user_id = u.id
+        LEFT JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
+        LEFT JOIN categories c ON mi.category_id = c.id
         WHERE o.user_id = $1
-        ORDER BY o.created_at DESC
-        LIMIT $2
+        ORDER BY o.created_at DESC, oi.id
+        LIMIT $2 * 20
       `,
         [userId, limit]
       );
 
-      const orders: Order[] = [];
+      // Группируем результаты по заказам
+      const ordersMap = new Map<string, Order>();
 
-      for (const orderRow of ordersResult.rows) {
-        // Получаем элементы для каждого заказа
-        const itemsResult = await client.query(
-          `
-          SELECT oi.*, mi.name, mi.description, c.name as category
-          FROM order_items oi
-          JOIN menu_items mi ON oi.menu_item_id = mi.id
-          JOIN categories c ON mi.category_id = c.id
-          WHERE oi.order_id = $1
-        `,
-          [orderRow.id]
-        );
+      for (const row of result.rows) {
+        const orderId = row.order_id.toString();
 
-        const items: CartItem[] = itemsResult.rows.map((row) => ({
-          menuItem: {
-            id: row.menu_item_id.toString(),
-            name: row.name,
-            description: row.description,
-            price: parseFloat(row.price),
-            category: row.category === "shawarma" ? "shawarma" : "drinks",
-          },
-          quantity: row.quantity,
-        }));
+        if (!ordersMap.has(orderId)) {
+          ordersMap.set(orderId, {
+            id: orderId,
+            userId: row.user_id,
+            userName: row.user_name || "Пользователь",
+            items: [],
+            totalPrice: parseFloat(row.total_price),
+            status: row.status,
+            createdAt: row.created_at,
+          });
+        }
 
-        orders.push({
-          id: orderRow.id.toString(),
-          userId: orderRow.user_id,
-          userName: orderRow.user_name || "Пользователь",
-          items,
-          totalPrice: parseFloat(orderRow.total_price),
-          status: orderRow.status,
-          createdAt: orderRow.created_at,
-        });
+        // Добавляем элемент заказа, если он существует
+        if (row.menu_item_id) {
+          const order = ordersMap.get(orderId)!;
+          order.items.push({
+            menuItem: {
+              id: row.menu_item_id.toString(),
+              name: row.item_name,
+              description: row.item_description,
+              price: parseFloat(row.item_price),
+              category: row.category === "shawarma" ? "shawarma" : "drinks",
+            },
+            quantity: row.quantity,
+          });
+        }
       }
 
-      return orders;
+      // Возвращаем только нужное количество заказов
+      return Array.from(ordersMap.values()).slice(0, limit);
     } finally {
       client.release();
     }
@@ -289,7 +311,9 @@ class DatabaseService {
       await client.query("SELECT 1");
       return true;
     } catch (error) {
-      console.error("Database connection test failed:", error);
+      this.logger.error("Database connection test failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return false;
     } finally {
       client.release();
@@ -297,7 +321,6 @@ class DatabaseService {
   }
 }
 
-// Экспортируем класс и singleton instance
-export { DatabaseService };
+// Экспортируем singleton instance
 export const databaseService = new DatabaseService();
 export default databaseService;

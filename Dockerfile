@@ -30,5 +30,9 @@ USER botuser
 # Открываем порт (если понадобится в будущем)
 EXPOSE 3000
 
+# Добавляем health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD node -e "process.exit(0)" || exit 1
+
 # Запускаем приложение
 CMD ["npm", "start"]

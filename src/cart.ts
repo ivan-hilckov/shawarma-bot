@@ -1,10 +1,12 @@
 import { createClient, RedisClientType } from "redis";
 import { CartItem, MenuItem } from "./types";
 import config from "./config";
+import { createLogger } from "./logger";
 
-class CartService {
+export class CartService {
   private client: RedisClientType;
   private isConnected: boolean = false;
+  private logger = createLogger("CartService");
 
   constructor() {
     this.client = createClient({
@@ -12,16 +14,16 @@ class CartService {
     });
 
     this.client.on("error", (err) => {
-      console.error("Redis Client Error:", err);
+      this.logger.error("Redis Client Error", { error: err.message });
     });
 
     this.client.on("connect", () => {
-      console.log("Connected to Redis");
+      this.logger.info("Connected to Redis");
       this.isConnected = true;
     });
 
     this.client.on("disconnect", () => {
-      console.log("Disconnected from Redis");
+      this.logger.info("Disconnected from Redis");
       this.isConnected = false;
     });
   }
@@ -109,7 +111,10 @@ class CartService {
     try {
       return JSON.parse(cartData) as CartItem[];
     } catch (error) {
-      console.error("Error parsing cart data:", error);
+      this.logger.error("Error parsing cart data", {
+        error: error instanceof Error ? error.message : String(error),
+        userId,
+      });
       return [];
     }
   }
@@ -140,7 +145,6 @@ class CartService {
   }
 }
 
-// Экспортируем класс и singleton instance
-export { CartService };
+// Экспортируем singleton instance
 export const cartService = new CartService();
 export default cartService;

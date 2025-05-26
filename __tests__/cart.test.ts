@@ -264,7 +264,9 @@ describe("CartService", () => {
       const result = await cartService.getCart(userId);
 
       expect(result).toEqual([]);
-      expect(consoleSpy).toHaveBeenCalledWith("Error parsing cart data:", expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Error parsing cart data")
+      );
 
       consoleSpy.mockRestore();
     });

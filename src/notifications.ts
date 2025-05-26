@@ -1,10 +1,12 @@
 import { BotInstance, Order } from "./types";
 import config from "./config";
+import { createLogger } from "./logger";
 
 class NotificationService {
   private bot: BotInstance;
   private notificationsChatId: string | undefined;
   private adminUserIds: number[];
+  private logger = createLogger("NotificationService");
 
   constructor(bot: BotInstance) {
     this.bot = bot;
@@ -15,9 +17,10 @@ class NotificationService {
           .filter((id) => !isNaN(id))
       : [];
 
-    console.log(`🔔 NotificationService инициализирован:`);
-    console.log(`   📢 Канал уведомлений: ${this.notificationsChatId || "не настроен"}`);
-    console.log(`   👨‍💼 Администраторов: ${this.adminUserIds.length}`);
+    this.logger.info("NotificationService инициализирован", {
+      notificationsChatId: this.notificationsChatId || "не настроен",
+      adminCount: this.adminUserIds.length,
+    });
   }
 
   // Уведомление о новом заказе
@@ -32,9 +35,12 @@ class NotificationService {
           reply_markup: keyboard,
           parse_mode: "HTML",
         });
-        console.log(`📢 Уведомление о заказе #${order.id} отправлено в канал`);
+        this.logger.info("Уведомление о заказе отправлено в канал", { orderId: order.id });
       } catch (error) {
-        console.error("❌ Ошибка отправки уведомления в канал:", error);
+        this.logger.error("Ошибка отправки уведомления в канал", {
+          orderId: order.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
