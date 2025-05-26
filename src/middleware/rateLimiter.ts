@@ -1,6 +1,4 @@
-import { createLogger } from "../logger";
-
-const logger = createLogger("RateLimiter");
+import { createLogger } from '../logger';
 
 interface RateLimitEntry {
   count: number;
@@ -11,6 +9,7 @@ export class RateLimiter {
   private limits: Map<number, RateLimitEntry> = new Map();
   private readonly maxRequests: number;
   private readonly windowMs: number;
+  private logger = createLogger('RateLimiter');
 
   constructor(maxRequests: number = 30, windowMs: number = 60000) {
     this.maxRequests = maxRequests;
@@ -37,7 +36,7 @@ export class RateLimiter {
     }
 
     if (entry.count >= this.maxRequests) {
-      logger.warn("Rate limit exceeded", {
+      this.logger.warn('Rate limit exceeded', {
         userId,
         count: entry.count,
         maxRequests: this.maxRequests,
@@ -77,7 +76,7 @@ export class RateLimiter {
     }
 
     if (cleaned > 0) {
-      logger.debug("Rate limiter cleanup completed", { cleaned, remaining: this.limits.size });
+      this.logger.debug('Rate limiter cleanup completed', { cleaned, remaining: this.limits.size });
     }
   }
 

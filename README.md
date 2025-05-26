@@ -3,7 +3,7 @@
 Production-ready Telegram-бот для заказа шаурмы с полным функционалом корзины, системой заказов, уведомлениями персонала и автоматическим деплоем.
 
 [![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](./CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-154%20passed-green.svg)](./docs/COVERAGE.md)
+[![Tests](https://img.shields.io/badge/tests-227%20passed-green.svg)](./docs/COVERAGE.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](./tsconfig.json)
 [![Docker](https://img.shields.io/badge/Docker-ready-blue.svg)](./docker-compose.yml)
 
@@ -15,10 +15,10 @@ Production-ready Telegram-бот для заказа шаурмы с полны�
 - ✅ **Полный функционал заказов** - корзина, оформление, история
 - ✅ **Уведомления персонала** - автоматические оповещения о заказах
 - ✅ **Фотографии блюд** - визуальное представление товаров
-- ✅ **Архитектурные улучшения** - логирование, валидация, DI
+- ✅ **Архитектурные улучшения** - логирование, валидация, DI, rate limiting
 - ✅ **Оптимизация производительности** - устранены N+1 запросы
 - ✅ **CI/CD Pipeline** - автоматические тесты на main ветке
-- ✅ **Качество кода** - ESLint, Prettier, 154 теста
+- ✅ **Качество кода** - ESLint, Prettier, 227 тестов
 - ✅ **Production-ready** - Docker, health checks, мониторинг
 
 ## 🚀 Быстрый запуск
@@ -181,8 +181,8 @@ curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/setup-s
 
 ## 📊 Статистика v2.0.0
 
-- **Тесты:** 154 теста (100% покрытие критических модулей)
-- **Код:** 15+ TypeScript модулей
+- **Тесты:** 227 тестов (81.7% покрытие кода, 100% критических модулей)
+- **Код:** 15+ TypeScript модулов
 - **Docker:** 4 контейнера (Bot, PostgreSQL, Redis, pgAdmin)
 - **Автоматизация:** 4 bash скрипта для деплоя
 - **Меню:** 15 позиций (12 шаурмы + 3 напитка)
@@ -195,6 +195,86 @@ curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/setup-s
 - ✅ Автоматизированное тестирование CI/CD
 - ✅ Мониторинг и логирование
 - ✅ Подробная документация
+
+## 🚀 Планы на версию 3.0.0
+
+### 📊 База данных и API
+
+- ✅ **Анализ БД завершен** - [Документация схемы](./docs/DATABASE_SCHEMA.md)
+- 🔄 **REST API (только чтение)** - [План реализации](./docs/API_PLAN.md)
+- 🔄 **Swagger документация** - автогенерация OpenAPI
+- 🔄 **Админка** - веб-интерфейс для управления заказами
+- 🔄 **Лендинг** - публичная страница с меню
+
+### 🏗️ Архитектура API v1.0
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   REST API      │    │   Database      │
+│                 │    │                 │    │                 │
+│ • Админка       │◄───┤ • Express.js    │◄───┤ • PostgreSQL    │
+│ • Лендинг       │    │ • TypeScript    │    │ • Redis (cache) │
+│ • Дашборд       │    │ • Swagger UI    │    │ • Connection    │
+│                 │    │ • Rate Limiting │    │   Pooling       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### 📡 Планируемые API endpoints
+
+#### 🍽️ Menu API
+
+- `GET /api/menu/categories` - категории меню
+- `GET /api/menu/items` - товары с фильтрацией
+- `GET /api/menu/items/:id` - детали товара
+
+#### 📦 Orders API (админы)
+
+- `GET /api/orders` - список заказов с фильтрацией
+- `GET /api/orders/:id` - детали заказа
+- `GET /api/orders/stats` - статистика заказов
+
+#### 📊 Analytics API
+
+- `GET /api/analytics/dashboard` - данные для дашборда
+- `GET /api/analytics/sales` - аналитика продаж
+- `GET /api/analytics/items` - популярные товары
+
+#### 🏥 Health API
+
+- `GET /api/health` - состояние сервисов
+- Мониторинг PostgreSQL, Redis, Telegram Bot
+
+### 🔒 Безопасность
+
+- **Публичные endpoints** - меню, цены (без аутентификации)
+- **Админские endpoints** - заказы, статистика (API ключи)
+- **Rate limiting** - 100 req/min публичные, 1000 req/min админы
+
+### 📈 Структура БД (уже реализована)
+
+**6 таблиц:**
+
+- `users` - пользователи Telegram (BIGINT ID)
+- `categories` - категории меню (шаурма, напитки)
+- `menu_items` - товары с ценами и изображениями
+- `orders` - заказы со статусами
+- `order_items` - состав заказов
+- `cart_items` - корзина покупок
+
+**Особенности:**
+
+- Оптимизированные индексы для производительности
+- Автоматические триггеры для updated_at
+- Связи с CASCADE DELETE где необходимо
+- 15 товаров в меню (12 шаурмы + 3 напитка)
+
+### 🎯 Этапы реализации
+
+1. **Фаза 1** (1-2 дня) - Express сервер, Health API, Swagger
+2. **Фаза 2** (1 день) - Menu API с кэшированием
+3. **Фаза 3** (2 дня) - Orders API с фильтрацией
+4. **Фаза 4** (1-2 дня) - Analytics API и дашборд
+5. **Фаза 5** (1 день) - Безопасность и оптимизация
 
 ---
 
