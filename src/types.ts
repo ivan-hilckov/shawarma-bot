@@ -15,6 +15,7 @@ export interface MenuItem {
   description: string;
   price: number;
   category: "shawarma" | "drinks";
+  photo?: string; // Путь к фотографии товара
 }
 
 export interface CartItem {

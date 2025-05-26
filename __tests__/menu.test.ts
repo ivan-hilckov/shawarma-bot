@@ -13,6 +13,7 @@ describe("Menu Module", () => {
         price: 270,
         description: "Большая порция вегетарианской шаурмы",
         category: "shawarma",
+        photo: "assets/XXL (3).jpeg",
       });
     });
 
@@ -45,6 +46,7 @@ describe("Menu Module", () => {
         price: 270,
         description: "Большая порция вегетарианской шаурмы",
         category: "shawarma",
+        photo: "assets/XXL (3).jpeg",
       });
     });
 
@@ -98,6 +100,11 @@ describe("Menu Module", () => {
         expect(typeof item.price).toBe("number");
         expect(typeof item.description).toBe("string");
         expect(["shawarma", "drinks"]).toContain(item.category);
+
+        // Поле photo опциональное, но если есть, должно быть строкой
+        if (item.photo) {
+          expect(typeof item.photo).toBe("string");
+        }
       });
     });
 
@@ -145,6 +152,26 @@ describe("Menu Module", () => {
       const prices = shawarmaItems.map((item) => item.price);
       expect(Math.min(...prices)).toBe(190); // Хот-Дог с сосиской
       expect(Math.max(...prices)).toBe(350); // Шаурма классик двойная
+    });
+
+    test("товары шаурмы должны иметь фотографии", () => {
+      const shawarmaItems = getMenuByCategory("shawarma");
+
+      // Все товары шаурмы должны иметь фотографии
+      shawarmaItems.forEach((item) => {
+        expect(item.photo).toBeDefined();
+        expect(typeof item.photo).toBe("string");
+        expect(item.photo).toMatch(/^assets\/XXL.*\.jpeg$/);
+      });
+    });
+
+    test("напитки могут не иметь фотографий", () => {
+      const drinkItems = getMenuByCategory("drinks");
+
+      // Напитки пока без фотографий
+      drinkItems.forEach((item) => {
+        expect(item.photo).toBeUndefined();
+      });
     });
   });
 });

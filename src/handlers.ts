@@ -2,6 +2,8 @@ import { getMenuByCategory, getItemById } from "./menu";
 import { BotInstance, BotMessage, BotCallbackQuery } from "./types";
 import cartService from "./cart";
 import databaseService from "./database";
+import * as fs from "fs";
+import * as path from "path";
 
 // Обработчик команды /start
 export function handleStart(bot: BotInstance, msg: BotMessage): void {
@@ -41,13 +43,14 @@ export function handleShawarmaMenu(bot: BotInstance, msg: BotMessage): void {
   const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
 
   items.forEach((item, index) => {
-    message += `${index + 1}. ${item.name}\n`;
+    const photoIcon = item.photo ? "📸 " : "";
+    message += `${index + 1}. ${photoIcon}${item.name}\n`;
     message += `   💰 ${item.price} руб.\n`;
     message += `   📝 ${item.description}\n\n`;
 
     keyboard.push([
       {
-        text: `${item.name} - ${item.price}₽`,
+        text: `${photoIcon}${item.name} - ${item.price}₽`,
         callback_data: `item_${item.id}`,
       },
     ]);
@@ -140,14 +143,38 @@ export function handleItemSelection(bot: BotInstance, query: BotCallbackQuery): 
     ],
   };
 
-  if (query.message?.message_id) {
-    bot
-      .editMessageText(message, {
-        chat_id: chatId,
-        message_id: query.message.message_id,
-        reply_markup: keyboard,
-      })
-      .catch(() => {});
+  // Если у товара есть фотография, отправляем её
+  if (item.photo) {
+    const photoPath = path.resolve(item.photo);
+
+    // Проверяем, существует ли файл
+    if (fs.existsSync(photoPath)) {
+      bot
+        .sendPhoto(chatId, photoPath, {
+          caption: message,
+          reply_markup: keyboard,
+        })
+        .catch((error) => {
+          console.error("Error sending photo:", error);
+          // Если не удалось отправить фото, отправляем обычное сообщение
+          bot.sendMessage(chatId, message, { reply_markup: keyboard }).catch(() => {});
+        });
+    } else {
+      console.warn(`Photo not found: ${photoPath}`);
+      // Если файл не найден, отправляем обычное сообщение
+      bot.sendMessage(chatId, message, { reply_markup: keyboard }).catch(() => {});
+    }
+  } else {
+    // Если фото нет, отправляем обычное сообщение
+    if (query.message?.message_id) {
+      bot
+        .editMessageText(message, {
+          chat_id: chatId,
+          message_id: query.message.message_id,
+          reply_markup: keyboard,
+        })
+        .catch(() => {});
+    }
   }
 
   bot.answerCallbackQuery(query.id, { text: `Выбрано: ${item.name}` }).catch(() => {});
