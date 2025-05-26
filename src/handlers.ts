@@ -145,22 +145,23 @@ export function handleItemSelection(bot: BotInstance, query: BotCallbackQuery): 
 
   // Если у товара есть фотография, отправляем её
   if (item.photo) {
-    const photoPath = path.resolve(item.photo);
+    const photoPath = path.join(process.cwd(), item.photo);
 
     // Проверяем, существует ли файл
     if (fs.existsSync(photoPath)) {
+      console.log(`📸 Отправляем фото: ${photoPath}`);
       bot
         .sendPhoto(chatId, photoPath, {
           caption: message,
           reply_markup: keyboard,
         })
         .catch((error) => {
-          console.error("Error sending photo:", error);
+          console.error("❌ Ошибка отправки фото:", error);
           // Если не удалось отправить фото, отправляем обычное сообщение
           bot.sendMessage(chatId, message, { reply_markup: keyboard }).catch(() => {});
         });
     } else {
-      console.warn(`Photo not found: ${photoPath}`);
+      console.warn(`⚠️ Фото не найдено: ${photoPath}`);
       // Если файл не найден, отправляем обычное сообщение
       bot.sendMessage(chatId, message, { reply_markup: keyboard }).catch(() => {});
     }
