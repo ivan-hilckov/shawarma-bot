@@ -155,7 +155,21 @@ cd $SERVER_PATH
 
 echo "📥 Обновление кода..."
 git fetch origin
-git reset --hard origin/master
+
+# Определяем основную ветку (main или master)
+if git show-ref --verify --quiet refs/remotes/origin/main; then
+    MAIN_BRANCH="main"
+elif git show-ref --verify --quiet refs/remotes/origin/master; then
+    MAIN_BRANCH="master"
+else
+    echo "❌ Не найдена ветка main или master"
+    exit 1
+fi
+
+echo "🔄 Переключение на ветку \$MAIN_BRANCH..."
+git checkout \$MAIN_BRANCH
+git reset --hard origin/\$MAIN_BRANCH
+echo "✅ Код обновлен с ветки \$MAIN_BRANCH"
 
 # Распаковка изображений (если загружены)
 if [ -f "assets-backup.tar.gz" ]; then

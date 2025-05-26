@@ -158,7 +158,7 @@ food/
 
 ```bash
 # 1. Настройка сервера (на сервере)
-curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/master/setup-server.sh | bash
+curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/setup-server.sh | bash
 
 # 2. Деплой (с локальной машины)
 ./deploy.sh
