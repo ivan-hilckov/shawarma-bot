@@ -17,7 +17,7 @@ Production-ready Telegram бот для заказа шаурмы с полны�
 
 - 📡 **Health API** - мониторинг состояния сервисов ✅
 - 🍽️ **Menu API** - категории и товары меню ✅
-- 📦 **Orders API** - управление заказами (планируется)
+- 📦 **Orders API** - управление заказами ✅
 - 📊 **Analytics API** - статистика и аналитика (планируется)
 - 📚 **Swagger UI** - автогенерируемая документация ✅
 - 🔒 **Безопасность** - API ключи, rate limiting, CORS ✅
@@ -161,11 +161,27 @@ curl "http://localhost:3000/api/menu/items?min_price=200&max_price=300"
 curl http://localhost:3000/api/menu/items/1
 ```
 
-#### Orders API (планируется)
+#### Orders API ✅
 
-- `GET /api/orders` - список заказов
+- `GET /api/orders` - список заказов (админ)
 - `GET /api/orders/:id` - детали заказа
 - `GET /api/orders/stats` - статистика заказов
+
+**Примеры использования:**
+
+```bash
+# Получить все заказы (требует API ключ)
+curl -H "Authorization: Bearer admin-key-dev" http://localhost:3000/api/orders
+
+# Получить заказы с фильтрацией
+curl -H "Authorization: Bearer admin-key-dev" "http://localhost:3000/api/orders?status=pending&limit=5"
+
+# Получить детали заказа
+curl -H "Authorization: Bearer admin-key-dev" http://localhost:3000/api/orders/5
+
+# Получить статистику заказов
+curl -H "Authorization: Bearer admin-key-dev" http://localhost:3000/api/orders/stats
+```
 
 ### Аутентификация
 
@@ -329,11 +345,12 @@ npm run type-check
 
 ## 📈 Roadmap
 
-### v2.1 - Menu API ✅
+### v2.2 - Orders API ✅
 
 - ✅ Health API
 - ✅ Menu categories и items
-- ✅ Фильтрация и пагинация
+- ✅ Orders API с аутентификацией
+- ✅ Статистика заказов
 - ✅ Swagger документация
 - 🔄 Redis кэширование (отключено)
 

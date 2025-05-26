@@ -8,6 +8,7 @@ import databasePlugin from './plugins/database';
 // Импорт маршрутов
 import healthRoutes from './routes/health';
 import menuRoutes from './routes/menu';
+import orderRoutes from './routes/orders';
 
 const logger = createLogger('API');
 
@@ -175,6 +176,7 @@ async function buildServer() {
     // Регистрируем маршруты
     await fastify.register(healthRoutes, { prefix: config.API_PREFIX });
     await fastify.register(menuRoutes, { prefix: config.API_PREFIX });
+    await fastify.register(orderRoutes, { prefix: config.API_PREFIX });
 
     return fastify;
   } catch (error) {
