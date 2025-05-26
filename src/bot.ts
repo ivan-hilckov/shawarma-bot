@@ -1,5 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 import config from "./config";
+import NotificationService from "./notifications";
 import {
   handleStart,
   handleShawarmaMenu,
@@ -16,6 +17,7 @@ import {
   handleCheckout,
   handleMyOrders,
   handleOrderDetails,
+  handleAdminOrderAction,
 } from "./handlers";
 import { BotInstance, BotMessage, BotCallbackQuery } from "./types";
 
@@ -29,6 +31,12 @@ if (!config.BOT_TOKEN || config.BOT_TOKEN === "YOUR_BOT_TOKEN_HERE") {
 
 // Создаем экземпляр бота
 const bot: BotInstance = new TelegramBot(config.BOT_TOKEN, { polling: true });
+
+// Создаем сервис уведомлений
+const notificationService = new NotificationService(bot);
+
+// Делаем сервис доступным глобально для handlers
+(global as any).notificationService = notificationService;
 
 console.log("🤖 Шаурма Бот запускается...");
 
@@ -107,6 +115,8 @@ bot.on("callback_query", (query: BotCallbackQuery) => {
       handleMyOrders(bot, query);
     } else if (data?.startsWith("order_details_")) {
       handleOrderDetails(bot, query);
+    } else if (data?.startsWith("admin_")) {
+      handleAdminOrderAction(bot, query);
     } else if (data === "back_to_menu") {
       handleBackToMenu(bot, query);
     } else {
@@ -130,6 +140,7 @@ bot
     console.log("✅ Бот успешно запущен!");
     console.log(`🤖 Имя бота: @${botInfo.username}`);
     console.log(`🆔 ID бота: ${botInfo.id}`);
+    console.log(`📢 ${notificationService.getStatus()}`);
     console.log("📱 Бот готов к работе!");
   })
   .catch((error: Error) => {

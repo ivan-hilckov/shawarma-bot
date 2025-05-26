@@ -469,6 +469,18 @@ export async function handleCheckout(bot: BotInstance, query: BotCallbackQuery):
     // Создаем заказ в БД
     const orderId = await databaseService.createOrder(userId, cart, total);
 
+    // Получаем созданный заказ для уведомления
+    const order = await databaseService.getOrderById(orderId);
+
+    // Отправляем уведомление персоналу (будет импортировано из bot.ts)
+    if (order && (global as any).notificationService) {
+      try {
+        await (global as any).notificationService.notifyNewOrder(order);
+      } catch (error) {
+        console.error("Ошибка отправки уведомления:", error);
+      }
+    }
+
     // Очищаем корзину после успешного заказа
     await cartService.clearCart(userId);
 
@@ -689,4 +701,108 @@ function formatDate(date: Date): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+// Обработчик админских действий с заказами
+export async function handleAdminOrderAction(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  const userId = query.from?.id;
+  const data = query.data;
+
+  if (!userId || !data) {
+    bot.answerCallbackQuery(query.id, { text: "Ошибка обработки запроса" }).catch(() => {});
+    return;
+  }
+
+  // Проверяем права администратора через глобальный сервис
+  const notificationService = (global as any).notificationService;
+  if (!notificationService || !notificationService.isAdmin(userId)) {
+    bot.answerCallbackQuery(query.id, { text: "❌ Доступ запрещен" }).catch(() => {});
+    return;
+  }
+
+  try {
+    if (data.startsWith("admin_confirm_")) {
+      const orderId = data.replace("admin_confirm_", "");
+      const oldOrder = await databaseService.getOrderById(orderId);
+      await databaseService.updateOrderStatus(orderId, "confirmed");
+
+      const order = await databaseService.getOrderById(orderId);
+      if (order && oldOrder) {
+        await notificationService.notifyStatusChange(order, oldOrder.status);
+      }
+
+      bot
+        .answerCallbackQuery(query.id, { text: `✅ Заказ #${orderId} подтвержден` })
+        .catch(() => {});
+    } else if (data.startsWith("admin_reject_")) {
+      const orderId = data.replace("admin_reject_", "");
+      const oldOrder = await databaseService.getOrderById(orderId);
+      // Здесь можно добавить статус "rejected" в типы или просто уведомить
+
+      bot.answerCallbackQuery(query.id, { text: `❌ Заказ #${orderId} отклонен` }).catch(() => {});
+    } else if (data.startsWith("admin_preparing_")) {
+      const orderId = data.replace("admin_preparing_", "");
+      const oldOrder = await databaseService.getOrderById(orderId);
+      await databaseService.updateOrderStatus(orderId, "preparing");
+
+      const order = await databaseService.getOrderById(orderId);
+      if (order && oldOrder) {
+        await notificationService.notifyStatusChange(order, oldOrder.status);
+      }
+
+      bot.answerCallbackQuery(query.id, { text: `👨‍🍳 Заказ #${orderId} готовится` }).catch(() => {});
+    } else if (data.startsWith("admin_ready_")) {
+      const orderId = data.replace("admin_ready_", "");
+      const oldOrder = await databaseService.getOrderById(orderId);
+      await databaseService.updateOrderStatus(orderId, "ready");
+
+      const order = await databaseService.getOrderById(orderId);
+      if (order && oldOrder) {
+        await notificationService.notifyStatusChange(order, oldOrder.status);
+      }
+
+      bot.answerCallbackQuery(query.id, { text: `🎉 Заказ #${orderId} готов!` }).catch(() => {});
+    } else if (data.startsWith("admin_details_")) {
+      const orderId = data.replace("admin_details_", "");
+      const order = await databaseService.getOrderById(orderId);
+
+      if (order) {
+        let message = `📦 <b>Заказ #${order.id}</b>\n\n`;
+        message += `👤 Клиент: ${order.userName}\n`;
+        message += `📅 Время: ${formatDate(order.createdAt)}\n`;
+        message += `📊 Статус: ${getStatusEmoji(order.status)} ${getStatusText(order.status)}\n\n`;
+        message += `🛒 <b>Состав:</b>\n`;
+
+        order.items.forEach((item, index) => {
+          const subtotal = item.menuItem.price * item.quantity;
+          message += `${index + 1}. ${item.menuItem.name}\n`;
+          message += `   💰 ${item.menuItem.price}₽ × ${item.quantity} = ${subtotal}₽\n`;
+        });
+
+        message += `\n💰 <b>Общая сумма: ${order.totalPrice}₽</b>`;
+
+        await bot.sendMessage(query.from.id, message, { parse_mode: "HTML" });
+      }
+
+      bot.answerCallbackQuery(query.id, { text: "📋 Детали отправлены" }).catch(() => {});
+    }
+  } catch (error) {
+    console.error("Error handling admin action:", error);
+    bot.answerCallbackQuery(query.id, { text: "❌ Ошибка при обработке" }).catch(() => {});
+  }
+}
+
+// Вспомогательная функция для получения emoji статуса
+function getStatusEmoji(status: string): string {
+  const statusMap: { [key: string]: string } = {
+    pending: "⏳",
+    confirmed: "✅",
+    preparing: "👨‍🍳",
+    ready: "🎉",
+    delivered: "✅",
+  };
+  return statusMap[status] || "❓";
 }

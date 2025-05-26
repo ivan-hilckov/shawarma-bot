@@ -6,9 +6,15 @@ class DatabaseService {
   private pool: Pool;
 
   constructor() {
+    // Отключаем SSL для Docker окружения (когда DATABASE_URL содержит @postgres:)
+    const isDockerEnvironment = config.DATABASE_URL.includes("@postgres:");
+
     this.pool = new Pool({
       connectionString: config.DATABASE_URL,
-      ssl: config.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+      ssl:
+        config.NODE_ENV === "production" && !isDockerEnvironment
+          ? { rejectUnauthorized: false }
+          : false,
     });
 
     this.pool.on("error", (err) => {

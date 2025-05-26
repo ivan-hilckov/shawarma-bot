@@ -12,4 +12,13 @@ const config: Config = {
     "postgresql://shawarma_user:shawarma_pass@localhost:5432/shawarma_db",
 };
 
+// Добавляем опциональные поля только если они заданы
+if (process.env.NOTIFICATIONS_CHAT_ID) {
+  config.NOTIFICATIONS_CHAT_ID = process.env.NOTIFICATIONS_CHAT_ID;
+}
+
+if (process.env.ADMIN_USER_IDS) {
+  config.ADMIN_USER_IDS = process.env.ADMIN_USER_IDS;
+}
+
 export default config;

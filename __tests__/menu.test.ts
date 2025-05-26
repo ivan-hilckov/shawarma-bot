@@ -6,12 +6,12 @@ describe("Menu Module", () => {
     test("должен возвращать шаурму", () => {
       const shawarmaItems = getMenuByCategory("shawarma");
 
-      expect(shawarmaItems).toHaveLength(3);
+      expect(shawarmaItems).toHaveLength(12);
       expect(shawarmaItems[0]).toEqual({
         id: "1",
-        name: "Классическая шаурма",
-        price: 250,
-        description: "Курица, овощи, соус",
+        name: "Шаурма Вегетарианская большая",
+        price: 270,
+        description: "Большая порция вегетарианской шаурмы",
         category: "shawarma",
       });
     });
@@ -21,7 +21,7 @@ describe("Menu Module", () => {
 
       expect(drinkItems).toHaveLength(3);
       expect(drinkItems[0]).toEqual({
-        id: "4",
+        id: "13",
         name: "Кола",
         price: 100,
         description: "330 мл",
@@ -41,18 +41,18 @@ describe("Menu Module", () => {
 
       expect(item).toEqual({
         id: "1",
-        name: "Классическая шаурма",
-        price: 250,
-        description: "Курица, овощи, соус",
+        name: "Шаурма Вегетарианская большая",
+        price: 270,
+        description: "Большая порция вегетарианской шаурмы",
         category: "shawarma",
       });
     });
 
     test("должен находить напиток по ID", () => {
-      const item = getItemById("4");
+      const item = getItemById("13");
 
       expect(item).toEqual({
-        id: "4",
+        id: "13",
         name: "Кола",
         price: 100,
         description: "330 мл",
@@ -127,6 +127,24 @@ describe("Menu Module", () => {
       drinkItems?.forEach((item) => {
         expect(item.category).toBe("drinks");
       });
+    });
+
+    test("должен содержать все новые позиции шаурмы", () => {
+      const shawarmaItems = getMenuByCategory("shawarma");
+
+      // Проверяем что есть все ключевые позиции из нового меню
+      const itemNames = shawarmaItems.map((item) => item.name);
+
+      expect(itemNames).toContain("Шаурма Вегетарианская большая");
+      expect(itemNames).toContain("Шаурма классик двойная");
+      expect(itemNames).toContain("Цезарь-Ролл большой");
+      expect(itemNames).toContain("Хот-Дог с сосиской");
+      expect(itemNames).toContain("Гирос");
+
+      // Проверяем ценовой диапазон
+      const prices = shawarmaItems.map((item) => item.price);
+      expect(Math.min(...prices)).toBe(190); // Хот-Дог с сосиской
+      expect(Math.max(...prices)).toBe(350); // Шаурма классик двойная
     });
   });
 });
