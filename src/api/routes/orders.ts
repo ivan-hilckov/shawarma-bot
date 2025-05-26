@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
-import { OrderService } from '../services/orderService';
+
 import config from '../../config';
+import { OrderService } from '../services/orderService';
 
 // Middleware для проверки API ключа
 const authenticateAdmin = async (request: any, reply: any) => {

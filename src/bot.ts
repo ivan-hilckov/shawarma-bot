@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
+
 import config from "./config";
-import NotificationService from "./notifications";
 import {
   handleStart,
   handleShawarmaMenu,
@@ -19,6 +19,7 @@ import {
   handleOrderDetails,
   handleAdminOrderAction,
 } from "./handlers";
+import NotificationService from "./notifications";
 import { BotInstance, BotMessage, BotCallbackQuery } from "./types";
 
 // Проверяем наличие токена

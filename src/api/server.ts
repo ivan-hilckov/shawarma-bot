@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+
 import config from '../config';
 import { createLogger } from '../logger';
 

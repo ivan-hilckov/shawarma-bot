@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+
 import { createLogger } from '../../logger';
 import { Order, OrderDetail, OrdersQuery, OrderStats } from '../schemas/orders';
 

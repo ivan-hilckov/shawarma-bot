@@ -1,9 +1,11 @@
-import { getMenuByCategory, getItemById } from "./menu";
-import { BotInstance, BotMessage, BotCallbackQuery } from "./types";
-import cartService from "./cart";
-import databaseService from "./database";
 import * as fs from "fs";
 import * as path from "path";
+
+import cartService from "./cart";
+import databaseService from "./database";
+import { getMenuByCategory, getItemById } from "./menu";
+import { BotInstance, BotMessage, BotCallbackQuery } from "./types";
+
 
 // Обработчик команды /start
 export function handleStart(bot: BotInstance, msg: BotMessage): void {

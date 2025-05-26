@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
 import { Pool } from 'pg';
+
 import config from '../../config';
 import { createLogger } from '../../logger';
 

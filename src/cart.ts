@@ -1,7 +1,8 @@
 import { createClient, RedisClientType } from "redis";
-import { CartItem, MenuItem } from "./types";
+
 import config from "./config";
 import { createLogger } from "./logger";
+import { CartItem, MenuItem } from "./types";
 
 export class CartService {
   private client: RedisClientType;

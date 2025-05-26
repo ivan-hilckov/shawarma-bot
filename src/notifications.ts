@@ -1,6 +1,6 @@
-import { BotInstance, Order } from "./types";
 import config from "./config";
 import { createLogger } from "./logger";
+import { BotInstance, Order } from "./types";
 
 class NotificationService {
   private bot: BotInstance;

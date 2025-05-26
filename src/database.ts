@@ -1,7 +1,8 @@
 import { Pool, PoolClient } from "pg";
-import { CartItem, Order } from "./types";
+
 import config from "./config";
 import { createLogger } from "./logger";
+import { CartItem, Order } from "./types";
 
 export class DatabaseService {
   private pool: Pool;

@@ -1,5 +1,5 @@
-import { BotMessage, BotCallbackQuery } from "../types";
 import { createLogger } from "../logger";
+import { BotMessage, BotCallbackQuery } from "../types";
 
 const logger = createLogger("Validation");
 

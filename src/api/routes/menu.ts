@@ -1,4 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
+
 import { MenuService } from '../services/menuService';
 
 const menuRoutes: FastifyPluginAsync = async fastify => {
