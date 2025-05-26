@@ -519,7 +519,7 @@ food/
 
 ```bash
 # На локальной машине - создание архива изображений
-tar -czf assets-backup.tar.gz assets/
+tar --no-xattrs -czf assets-backup.tar.gz assets/
 
 # Перенос на сервер через scp
 scp assets-backup.tar.gz user@your-server:/path/to/project/
@@ -748,7 +748,7 @@ docker-compose logs --tail=10 bot
 
 ```bash
 # 1. Создание архива изображений
-tar -czf assets-backup.tar.gz assets/
+tar --no-xattrs -czf assets-backup.tar.gz assets/
 
 # 2. Создание бэкапа БД (если есть данные)
 docker exec shawarma-postgres pg_dump -U shawarma_user shawarma_db > local_backup.sql
@@ -813,6 +813,16 @@ docker exec shawarma-postgres psql -U shawarma_user -d shawarma_db -c "SELECT CO
 # Проверка занятых портов
 sudo netstat -tlnp | grep :5432
 sudo netstat -tlnp | grep :6379
+```
+
+#### Проблема: Предупреждения tar на macOS
+
+Если видите сообщения типа "Ignoring unknown extended header keyword":
+
+```bash
+# Эти предупреждения безопасны и исправлены в скриптах
+# Используется флаг --no-xattrs для подавления extended attributes macOS
+# Автоматически определяется ОС и применяются нужные флаги
 ```
 
 #### Проблема: Изображения не отображаются

@@ -1,6 +1,21 @@
 #!/bin/bash
 set -e
 
+# Функция для создания tar архива без предупреждений macOS
+create_tar() {
+    local archive_name="$1"
+    local source_dir="$2"
+
+    # Проверяем ОС и используем соответствующие флаги
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS - подавляем extended attributes
+        tar --no-xattrs -czf "$archive_name" "$source_dir"
+    else
+        # Linux - стандартная команда
+        tar -czf "$archive_name" "$source_dir"
+    fi
+}
+
 echo "🔄 Скрипт миграции данных между серверами"
 
 # Функция для проверки SSH подключения
@@ -84,7 +99,7 @@ echo "✅ Бэкап БД создан: \$DB_SIZE"
 # Создание архива изображений
 if [ -d "assets" ]; then
     echo "📸 Создание архива изображений..."
-    tar -czf migration_assets_export.tar.gz assets/
+    create_tar migration_assets_export.tar.gz assets/
     ASSETS_SIZE=\$(du -h migration_assets_export.tar.gz | cut -f1)
     echo "✅ Архив изображений создан: \$ASSETS_SIZE"
 else

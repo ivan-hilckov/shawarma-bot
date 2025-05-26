@@ -35,11 +35,53 @@ else
     echo "✅ Docker Compose уже установлен"
 fi
 
+# Настройка SSH ключей для GitHub
+echo "🔑 Настройка SSH ключей для GitHub..."
+if [ ! -f ~/.ssh/id_ed25519 ]; then
+    echo "Генерация SSH ключа..."
+    ssh-keygen -t ed25519 -C "server@shawarma-bot" -f ~/.ssh/id_ed25519 -N ""
+    echo "✅ SSH ключ создан"
+
+    echo ""
+    echo "🔑 ВАЖНО: Добавьте этот публичный ключ в GitHub:"
+    echo "=========================================="
+    cat ~/.ssh/id_ed25519.pub
+    echo "=========================================="
+    echo ""
+    echo "Инструкция:"
+    echo "1. Скопируйте ключ выше"
+    echo "2. Идите в GitHub → Settings → SSH and GPG keys"
+    echo "3. Нажмите 'New SSH key'"
+    echo "4. Вставьте ключ и дайте название 'Shawarma Bot Server'"
+    echo ""
+    read -p "Нажмите Enter после добавления ключа в GitHub..."
+
+    # Тест подключения к GitHub
+    echo "🔍 Проверка подключения к GitHub..."
+    if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+        echo "✅ Подключение к GitHub работает"
+    else
+        echo "⚠️ Проблема с подключением к GitHub"
+        echo "Убедитесь что ключ добавлен в GitHub"
+    fi
+else
+    echo "✅ SSH ключ уже существует"
+fi
+
 # Клонирование репозитория
 if [ ! -d "~/shawarma-bot/.git" ]; then
     echo "📥 Клонирование репозитория..."
-    read -p "Введите URL репозитория: " REPO_URL
-    git clone $REPO_URL ~/shawarma-bot
+
+    # Попробуем SSH сначала
+    if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+        echo "Клонирование через SSH..."
+        git clone git@github.com:ivan-hilckov/shawarma-bot.git ~/shawarma-bot
+    else
+        echo "SSH не настроен, клонирование через HTTPS..."
+        read -p "Введите URL репозитория (HTTPS): " REPO_URL
+        git clone $REPO_URL ~/shawarma-bot
+    fi
+
     echo "✅ Репозиторий склонирован"
 else
     echo "✅ Репозиторий уже существует"
@@ -50,22 +92,59 @@ cd ~/shawarma-bot
 # Создание .env файла
 if [ ! -f ".env" ]; then
     echo "⚙️ Создание .env файла..."
-    cp docker.env.example .env
+
+    # Проверяем есть ли docker.env.example
+    if [ -f "docker.env.example" ]; then
+        cp docker.env.example .env
+        echo "Скопирован docker.env.example как основа"
+    else
+        echo "⚠️ docker.env.example не найден, создаем базовый .env"
+        cat > .env << 'EOF'
+# Telegram Bot Configuration
+BOT_TOKEN=YOUR_BOT_TOKEN_HERE
+
+# Environment
+NODE_ENV=production
+
+# Database Configuration (для Docker)
+DATABASE_URL=postgresql://shawarma_user:shawarma_pass@postgres:5432/shawarma_db
+
+# PostgreSQL Configuration
+POSTGRES_DB=shawarma_db
+POSTGRES_USER=shawarma_user
+POSTGRES_PASSWORD=shawarma_pass
+
+# Redis Configuration
+REDIS_URL=redis://redis:6379
+
+# pgAdmin Configuration
+PGADMIN_DEFAULT_EMAIL=admin@example.com
+PGADMIN_DEFAULT_PASSWORD=admin123
+EOF
+    fi
 
     # Запрос токена бота
     read -p "Введите BOT_TOKEN: " BOT_TOKEN
-    sed -i "s/your_telegram_bot_token/$BOT_TOKEN/" .env
+    sed -i "s/YOUR_BOT_TOKEN_HERE/$BOT_TOKEN/" .env
 
     # Запрос ID канала уведомлений (опционально)
     read -p "Введите NOTIFICATIONS_CHAT_ID (или Enter для пропуска): " NOTIFICATIONS_CHAT_ID
     if [ ! -z "$NOTIFICATIONS_CHAT_ID" ]; then
-        sed -i "s/# NOTIFICATIONS_CHAT_ID=/NOTIFICATIONS_CHAT_ID=$NOTIFICATIONS_CHAT_ID/" .env
+        if grep -q "# NOTIFICATIONS_CHAT_ID=" .env; then
+            sed -i "s/# NOTIFICATIONS_CHAT_ID=/NOTIFICATIONS_CHAT_ID=$NOTIFICATIONS_CHAT_ID/" .env
+        else
+            echo "NOTIFICATIONS_CHAT_ID=$NOTIFICATIONS_CHAT_ID" >> .env
+        fi
     fi
 
     # Запрос ID администраторов (опционально)
     read -p "Введите ADMIN_USER_IDS через запятую (или Enter для пропуска): " ADMIN_USER_IDS
     if [ ! -z "$ADMIN_USER_IDS" ]; then
-        sed -i "s/# ADMIN_USER_IDS=/ADMIN_USER_IDS=$ADMIN_USER_IDS/" .env
+        if grep -q "# ADMIN_USER_IDS=" .env; then
+            sed -i "s/# ADMIN_USER_IDS=/ADMIN_USER_IDS=$ADMIN_USER_IDS/" .env
+        else
+            echo "ADMIN_USER_IDS=$ADMIN_USER_IDS" >> .env
+        fi
     fi
 
     echo "✅ .env файл создан"

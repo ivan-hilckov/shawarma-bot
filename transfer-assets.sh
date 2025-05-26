@@ -1,6 +1,21 @@
 #!/bin/bash
 set -e
 
+# Функция для создания tar архива без предупреждений macOS
+create_tar() {
+    local archive_name="$1"
+    local source_dir="$2"
+
+    # Проверяем ОС и используем соответствующие флаги
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS - подавляем extended attributes
+        tar --no-xattrs -czf "$archive_name" "$source_dir"
+    else
+        # Linux - стандартная команда
+        tar -czf "$archive_name" "$source_dir"
+    fi
+}
+
 echo "📸 Скрипт переноса изображений на сервер"
 
 # Проверка наличия папки assets
@@ -40,7 +55,7 @@ fi
 
 # Создание архива
 echo "📦 Создание архива изображений..."
-tar -czf assets-backup.tar.gz assets/
+create_tar assets-backup.tar.gz assets/
 echo "✅ Архив создан: assets-backup.tar.gz ($(du -h assets-backup.tar.gz | cut -f1))"
 
 # Проверка SSH подключения
