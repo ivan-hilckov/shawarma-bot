@@ -6,11 +6,15 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/bot.js",
+    "start:api": "node dist/api/server.js",
     "dev": "ts-node src/bot.ts",
+    "dev:api": "ts-node src/api/server.ts",
     "dev:watch": "ts-node --watch src/bot.ts",
+    "dev:api:watch": "ts-node --watch src/api/server.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:api": "jest --testPathPattern=api",
     "clean": "rm -rf dist",
     "lint": "eslint src/**/*.ts __tests__/**/*.ts",
     "lint:fix": "eslint src/**/*.ts __tests__/**/*.ts --fix",
@@ -43,7 +47,16 @@
     "dotenv": "^16.5.0",
     "node-telegram-bot-api": "^0.66.0",
     "pg": "^8.16.0",
-    "redis": "^5.1.0"
+    "redis": "^5.1.0",
+    "fastify": "^4.24.3",
+    "@fastify/swagger": "^8.12.0",
+    "@fastify/swagger-ui": "^2.1.0",
+    "@fastify/cors": "^8.4.0",
+    "@fastify/rate-limit": "^8.0.3",
+    "@fastify/redis": "^6.1.1",
+    "fastify-type-provider-zod": "^1.1.9",
+    "fastify-plugin": "^4.5.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -62,7 +75,10 @@
     "prettier": "^3.0.0",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "@types/supertest": "^2.0.16",
+    "supertest": "^6.3.3",
+    "pino-pretty": "^10.3.1"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

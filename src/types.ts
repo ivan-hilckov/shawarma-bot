@@ -1,4 +1,4 @@
-import TelegramBot from "node-telegram-bot-api";
+import TelegramBot from 'node-telegram-bot-api';
 
 export interface Config {
   BOT_TOKEN: string;
@@ -7,6 +7,23 @@ export interface Config {
   DATABASE_URL: string;
   NOTIFICATIONS_CHAT_ID?: string; // ID канала/группы для уведомлений персонала
   ADMIN_USER_IDS?: string; // Список ID администраторов через запятую
+
+  // API Configuration
+  API_PORT: number;
+  API_HOST: string;
+  API_PREFIX: string;
+
+  // Security
+  API_KEYS: string[];
+  CORS_ORIGINS: string[];
+
+  // Rate Limiting
+  RATE_LIMIT_PUBLIC: number;
+  RATE_LIMIT_ADMIN: number;
+
+  // Cache
+  REDIS_CACHE_TTL: number;
+  ENABLE_CACHE: boolean;
 }
 
 export interface MenuItem {
@@ -14,7 +31,7 @@ export interface MenuItem {
   name: string;
   description: string;
   price: number;
-  category: "shawarma" | "drinks";
+  category: 'shawarma' | 'drinks';
   photo?: string; // Путь к фотографии товара
 }
 
@@ -33,7 +50,7 @@ export interface Order {
   userName: string;
   items: CartItem[];
   totalPrice: number;
-  status: "pending" | "confirmed" | "preparing" | "ready" | "delivered";
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered';
   createdAt: Date;
 }
 
