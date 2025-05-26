@@ -1,0 +1,182 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    // ==========================================
+    // РАЗРАБОТКА
+    // ==========================================
+    {
+      "label": "🚀 Dev: Запуск в режиме разработки",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "🔨 Build",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "panel": "shared"
+      },
+      "problemMatcher": ["$tsc"]
+    },
+
+    // ==========================================
+    // ТЕСТИРОВАНИЕ
+    // ==========================================
+    {
+      "label": "🧪 Test",
+      "type": "shell",
+      "command": "npm",
+      "args": ["test"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "👀 Test: Watch",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "test:watch"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      },
+      "isBackground": true
+    },
+
+    // ==========================================
+    // КАЧЕСТВО КОДА
+    // ==========================================
+    {
+      "label": "🔧 Lint: Fix",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "lint:fix"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "💅 Format",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "format"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+
+    // ==========================================
+    // DOCKER
+    // ==========================================
+    {
+      "label": "🐳 Docker: Up",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "docker:up"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "🛑 Docker: Down",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "docker:down"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "📋 Docker: Logs",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "docker:logs"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      },
+      "isBackground": true
+    },
+
+    // ==========================================
+    // ДЕПЛОЙ
+    // ==========================================
+    {
+      "label": "🚀 Deploy",
+      "type": "shell",
+      "command": "./deploy.sh",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new"
+      },
+      "dependsOn": ["🔨 Build"]
+    },
+
+    // ==========================================
+    // КОМПЛЕКСНЫЕ
+    // ==========================================
+    {
+      "label": "✅ Full Check",
+      "dependsOrder": "sequence",
+      "dependsOn": ["🔧 Lint: Fix", "🧪 Test", "🔨 Build"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "🚀 Quick Start",
+      "dependsOrder": "sequence",
+      "dependsOn": ["🔨 Build", "🐳 Docker: Up"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
+    }
+  ]
+}
