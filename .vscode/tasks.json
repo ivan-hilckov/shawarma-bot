@@ -2,100 +2,6 @@
   "version": "2.0.0",
   "tasks": [
     // ==========================================
-    // РАЗРАБОТКА
-    // ==========================================
-    {
-      "label": "🚀 Dev: Запуск в режиме разработки",
-      "type": "shell",
-      "command": "npm",
-      "args": ["run", "dev"],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "new"
-      },
-      "problemMatcher": ["$tsc"]
-    },
-    {
-      "label": "🔨 Build",
-      "type": "shell",
-      "command": "npm",
-      "args": ["run", "build"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "silent",
-        "panel": "shared"
-      },
-      "problemMatcher": ["$tsc"]
-    },
-
-    // ==========================================
-    // ТЕСТИРОВАНИЕ
-    // ==========================================
-    {
-      "label": "🧪 Test",
-      "type": "shell",
-      "command": "npm",
-      "args": ["test"],
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "new"
-      }
-    },
-    {
-      "label": "👀 Test: Watch",
-      "type": "shell",
-      "command": "npm",
-      "args": ["run", "test:watch"],
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "new"
-      },
-      "isBackground": true
-    },
-
-    // ==========================================
-    // КАЧЕСТВО КОДА
-    // ==========================================
-    {
-      "label": "🔧 Lint: Fix",
-      "type": "shell",
-      "command": "npm",
-      "args": ["run", "lint:fix"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "💅 Format",
-      "type": "shell",
-      "command": "npm",
-      "args": ["run", "format"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "silent",
-        "panel": "shared"
-      }
-    },
-
-    // ==========================================
     // DOCKER
     // ==========================================
     {
@@ -122,18 +28,24 @@
         "panel": "shared"
       }
     },
+
+    // ==========================================
+    // ТЕСТИРОВАНИЕ
+    // ==========================================
     {
-      "label": "📋 Docker: Logs",
+      "label": "🧪 Test",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "docker:logs"],
-      "group": "build",
+      "args": ["test"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
       "presentation": {
         "echo": true,
         "reveal": "always",
         "panel": "new"
-      },
-      "isBackground": true
+      }
     },
 
     // ==========================================
@@ -151,76 +63,6 @@
         "panel": "new"
       },
       "dependsOn": ["🔨 Build"]
-    },
-    {
-      "label": "🏥 Health Check",
-      "type": "shell",
-      "command": "cd deployment && ./health-check.sh",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "new"
-      }
-    },
-    {
-      "label": "🔧 Quick Fix: API",
-      "type": "shell",
-      "command": "cd deployment && ./quick-fix.sh api",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "🔧 Quick Fix: Bot",
-      "type": "shell",
-      "command": "cd deployment && ./quick-fix.sh bot",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "🔍 Server Analysis",
-      "type": "shell",
-      "command": "echo 'Запустите на сервере: cd ~/shawarma-bot/deployment && ./server-info.sh && echo \"Документация: docs/SERVER_MONITORING.md\"'",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "shared"
-      }
-    },
-
-    // ==========================================
-    // КОМПЛЕКСНЫЕ
-    // ==========================================
-    {
-      "label": "✅ Full Check",
-      "dependsOrder": "sequence",
-      "dependsOn": ["🔧 Lint: Fix", "🧪 Test", "🔨 Build"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "new"
-      }
-    },
-    {
-      "label": "🚀 Quick Start",
-      "dependsOrder": "sequence",
-      "dependsOn": ["🔨 Build", "🐳 Docker: Up"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "new"
-      }
     }
   ]
 }
