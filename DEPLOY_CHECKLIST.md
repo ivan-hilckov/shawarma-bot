@@ -15,7 +15,7 @@
 - [x] **docker-compose.yml** - добавлен API сервис
 - [x] **Dockerfile** - поддержка запуска API и бота
 - [x] **docker.env.example** - обновлен с API переменными
-- [x] **health-check.sh** - скрипт проверки всех сервисов
+- [x] **deployment/health-check.sh** - скрипт проверки всех сервисов
 
 ### Сборка и тесты
 
@@ -55,6 +55,7 @@ nginx -t -c $PWD/nginx.conf
 
 ```bash
 # Автоматический деплой
+cd deployment
 ./deploy.sh
 ```
 

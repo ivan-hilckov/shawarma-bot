@@ -112,6 +112,11 @@
 - ✅ **Load balancing** - несколько инстансов API
 - ✅ **Monitoring** - health checks и метрики
 
+### 🚀 Деплой
+
+- `deployment/deploy.sh` - скрипт деплоя
+- `deployment/setup-server.sh` - настройка сервера
+
 ---
 
 ## [2.0.0] - 2024-12-19
@@ -221,8 +226,8 @@
 - `src/cart.ts` - корзина в Redis
 - `src/notifications.ts` - уведомления персонала
 - `.github/workflows/ci-cd.yml` - CI/CD pipeline
-- `deploy.sh` - скрипт деплоя
-- `setup-server.sh` - настройка сервера
+- `deployment/deploy.sh` - скрипт деплоя
+- `deployment/setup-server.sh` - настройка сервера
 - `migrate-data.sh` - миграция данных
 
 ### 📊 Статистика
@@ -266,6 +271,11 @@
 - Docker + Docker Compose
 - PostgreSQL + pgAdmin
 - 110 тестов
+
+### 🚀 Деплой
+
+- `deployment/deploy.sh` - скрипт деплоя
+- `deployment/setup-server.sh` - настройка сервера
 
 ---
 

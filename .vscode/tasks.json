@@ -142,7 +142,7 @@
     {
       "label": "🚀 Deploy",
       "type": "shell",
-      "command": "./deploy.sh",
+      "command": "cd deployment && ./deploy.sh",
       "group": "build",
       "presentation": {
         "echo": true,
@@ -151,6 +151,39 @@
         "panel": "new"
       },
       "dependsOn": ["🔨 Build"]
+    },
+    {
+      "label": "🏥 Health Check",
+      "type": "shell",
+      "command": "cd deployment && ./health-check.sh",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "🔧 Quick Fix: API",
+      "type": "shell",
+      "command": "cd deployment && ./quick-fix.sh api",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🔧 Quick Fix: Bot",
+      "type": "shell",
+      "command": "cd deployment && ./quick-fix.sh bot",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      }
     },
 
     // ==========================================
