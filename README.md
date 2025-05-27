@@ -258,7 +258,30 @@ ENABLE_CACHE=true
 NODE_ENV=development
 ```
 
-## 📊 Мониторинг
+## 📊 Мониторинг и анализ
+
+### Анализ VPS сервера
+
+Для документирования инфраструктуры и диагностики проблем:
+
+```bash
+# Сбор информации о сервере
+ssh user@server "cd ~/shawarma-bot/deployment && ./server-info.sh"
+
+# Скачивание отчета
+scp user@server:~/shawarma-bot/deployment/server-info-*.log ./
+
+# Анализ отчета
+# Заполните deployment/SERVER_ANALYSIS.md на основе данных
+```
+
+**Что анализируется:**
+
+- 🖥️ **Система** - ОС, ресурсы, производительность
+- 🐳 **Docker** - контейнеры, образы, использование
+- 🌐 **Nginx** - конфигурация, статус, логи
+- 🚀 **Проект** - версия, статус сервисов
+- 🔒 **Безопасность** - файрвол, порты, доступы
 
 ### Health Checks
 
@@ -436,6 +459,8 @@ deployment/                 # Скрипты деплоя
 ├── health-check.sh        # Проверка состояния
 ├── quick-fix.sh           # Быстрое исправление
 ├── nginx.conf             # Конфигурация nginx
+├── server-info.sh         # Анализ VPS сервера
+├── SERVER_ANALYSIS.md     # Шаблон документации
 └── README.md              # Документация деплоя
 
 __tests__/
@@ -545,30 +570,6 @@ npm run type-check
 - ✅ **Rate limiting** - защита от злоупотреблений
 - ✅ **CORS поддержка** - готовность к frontend интеграции
 
-**Cart API endpoints:**
-
-- `POST /api/cart/add` - добавить товар ✅
-- `PUT /api/cart/update` - изменить количество ✅
-- `DELETE /api/cart/remove/:userId/:itemId` - удалить товар ✅
-- `DELETE /api/cart/clear/:userId` - очистить корзину ✅
-- `GET /api/cart/:userId` - получить корзину ✅
-- `GET /api/cart/:userId/total` - получить сумму ✅
-
-**Архитектура v2.4:**
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Telegram Bot  │───▶│   REST API      │───▶│   Database      │
-│   (Port: N/A)   │    │   (Port: 3000)  │    │   (Port: 5432)  │
-│                 │    │                 │    │                 │
-│ • Bot Handlers  │    │ • Cart API (6)  │    │ • PostgreSQL    │
-│ • API Client    │    │ • Menu API (3)  │    │ • Redis Cache   │
-│ • Notifications │    │ • Orders API (3)│    │ • Health Checks │
-│                 │    │ • Health API (3)│    │                 │
-│                 │    │ • Swagger UI    │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
 ### v2.5 - Separated Architecture ✅ **ЗАВЕРШЕНО**
 
 - ✅ **Раздельные Docker образы** - `Dockerfile.api` и `Dockerfile.bot`
@@ -582,41 +583,7 @@ npm run type-check
 - ✅ **Nginx конфигурация** - автоматическое обновление с проверкой синтаксиса и откатом
 - ✅ **Production-ready nginx** - rate limiting, CORS, заголовки безопасности, SSL готовность
 - ✅ **Организация деплоя** - все скрипты и конфигурации в папке `deployment/`
-
-**Решение проблемы сборки v2.5:**
-
-Проблема `Cannot find module '/app/dist/api/server.js'` была решена путем разделения монолитного приложения на два независимых сервиса:
-
-1. **API сервис** (`Dockerfile.api`) - содержит только файлы необходимые для REST API
-2. **Bot сервис** (`Dockerfile.bot`) - содержит только файлы необходимые для Telegram бота
-
-Каждый сервис имеет свой собственный:
-
-- Dockerfile с оптимизированной сборкой
-- tsconfig.json с правильными include/exclude
-- Набор зависимостей и файлов
-
-**Новые команды v2.5:**
-
-```bash
-# Раздельная сборка
-npm run build:api          # Сборка только API
-npm run build:bot          # Сборка только бота
-
-# Раздельная проверка типов
-npm run type-check:api     # Проверка типов API
-npm run type-check:bot     # Проверка типов бота
-
-# Docker команды
-npm run docker:up          # Запуск всех сервисов
-npm run docker:down        # Остановка всех сервисов
-npm run docker:logs        # Логи всех сервисов
-npm run docker:restart     # Перезапуск всех сервисов
-
-# Быстрое исправление проблем
-cd deployment && ./quick-fix.sh api         # Исправление API
-cd deployment && ./quick-fix.sh bot         # Исправление бота
-```
+- ✅ **Анализ сервера** - скрипт `server-info.sh` для документирования инфраструктуры
 
 ### v2.6 - Analytics API (планируется)
 

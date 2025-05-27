@@ -185,6 +185,17 @@
         "panel": "shared"
       }
     },
+    {
+      "label": "🔍 Server Analysis",
+      "type": "shell",
+      "command": "echo 'Запустите на сервере: cd ~/shawarma-bot/deployment && ./server-info.sh'",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
 
     // ==========================================
     // КОМПЛЕКСНЫЕ
