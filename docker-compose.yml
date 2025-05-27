@@ -28,16 +28,7 @@ services:
       redis:
         condition: service_started
     healthcheck:
-      test:
-        [
-          'CMD',
-          'wget',
-          '--no-verbose',
-          '--tries=3',
-          '--timeout=10',
-          '--spider',
-          'http://localhost:3000/api/health/live',
-        ]
+      test: ['CMD', 'sh', '-c', 'curl -f http://localhost:3000/api/health/live || exit 1']
       interval: 30s
       timeout: 30s
       retries: 10
