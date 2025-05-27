@@ -33,15 +33,15 @@ services:
           'CMD',
           'wget',
           '--no-verbose',
-          '--tries=1',
-          '--timeout=5',
+          '--tries=3',
+          '--timeout=10',
           '--spider',
           'http://localhost:3000/api/health/live',
         ]
       interval: 30s
-      timeout: 15s
-      retries: 5
-      start_period: 60s
+      timeout: 30s
+      retries: 10
+      start_period: 120s
     networks:
       - shawarma-network
 
