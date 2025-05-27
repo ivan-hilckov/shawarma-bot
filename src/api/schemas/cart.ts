@@ -16,24 +16,12 @@ export const CartUpdateSchema = z.object({
 
 // Схема для параметров пути
 export const CartParamsSchema = z.object({
-  userId: z.string().transform(val => {
-    const parsed = parseInt(val, 10);
-    if (isNaN(parsed)) {
-      throw new Error('Invalid userId: must be a number');
-    }
-    return parsed;
-  }),
+  userId: z.string().pipe(z.coerce.number().int().positive()),
 });
 
 // Схема для параметров удаления товара
 export const CartRemoveParamsSchema = z.object({
-  userId: z.string().transform(val => {
-    const parsed = parseInt(val, 10);
-    if (isNaN(parsed)) {
-      throw new Error('Invalid userId: must be a number');
-    }
-    return parsed;
-  }),
+  userId: z.string().pipe(z.coerce.number().int().positive()),
   itemId: z.string().min(1),
 });
 

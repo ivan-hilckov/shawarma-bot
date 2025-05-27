@@ -10,13 +10,23 @@ export class RateLimiter {
   private readonly maxRequests: number;
   private readonly windowMs: number;
   private logger = createLogger('RateLimiter');
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(maxRequests: number = 30, windowMs: number = 60000) {
     this.maxRequests = maxRequests;
     this.windowMs = windowMs;
 
     // Очищаем старые записи каждые 5 минут
-    setInterval(() => this.cleanup(), 5 * 60 * 1000);
+    this.cleanupInterval = setInterval(() => this.cleanup(), 5 * 60 * 1000);
+  }
+
+  // Метод для очистки ресурсов
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+    this.limits.clear();
   }
 
   isAllowed(userId: number): boolean {
@@ -97,4 +107,5 @@ export class RateLimiter {
   }
 }
 
-export const rateLimiter = new RateLimiter();
+// Создаем глобальный экземпляр только если не в тестовой среде
+export const rateLimiter = process.env.NODE_ENV === 'test' ? null : new RateLimiter();

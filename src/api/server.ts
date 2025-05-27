@@ -18,9 +18,11 @@ async function buildServer() {
     logger:
       config.NODE_ENV === 'development'
         ? true
-        : {
-            level: 'info',
-          },
+        : config.NODE_ENV === 'test'
+          ? false // Отключаем логирование в тестах
+          : {
+              level: 'info',
+            },
   });
 
   try {
@@ -129,18 +131,20 @@ async function buildServer() {
     // Регистрируем плагин базы данных
     await fastify.register(databasePlugin);
 
-    // Middleware для логирования запросов
-    fastify.addHook('onRequest', async (request, _reply) => {
-      request.log.info(
-        {
-          method: request.method,
-          url: request.url,
-          ip: request.ip,
-          userAgent: request.headers['user-agent'],
-        },
-        'Incoming request'
-      );
-    });
+    // Middleware для логирования запросов (отключено в тестах)
+    if (config.NODE_ENV !== 'test') {
+      fastify.addHook('onRequest', async (request, _reply) => {
+        request.log.info(
+          {
+            method: request.method,
+            url: request.url,
+            ip: request.ip,
+            userAgent: request.headers['user-agent'],
+          },
+          'Incoming request'
+        );
+      });
+    }
 
     // Middleware для обработки ошибок
     fastify.setErrorHandler(async (error, request, reply) => {

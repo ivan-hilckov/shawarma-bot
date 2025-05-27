@@ -31,6 +31,9 @@ describe('RateLimiter', () => {
   });
 
   afterEach(() => {
+    // Очищаем ресурсы RateLimiter
+    rateLimiter.destroy();
+
     jest.useRealTimers();
     jest.clearAllMocks();
   });
@@ -40,21 +43,26 @@ describe('RateLimiter', () => {
       const defaultLimiter = new RateLimiter();
 
       expect(defaultLimiter.getRemainingRequests(123)).toBe(30);
+
+      defaultLimiter.destroy();
     });
 
     it('должен создавать RateLimiter с кастомными параметрами', () => {
       const customLimiter = new RateLimiter(10, 30000);
 
       expect(customLimiter.getRemainingRequests(123)).toBe(10);
+
+      customLimiter.destroy();
     });
 
     it('должен настраивать интервал очистки', () => {
       const setIntervalSpy = jest.spyOn(global, 'setInterval');
 
-      new RateLimiter();
+      const testLimiter = new RateLimiter();
 
       expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 5 * 60 * 1000);
 
+      testLimiter.destroy();
       setIntervalSpy.mockRestore();
     });
   });
@@ -326,6 +334,8 @@ describe('RateLimiter', () => {
       expect(zeroLimiter.isAllowed(userId)).toBe(true);
       expect(zeroLimiter.isAllowed(userId)).toBe(false);
       expect(zeroLimiter.getRemainingRequests(userId)).toBe(0);
+
+      zeroLimiter.destroy();
     });
 
     it('должен правильно работать с очень коротким окном', () => {
@@ -340,6 +350,8 @@ describe('RateLimiter', () => {
       // Должен сбросить лимит
       expect(shortWindowLimiter.isAllowed(userId)).toBe(true);
       expect(shortWindowLimiter.getRemainingRequests(userId)).toBe(4);
+
+      shortWindowLimiter.destroy();
     });
   });
 });
