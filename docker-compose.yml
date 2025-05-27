@@ -1,4 +1,52 @@
 services:
+  # REST API Server
+  api:
+    build: .
+    container_name: shawarma-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://shawarma_user:shawarma_pass@postgres:5432/shawarma_db
+      - REDIS_URL=redis://redis:6379
+      - API_PORT=3000
+      - API_HOST=0.0.0.0
+      - API_PREFIX=/api
+      - API_KEYS=${API_KEYS:-admin-key-dev}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - RATE_LIMIT_PUBLIC=${RATE_LIMIT_PUBLIC:-100}
+      - RATE_LIMIT_ADMIN=${RATE_LIMIT_ADMIN:-1000}
+      - REDIS_CACHE_TTL=${REDIS_CACHE_TTL:-300}
+      - ENABLE_CACHE=${ENABLE_CACHE:-true}
+    command: ['npm', 'run', 'start:api']
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://localhost:3000/api/health',
+          '||',
+          'exit',
+          '1',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - shawarma-network
+
   # Telegram Bot
   bot:
     build: .
@@ -13,10 +61,15 @@ services:
       - REDIS_URL=redis://redis:6379
       - NOTIFICATIONS_CHAT_ID=${NOTIFICATIONS_CHAT_ID}
       - ADMIN_USER_IDS=${ADMIN_USER_IDS}
+      # API Configuration for bot
+      - API_BASE_URL=http://api:3000/api
+      - API_TIMEOUT=10000
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      api:
         condition: service_healthy
     healthcheck:
       test: ['CMD', 'node', '-e', 'process.exit(0)']

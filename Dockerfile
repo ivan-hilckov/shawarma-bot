@@ -1,6 +1,9 @@
 # Используем официальный Node.js образ
 FROM node:18-alpine
 
+# Устанавливаем wget для healthcheck
+RUN apk add --no-cache wget
+
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
@@ -27,12 +30,12 @@ RUN adduser -S botuser -u 1001
 RUN chown -R botuser:nodejs /app
 USER botuser
 
-# Открываем порт (если понадобится в будущем)
+# Открываем порт для API
 EXPOSE 3000
 
-# Добавляем health check
+# Добавляем health check (будет переопределен в docker-compose)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD node -e "process.exit(0)" || exit 1
 
-# Запускаем приложение
+# По умолчанию запускаем бота (может быть переопределено в docker-compose)
 CMD ["npm", "start"]

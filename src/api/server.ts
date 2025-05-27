@@ -7,6 +7,7 @@ import { createLogger } from '../logger';
 import databasePlugin from './plugins/database';
 
 // Импорт маршрутов
+import cartRoutes from './routes/cart';
 import healthRoutes from './routes/health';
 import menuRoutes from './routes/menu';
 import orderRoutes from './routes/orders';
@@ -46,6 +47,7 @@ async function buildServer() {
         tags: [
           { name: 'Health', description: 'Health check endpoints' },
           { name: 'Menu', description: 'Menu management endpoints' },
+          { name: 'Cart', description: 'Shopping cart management endpoints' },
           { name: 'Orders', description: 'Orders management endpoints' },
           { name: 'Analytics', description: 'Analytics and statistics endpoints' },
         ],
@@ -175,6 +177,7 @@ async function buildServer() {
     });
 
     // Регистрируем маршруты
+    await fastify.register(cartRoutes, { prefix: config.API_PREFIX });
     await fastify.register(healthRoutes, { prefix: config.API_PREFIX });
     await fastify.register(menuRoutes, { prefix: config.API_PREFIX });
     await fastify.register(orderRoutes, { prefix: config.API_PREFIX });
