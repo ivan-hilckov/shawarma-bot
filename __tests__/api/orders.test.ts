@@ -1,3 +1,4 @@
+import '../api-setup';
 import { buildServer } from '../../src/api/server';
 
 describe('Orders API', () => {

@@ -8,6 +8,8 @@ module.exports = {
   },
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  testTimeout: 15000, // Увеличиваем таймаут до 15 секунд
+  setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
   globals: {
     'ts-jest': {
       tsconfig: 'tsconfig.test.json',

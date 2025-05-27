@@ -17,12 +17,11 @@ jest.mock('../src/menu', () => ({
   getItemById: jest.fn(),
 }));
 
-jest.mock('../src/cart', () => ({
+jest.mock('../src/api-client', () => ({
   addToCart: jest.fn(),
   getCart: jest.fn(),
   getCartTotal: jest.fn(),
-  getCartItemsCount: jest.fn(),
-  updateQuantity: jest.fn(),
+  updateCartQuantity: jest.fn(),
   removeFromCart: jest.fn(),
   clearCart: jest.fn(),
 }));
@@ -110,16 +109,16 @@ describe('Async Handlers', () => {
   describe('handleAddToCart', () => {
     it('должен добавлять товар в корзину', async () => {
       const { getItemById } = require('../src/menu');
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
 
       getItemById.mockReturnValue(mockMenuItem);
-      cartService.addToCart.mockResolvedValue(undefined);
-      cartService.getCartItemsCount.mockResolvedValue(3);
+      botApiClient.addToCart.mockResolvedValue(undefined);
+      botApiClient.getCartTotal.mockResolvedValue({ itemsCount: 3, total: 750 });
 
       await handleAddToCart(mockBot, mockCallbackQuery);
 
       expect(getItemById).toHaveBeenCalledWith('1');
-      expect(cartService.addToCart).toHaveBeenCalledWith(789, mockMenuItem, 1);
+      expect(botApiClient.addToCart).toHaveBeenCalledWith(789, '1', 1);
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
         text: '✅ Тестовая шаурма добавлен в корзину! (3 товаров)',
       });
@@ -139,10 +138,10 @@ describe('Async Handlers', () => {
 
     it('должен обрабатывать ошибки при добавлении в корзину', async () => {
       const { getItemById } = require('../src/menu');
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
 
       getItemById.mockReturnValue(mockMenuItem);
-      cartService.addToCart.mockRejectedValue(new Error('Redis error'));
+      botApiClient.addToCart.mockRejectedValue(new Error('API error'));
 
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
@@ -158,15 +157,15 @@ describe('Async Handlers', () => {
 
   describe('handleViewCart', () => {
     it('должен показывать корзину с товарами', async () => {
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
 
-      cartService.getCart.mockResolvedValue([mockCartItem]);
-      cartService.getCartTotal.mockResolvedValue(500);
+      botApiClient.getCart.mockResolvedValue([mockCartItem]);
+      botApiClient.getCartTotal.mockResolvedValue({ itemsCount: 2, total: 500 });
 
       await handleViewCart(mockBot, mockCallbackQuery);
 
-      expect(cartService.getCart).toHaveBeenCalledWith(789);
-      expect(cartService.getCartTotal).toHaveBeenCalledWith(789);
+      expect(botApiClient.getCart).toHaveBeenCalledWith(789);
+      expect(botApiClient.getCartTotal).toHaveBeenCalledWith(789);
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
         expect.stringContaining('🛒 Ваша корзина:'),
         expect.objectContaining({
@@ -182,9 +181,9 @@ describe('Async Handlers', () => {
     });
 
     it('должен показывать пустую корзину', async () => {
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
 
-      cartService.getCart.mockResolvedValue([]);
+      botApiClient.getCart.mockResolvedValue([]);
 
       await handleViewCart(mockBot, mockCallbackQuery);
 
@@ -201,10 +200,10 @@ describe('Async Handlers', () => {
     });
 
     it('должен работать с обычным сообщением', async () => {
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
 
-      cartService.getCart.mockResolvedValue([mockCartItem]);
-      cartService.getCartTotal.mockResolvedValue(500);
+      botApiClient.getCart.mockResolvedValue([mockCartItem]);
+      botApiClient.getCartTotal.mockResolvedValue({ itemsCount: 2, total: 500 });
 
       await handleViewCart(mockBot, mockMessage);
 
@@ -218,10 +217,10 @@ describe('Async Handlers', () => {
 
   describe('handleIncreaseQuantity', () => {
     it('должен увеличивать количество товара', async () => {
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
 
-      cartService.getCart.mockResolvedValue([mockCartItem]);
-      cartService.updateQuantity.mockResolvedValue(undefined);
+      botApiClient.getCart.mockResolvedValue([mockCartItem]);
+      botApiClient.updateCartQuantity.mockResolvedValue(undefined);
 
       const query = {
         ...mockCallbackQuery,
@@ -230,13 +229,13 @@ describe('Async Handlers', () => {
 
       await handleIncreaseQuantity(mockBot, query);
 
-      expect(cartService.updateQuantity).toHaveBeenCalledWith(789, '1', 3);
+      expect(botApiClient.updateCartQuantity).toHaveBeenCalledWith(789, '1', 3);
     });
 
     it('должен обрабатывать ошибки при увеличении количества', async () => {
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
 
-      cartService.getCart.mockRejectedValue(new Error('Cart error'));
+      botApiClient.getCart.mockRejectedValue(new Error('Cart error'));
 
       const query = {
         ...mockCallbackQuery,
@@ -257,10 +256,10 @@ describe('Async Handlers', () => {
 
   describe('handleDecreaseQuantity', () => {
     it('должен уменьшать количество товара', async () => {
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
 
-      cartService.getCart.mockResolvedValue([mockCartItem]);
-      cartService.updateQuantity.mockResolvedValue(undefined);
+      botApiClient.getCart.mockResolvedValue([mockCartItem]);
+      botApiClient.updateCartQuantity.mockResolvedValue(undefined);
 
       const query = {
         ...mockCallbackQuery,
@@ -269,19 +268,19 @@ describe('Async Handlers', () => {
 
       await handleDecreaseQuantity(mockBot, query);
 
-      expect(cartService.updateQuantity).toHaveBeenCalledWith(789, '1', 1);
+      expect(botApiClient.updateCartQuantity).toHaveBeenCalledWith(789, '1', 1);
     });
 
     it('должен удалять товар при количестве 0', async () => {
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
 
       const singleItemCart = {
         menuItem: mockMenuItem,
         quantity: 1,
       };
 
-      cartService.getCart.mockResolvedValue([singleItemCart]);
-      cartService.removeFromCart.mockResolvedValue(undefined);
+      botApiClient.getCart.mockResolvedValue([singleItemCart]);
+      botApiClient.removeFromCart.mockResolvedValue(undefined);
 
       const query = {
         ...mockCallbackQuery,
@@ -290,15 +289,15 @@ describe('Async Handlers', () => {
 
       await handleDecreaseQuantity(mockBot, query);
 
-      expect(cartService.removeFromCart).toHaveBeenCalledWith(789, '1');
+      expect(botApiClient.removeFromCart).toHaveBeenCalledWith(789, '1');
     });
   });
 
   describe('handleRemoveFromCart', () => {
     it('должен удалять товар из корзины', async () => {
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
 
-      cartService.removeFromCart.mockResolvedValue(undefined);
+      botApiClient.removeFromCart.mockResolvedValue(undefined);
 
       const query = {
         ...mockCallbackQuery,
@@ -307,7 +306,7 @@ describe('Async Handlers', () => {
 
       await handleRemoveFromCart(mockBot, query);
 
-      expect(cartService.removeFromCart).toHaveBeenCalledWith(789, '1');
+      expect(botApiClient.removeFromCart).toHaveBeenCalledWith(789, '1');
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
         text: 'Товар удален из корзины',
       });
@@ -316,13 +315,13 @@ describe('Async Handlers', () => {
 
   describe('handleClearCart', () => {
     it('должен очищать корзину', async () => {
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
 
-      cartService.clearCart.mockResolvedValue(undefined);
+      botApiClient.clearCart.mockResolvedValue(undefined);
 
       await handleClearCart(mockBot, mockCallbackQuery);
 
-      expect(cartService.clearCart).toHaveBeenCalledWith(789);
+      expect(botApiClient.clearCart).toHaveBeenCalledWith(789);
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
         text: 'Корзина очищена',
       });
@@ -331,12 +330,12 @@ describe('Async Handlers', () => {
 
   describe('handleCheckout', () => {
     it('должен оформлять заказ', async () => {
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
       const databaseService = require('../src/database');
 
-      cartService.getCart.mockResolvedValue([mockCartItem]);
-      cartService.getCartTotal.mockResolvedValue(500);
-      cartService.clearCart.mockResolvedValue(undefined);
+      botApiClient.getCart.mockResolvedValue([mockCartItem]);
+      botApiClient.getCartTotal.mockResolvedValue({ itemsCount: 2, total: 500 });
+      botApiClient.clearCart.mockResolvedValue(undefined);
       databaseService.upsertUser.mockResolvedValue(undefined);
       databaseService.createOrder.mockResolvedValue('42');
       databaseService.getOrderById.mockResolvedValue(mockOrder);
@@ -345,7 +344,7 @@ describe('Async Handlers', () => {
 
       expect(databaseService.upsertUser).toHaveBeenCalledWith(789, 'testuser', 'TestUser');
       expect(databaseService.createOrder).toHaveBeenCalledWith(789, [mockCartItem], 500);
-      expect(cartService.clearCart).toHaveBeenCalledWith(789);
+      expect(botApiClient.clearCart).toHaveBeenCalledWith(789);
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
         expect.stringContaining('✅ Заказ успешно оформлен!'),
         expect.objectContaining({
@@ -359,9 +358,9 @@ describe('Async Handlers', () => {
     });
 
     it('должен обрабатывать пустую корзину при оформлении', async () => {
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
 
-      cartService.getCart.mockResolvedValue([]);
+      botApiClient.getCart.mockResolvedValue([]);
 
       await handleCheckout(mockBot, mockCallbackQuery);
 
@@ -371,11 +370,11 @@ describe('Async Handlers', () => {
     });
 
     it('должен обрабатывать ошибки при оформлении заказа', async () => {
-      const cartService = require('../src/cart');
+      const botApiClient = require('../src/api-client');
       const databaseService = require('../src/database');
 
-      cartService.getCart.mockResolvedValue([mockCartItem]);
-      cartService.getCartTotal.mockResolvedValue(500);
+      botApiClient.getCart.mockResolvedValue([mockCartItem]);
+      botApiClient.getCartTotal.mockResolvedValue({ itemsCount: 2, total: 500 });
       databaseService.createOrder.mockRejectedValue(new Error('DB error'));
 
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
@@ -516,16 +515,18 @@ describe('Async Handlers', () => {
       });
     });
 
-    it('должен отклонять заказ', async () => {
+    it('должен отклонять доступ для не-админов', async () => {
+      (global as any).notificationService.isAdmin.mockReturnValue(false);
+
       const query = {
         ...mockCallbackQuery,
-        data: 'admin_reject_42',
+        data: 'admin_confirm_42',
       };
 
       await handleAdminOrderAction(mockBot, query);
 
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
-        text: '❌ Заказ #42 отклонен',
+        text: '❌ Доступ запрещен',
       });
     });
 
