@@ -1,69 +1,74 @@
 #!/bin/bash
 
-echo "⚡ Экстренное исправление сборки (быстрый режим)"
-echo "=============================================="
+echo "🔧 Быстрое исправление проблем"
+echo "=============================="
 
-# Остановка только проблемного контейнера
-echo "🛑 Остановка API контейнера..."
-docker-compose stop api
+# Проверка аргументов
+SERVICE=${1:-api}
 
-# Удаление только API контейнера
-echo "🗑️ Удаление API контейнера..."
-docker-compose rm -f api
-
-# Проверка ключевых файлов
-echo "📁 Быстрая проверка файлов:"
-test -f src/api/server.ts && echo "✅ server.ts" || echo "❌ server.ts"
-test -f package.json && echo "✅ package.json" || echo "❌ package.json"
-
-# Быстрая проверка зависимостей TypeScript
-echo "🔍 Проверка TypeScript..."
-if ! npm list typescript > /dev/null 2>&1; then
-    echo "📦 Переустановка TypeScript..."
-    npm install typescript --save-dev
-fi
-
-# Тест быстрой сборки
-echo "🔨 Быстрый тест сборки..."
-if npm run build > /dev/null 2>&1; then
-    echo "✅ Сборка работает"
-    rm -rf dist/
-else
-    echo "❌ Проблема с TypeScript сборкой"
-    echo "Попробуйте полный скрипт: ./fix-build-issue.sh"
+if [[ "$SERVICE" != "api" && "$SERVICE" != "bot" ]]; then
+    echo "Использование: $0 [api|bot]"
+    echo "По умолчанию: api"
     exit 1
 fi
 
-# Пересборка только API контейнера
-echo "🐳 Пересборка API контейнера..."
-docker-compose build --no-cache api
+echo "🎯 Исправление сервиса: $SERVICE"
 
-# Запуск API контейнера
-echo "🚀 Запуск API..."
-docker-compose up -d api
+# Остановка и удаление контейнера
+echo "🛑 Остановка $SERVICE контейнера..."
+docker-compose stop $SERVICE
+docker-compose rm -f $SERVICE
 
-# Быстрая проверка
+# Проверка ключевых файлов
+echo "📁 Проверка файлов:"
+if [[ "$SERVICE" == "api" ]]; then
+    test -f src/api/server.ts && echo "✅ server.ts" || echo "❌ server.ts"
+    test -f tsconfig.api.json && echo "✅ tsconfig.api.json" || echo "❌ tsconfig.api.json"
+else
+    test -f src/bot.ts && echo "✅ bot.ts" || echo "❌ bot.ts"
+    test -f tsconfig.bot.json && echo "✅ tsconfig.bot.json" || echo "❌ tsconfig.bot.json"
+fi
+
+# Тест сборки
+echo "🔨 Тест сборки $SERVICE..."
+if npm run build:$SERVICE > /dev/null 2>&1; then
+    echo "✅ Сборка работает"
+    rm -rf dist/
+else
+    echo "❌ Ошибка сборки"
+    echo "Попробуйте: npm install && npm run build:$SERVICE"
+    exit 1
+fi
+
+# Пересборка контейнера
+echo "🐳 Пересборка $SERVICE..."
+docker-compose build --no-cache $SERVICE
+
+# Запуск контейнера
+echo "🚀 Запуск $SERVICE..."
+docker-compose up -d $SERVICE
+
+# Проверка
 echo "⏳ Ожидание 10 секунд..."
 sleep 10
 
-if docker-compose ps | grep -q "shawarma-api.*Up"; then
-    echo "✅ API контейнер запущен"
+if docker-compose ps | grep -q "shawarma-$SERVICE.*Up"; then
+    echo "✅ $SERVICE запущен"
 
-    # Проверка логов
-    echo "📋 Последние логи:"
-    docker-compose logs --tail=5 api
-
-    # Проверка endpoint
-    sleep 3
-    if curl -s http://localhost:3000/api/health > /dev/null 2>&1; then
-        echo "🎉 API работает!"
+    if [[ "$SERVICE" == "api" ]]; then
+        sleep 5
+        if curl -s http://localhost:3000/api/health > /dev/null 2>&1; then
+            echo "🎉 API работает!"
+            echo "📚 Swagger: http://localhost:3000/api/docs"
+        else
+            echo "⚠️ API не отвечает"
+        fi
     else
-        echo "⚠️ API не отвечает, проверьте логи"
+        echo "🤖 Бот запущен, проверьте Telegram"
     fi
 else
     echo "❌ Проблема с запуском"
-    docker-compose logs api
+    docker-compose logs --tail=10 $SERVICE
 fi
 
-echo ""
-echo "⚡ Быстрое исправление завершено!"
+echo "✅ Готово!"

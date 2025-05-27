@@ -1,0 +1,56 @@
+# Dockerfile для REST API
+FROM node:18-alpine
+
+# Устанавливаем wget для healthcheck
+RUN apk add --no-cache wget
+
+# Устанавливаем рабочую директорию
+WORKDIR /app
+
+# Копируем package.json и package-lock.json
+COPY package*.json ./
+
+# Устанавливаем зависимости
+RUN npm ci
+
+# Копируем tsconfig файлы
+COPY tsconfig.json ./
+COPY tsconfig.api.json ./
+
+# Копируем общие файлы и файлы API
+COPY src/api/ ./src/api/
+COPY src/config.ts ./src/
+COPY src/database.ts ./src/
+COPY src/types.ts ./src/
+COPY src/logger.ts ./src/
+COPY src/menu.ts ./src/
+COPY src/cart.ts ./src/
+COPY src/notifications.ts ./src/
+COPY src/services/ ./src/services/
+COPY src/middleware/ ./src/middleware/
+
+# Собираем TypeScript проект с API конфигом
+RUN npx tsc --project tsconfig.api.json
+
+# Проверяем что API файлы созданы
+RUN test -f dist/api/server.js && echo "✅ server.js найден" || echo "❌ server.js НЕ найден"
+RUN ls -la dist/api/ || echo "dist/api не найден"
+
+# Удаляем dev зависимости
+RUN npm prune --production
+
+# Создаем пользователя для безопасности
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S botuser -u 1001
+RUN chown -R botuser:nodejs /app
+USER botuser
+
+# Открываем порт для API
+EXPOSE 3000
+
+# Health check для API
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+
+# Запуск API
+CMD ["npm", "run", "start:api"]

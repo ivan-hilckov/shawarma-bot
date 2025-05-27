@@ -4,12 +4,24 @@
 ## .env file contents (development):
 BOT_TOKEN=7753664149:AAEs2BFLXZzDp0CQj_XsjxjEIixmzhXi-r4
 NODE_ENV=development
+DATABASE_URL=postgresql://shawarma_user:shawarma_pass@localhost:5433/shawarma_db
+REDIS_URL=redis://localhost:6379
+NOTIFICATIONS_CHAT_ID=-1002689599286
+ADMIN_USER_IDS=121270837
+
+DEPLOY_SERVER_HOST=5ee5d87f4ecb.vps.myjino.ru
+DEPLOY_SERVER_PORT=49337
+DEPLOY_SERVER_USER=root
+DEPLOY_SERVER_PATH=~/shawarma-bot
+
+## .env.production file contents:
+BOT_TOKEN=7753664149:AAEs2BFLXZzDp0CQj_XsjxjEIixmzhXi-r4
+NODE_ENV=production
 DATABASE_URL=postgresql://shawarma_user:shawarma_pass@localhost:5432/shawarma_db
 REDIS_URL=redis://localhost:6379
 NOTIFICATIONS_CHAT_ID=-1002689599286
-ADMIN_USER_IDS=
+ADMIN_USER_IDS=121270837,1087968824
 
-## .env.production file contents:
 DEPLOY_SERVER_HOST=5ee5d87f4ecb.vps.myjino.ru
 DEPLOY_SERVER_PORT=49337
 DEPLOY_SERVER_USER=root
@@ -20,7 +32,3 @@ DEPLOY_SERVER_PATH=~/shawarma-bot
 - Use the above variables when referencing environment configuration
 - When suggesting code changes, reference these variables but don't try to read/write the actual files
 - These are the actual values currently in use in the project
-
-# Recent fixes:
-- Fixed Config interface test in __tests__/types.test.ts by adding all required fields (API_PORT, API_HOST, API_PREFIX, API_KEYS, CORS_ORIGINS, RATE_LIMIT_PUBLIC, RATE_LIMIT_ADMIN, REDIS_CACHE_TTL, ENABLE_CACHE)
-- All tests now pass successfully (262 passed)

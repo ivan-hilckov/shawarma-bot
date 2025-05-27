@@ -1,0 +1,51 @@
+# Dockerfile для Telegram Bot
+FROM node:18-alpine
+
+# Устанавливаем рабочую директорию
+WORKDIR /app
+
+# Копируем package.json и package-lock.json
+COPY package*.json ./
+
+# Устанавливаем зависимости
+RUN npm ci
+
+# Копируем tsconfig файлы
+COPY tsconfig.json ./
+COPY tsconfig.bot.json ./
+
+# Копируем общие файлы и файлы бота
+COPY src/bot.ts ./src/
+COPY src/handlers.ts ./src/
+COPY src/api-client.ts ./src/
+COPY src/config.ts ./src/
+COPY src/cart.ts ./src/
+COPY src/database.ts ./src/
+COPY src/notifications.ts ./src/
+COPY src/types.ts ./src/
+COPY src/logger.ts ./src/
+COPY src/menu.ts ./src/
+COPY src/services/ ./src/services/
+COPY src/middleware/ ./src/middleware/
+
+# Собираем TypeScript проект с Bot конфигом
+RUN npx tsc --project tsconfig.bot.json
+
+# Проверяем что bot.js создан
+RUN test -f dist/bot.js && echo "✅ bot.js найден" || echo "❌ bot.js НЕ найден"
+
+# Удаляем dev зависимости
+RUN npm prune --production
+
+# Создаем пользователя для безопасности
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S botuser -u 1001
+RUN chown -R botuser:nodejs /app
+USER botuser
+
+# Health check для бота
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD node -e "process.exit(0)" || exit 1
+
+# Запуск бота
+CMD ["npm", "start"]

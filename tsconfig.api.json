@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/api/**/*",
+    "src/config.ts",
+    "src/database.ts",
+    "src/types.ts",
+    "src/logger.ts",
+    "src/menu.ts",
+    "src/cart.ts",
+    "src/notifications.ts",
+    "src/services/**/*",
+    "src/middleware/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/bot.ts",
+    "src/handlers.ts",
+    "src/api-client.ts",
+    "__tests__/**/*"
+  ]
+}
