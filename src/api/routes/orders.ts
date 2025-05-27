@@ -4,7 +4,7 @@ import config from '../../config';
 import { OrderService } from '../services/orderService';
 
 // Middleware для проверки API ключа
-const authenticateAdmin = async (request: any, reply: any) => {
+const authenticateAdmin = (request: any, reply: any) => {
   const authHeader = request.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -348,6 +348,8 @@ const orderRoutes: FastifyPluginAsync = async fastify => {
       }
     }
   );
+
+  await Promise.resolve();
 };
 
 export default orderRoutes;

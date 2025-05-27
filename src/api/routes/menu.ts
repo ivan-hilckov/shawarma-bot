@@ -286,6 +286,8 @@ const menuRoutes: FastifyPluginAsync = async fastify => {
       }
     }
   );
+
+  await Promise.resolve();
 };
 
 export default menuRoutes;

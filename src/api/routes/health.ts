@@ -54,7 +54,7 @@ const healthRoutes: FastifyPluginAsync = async fastify => {
         },
       },
     },
-    async (request, reply) => {
+    async (_request, _reply) => {
       // Проверяем базу данных
       let dbStatus = 'down';
       let dbResponseTime = 0;
@@ -186,13 +186,15 @@ const healthRoutes: FastifyPluginAsync = async fastify => {
         },
       },
     },
-    async (request, reply) => {
+    async (_request, _reply) => {
       return {
         alive: true,
         timestamp: new Date().toISOString(),
       };
     }
   );
+
+  await Promise.resolve();
 };
 
 export default healthRoutes;

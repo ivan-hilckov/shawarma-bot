@@ -502,6 +502,8 @@ const cartRoutes: FastifyPluginAsync = async fastify => {
       }
     }
   );
+
+  await Promise.resolve();
 };
 
 export default cartRoutes;
