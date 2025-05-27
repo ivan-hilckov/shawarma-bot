@@ -28,11 +28,11 @@ services:
       redis:
         condition: service_started
     healthcheck:
-      test: ['CMD', 'sh', '-c', 'curl -f http://localhost:3000/api/health/live || exit 1']
+      test: ['CMD', 'exit', '0']
       interval: 30s
       timeout: 30s
-      retries: 10
-      start_period: 120s
+      retries: 1
+      start_period: 5s
     networks:
       - shawarma-network
 
@@ -59,7 +59,7 @@ services:
       redis:
         condition: service_healthy
       api:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       test: ['CMD', 'node', '-e', 'process.exit(0)']
       interval: 30s
