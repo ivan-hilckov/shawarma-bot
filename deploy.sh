@@ -191,6 +191,32 @@ fi
 
 echo "🔄 Перезапуск контейнеров..."
 docker-compose down
+
+# Добавляем диагностику сборки
+echo "🔍 Диагностика сборки..."
+echo "Проверка исходных файлов:"
+ls -la src/api/server.ts 2>/dev/null && echo "✅ src/api/server.ts найден" || echo "❌ src/api/server.ts не найден"
+ls -la tsconfig.json 2>/dev/null && echo "✅ tsconfig.json найден" || echo "❌ tsconfig.json не найден"
+
+# Тестируем локальную сборку TypeScript на сервере
+echo "🔨 Тестирование сборки TypeScript на сервере..."
+if npm run build; then
+    echo "✅ Сборка TypeScript успешна"
+    echo "Содержимое dist/:"
+    ls -la dist/ 2>/dev/null || echo "dist/ не найден"
+    echo "Содержимое dist/api/:"
+    ls -la dist/api/ 2>/dev/null || echo "dist/api/ не найден"
+    # Очищаем dist перед Docker сборкой
+    rm -rf dist/
+else
+    echo "❌ Ошибка сборки TypeScript"
+    echo "Попробуем установить зависимости заново..."
+    rm -rf node_modules package-lock.json
+    npm install
+    npm run build || echo "❌ Повторная сборка также не удалась"
+    rm -rf dist/
+fi
+
 docker-compose build --no-cache
 docker-compose up -d
 

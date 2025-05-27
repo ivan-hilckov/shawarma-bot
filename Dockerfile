@@ -16,14 +16,23 @@ RUN npm ci
 # Копируем исходный код
 COPY . .
 
-# Собираем TypeScript проект
-RUN npm run build
+# Проверяем что исходные файлы скопированы
+RUN echo "=== Проверка исходных файлов ==="
+RUN ls -la src/ || echo "src не найден"
+RUN ls -la src/api/ || echo "src/api не найден"
+RUN test -f src/api/server.ts && echo "src/api/server.ts найден" || echo "src/api/server.ts НЕ найден"
+RUN test -f tsconfig.json && echo "tsconfig.json найден" || echo "tsconfig.json НЕ найден"
+
+# Собираем TypeScript проект с подробным выводом
+RUN echo "=== Запуск сборки TypeScript ==="
+RUN npm run build 2>&1 || (echo "Ошибка сборки TypeScript" && exit 1)
 
 # Проверяем что сборка прошла успешно
-RUN echo "=== Проверка сборки ==="
+RUN echo "=== Проверка результатов сборки ==="
 RUN ls -la dist/ || echo "dist не найден"
 RUN ls -la dist/api/ || echo "dist/api не найден"
 RUN test -f dist/api/server.js && echo "server.js найден" || echo "server.js НЕ найден"
+RUN test -f dist/bot.js && echo "bot.js найден" || echo "bot.js НЕ найден"
 
 # Удаляем dev зависимости после сборки
 RUN npm prune --production
