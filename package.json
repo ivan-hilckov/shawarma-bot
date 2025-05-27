@@ -1,7 +1,7 @@
 {
   "name": "shawarma-bot",
-  "version": "2.0.0",
-  "description": "Production-ready Telegram бот для заказа шаурмы с полным функционалом корзины, системой заказов и автоматическим деплоем",
+  "version": "2.4.0",
+  "description": "Production-ready Telegram бот для заказа шаурмы с полным функционалом корзины, REST API, системой заказов и автоматическим деплоем",
   "main": "dist/bot.js",
   "scripts": {
     "build": "tsc",

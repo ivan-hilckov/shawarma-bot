@@ -349,7 +349,7 @@ npm run type-check
 
 ## 📈 Roadmap
 
-### v2.2 - Orders API ✅
+### v2.2 - Orders API ✅ **ЗАВЕРШЕНО**
 
 - ✅ Health API
 - ✅ Menu categories и items
@@ -410,22 +410,20 @@ npm run type-check
 - ✅ **Основные тесты**: 255 passed, 1 failed (Logger проблемы с mock console)
 - ⚠️ Интеграционные тесты API: отложены по приоритизации
 
-### v2.3 - Analytics API
-
-- 📈 Дашборд метрики
-- 📊 Детальная аналитика
-- 📉 Тренды продаж
-
 ### v2.4 - Cart API Migration ✅ **ЗАВЕРШЕНО**
 
-- ✅ **Cart API** - полноценное API для корзины
+- ✅ **REST API Сервер** - Fastify с TypeScript и Swagger UI
+- ✅ **Cart API** - 6 endpoints для полноценного управления корзиной
+- ✅ **Menu API** - 3 endpoints с фильтрацией и пагинацией
+- ✅ **Orders API** - 3 endpoints с авторизацией и статистикой
+- ✅ **Health API** - 3 endpoints для мониторинга и K8s probes
 - ✅ **API клиент** - `src/api-client.ts` для бота
 - ✅ **Миграция handlers** - бот использует API вместо прямого доступа к Redis
+- ✅ **Zod валидация** - схемы для всех API endpoints
 - ✅ **Docker архитектура** - API и бот в отдельных контейнерах
-- ✅ **Health checks** - мониторинг всех сервисов
-- ✅ **Деплой готовность** - обновлены все конфигурации
-- ✅ **TypeScript конфигурация** - исправлена сборка для Docker
-- ✅ **Docker healthcheck** - оптимизированы таймауты
+- ✅ **Swagger документация** - интерактивная документация на `/api/docs`
+- ✅ **Rate limiting** - защита от злоупотреблений
+- ✅ **CORS поддержка** - готовность к frontend интеграции
 
 **Cart API endpoints:**
 
@@ -443,11 +441,19 @@ npm run type-check
 │   Telegram Bot  │───▶│   REST API      │───▶│   Database      │
 │   (Port: N/A)   │    │   (Port: 3000)  │    │   (Port: 5432)  │
 │                 │    │                 │    │                 │
-│ • Bot Handlers  │    │ • Cart API      │    │ • PostgreSQL    │
-│ • API Client    │    │ • Menu API      │    │ • Redis Cache   │
-│ • Notifications │    │ • Orders API    │    │ • Health Checks │
+│ • Bot Handlers  │    │ • Cart API (6)  │    │ • PostgreSQL    │
+│ • API Client    │    │ • Menu API (3)  │    │ • Redis Cache   │
+│ • Notifications │    │ • Orders API (3)│    │ • Health Checks │
+│                 │    │ • Health API (3)│    │                 │
+│                 │    │ • Swagger UI    │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
+
+### v2.5 - Analytics API (планируется)
+
+- 📈 Дашборд метрики
+- 📊 Детальная аналитика
+- 📉 Тренды продаж
 
 ### v3.0 - Advanced Features
 
