@@ -26,7 +26,7 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       test:
         [
@@ -36,7 +36,7 @@ services:
           '--tries=1',
           '--timeout=5',
           '--spider',
-          'http://localhost:3000/api/health',
+          'http://localhost:3000/api/health/live',
         ]
       interval: 30s
       timeout: 15s
