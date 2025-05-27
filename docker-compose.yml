@@ -19,7 +19,7 @@ services:
       - RATE_LIMIT_ADMIN=${RATE_LIMIT_ADMIN:-1000}
       - REDIS_CACHE_TTL=${REDIS_CACHE_TTL:-300}
       - ENABLE_CACHE=${ENABLE_CACHE:-true}
-    command: ['npm', 'run', 'start:api']
+    command: ['node', 'dist/api/server.js']
     ports:
       - '3000:3000'
     depends_on:
