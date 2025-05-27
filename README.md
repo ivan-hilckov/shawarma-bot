@@ -272,7 +272,7 @@ ssh user@server "cd ~/shawarma-bot/deployment && ./server-info.sh"
 scp user@server:~/shawarma-bot/deployment/server-info-*.log ./
 
 # Анализ отчета
-# Заполните deployment/SERVER_ANALYSIS.md на основе данных
+# Заполните docs/VPS_ANALYSIS.md на основе данных
 ```
 
 **Что анализируется:**

@@ -188,7 +188,7 @@
     {
       "label": "🔍 Server Analysis",
       "type": "shell",
-      "command": "echo 'Запустите на сервере: cd ~/shawarma-bot/deployment && ./server-info.sh'",
+      "command": "echo 'Запустите на сервере: cd ~/shawarma-bot/deployment && ./server-info.sh && echo \"Документация: docs/SERVER_MONITORING.md\"'",
       "group": "build",
       "presentation": {
         "echo": true,

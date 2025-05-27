@@ -1,6 +1,6 @@
 {
   "name": "shawarma-bot",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "Production-ready Telegram бот для заказа шаурмы с раздельной архитектурой API и бота, полным функционалом корзины, системой заказов и автоматическим деплоем",
   "main": "dist/bot.js",
   "scripts": {
