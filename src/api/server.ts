@@ -5,7 +5,6 @@ import { createLogger } from '../logger';
 
 // Импорт плагинов
 import databasePlugin from './plugins/database';
-
 // Импорт маршрутов
 import cartRoutes from './routes/cart';
 import healthRoutes from './routes/health';
@@ -131,7 +130,7 @@ async function buildServer() {
     await fastify.register(databasePlugin);
 
     // Middleware для логирования запросов
-    fastify.addHook('onRequest', async (request, reply) => {
+    fastify.addHook('onRequest', async (request, _reply) => {
       request.log.info(
         {
           method: request.method,

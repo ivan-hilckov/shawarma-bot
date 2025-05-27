@@ -1,8 +1,8 @@
-import { CartService } from "../cart";
-import { DatabaseService } from "../database";
-import { createLogger } from "../logger";
-import NotificationService from "../notifications";
-import { BotInstance } from "../types";
+import { CartService } from '../cart';
+import { DatabaseService } from '../database';
+import { createLogger } from '../logger';
+import NotificationService from '../notifications';
+import { BotInstance } from '../types';
 
 export interface ServiceContainer {
   bot: BotInstance;

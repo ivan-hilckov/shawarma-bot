@@ -771,7 +771,6 @@ export async function handleAdminOrderAction(
         .catch(() => {});
     } else if (data.startsWith('admin_reject_')) {
       const orderId = data.replace('admin_reject_', '');
-      const oldOrder = await databaseService.getOrderById(orderId);
       // Здесь можно добавить статус "rejected" в типы или просто уведомить
 
       bot.answerCallbackQuery(query.id, { text: `❌ Заказ #${orderId} отклонен` }).catch(() => {});
