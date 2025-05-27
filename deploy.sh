@@ -110,6 +110,7 @@ git fetch origin
 MAIN_BRANCH=\$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
 git checkout \$MAIN_BRANCH
 git reset --hard origin/\$MAIN_BRANCH
+git pull --all
 
 # Изображения
 if [ -f "assets-backup.tar.gz" ]; then
@@ -118,6 +119,10 @@ if [ -f "assets-backup.tar.gz" ]; then
     tar -xzf assets-backup.tar.gz
     chmod 644 assets/*.jpeg 2>/dev/null || true
     rm assets-backup.tar.gz
+
+    # Очистка старых бэкапов (оставляем только последние 3)
+    echo "🧹 Очистка старых бэкапов..."
+    ls -t assets-backup-old-*.tar.gz 2>/dev/null | tail -n +4 | xargs rm -f 2>/dev/null || true
 fi
 
 echo "🔄 Перезапуск..."
