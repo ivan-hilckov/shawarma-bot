@@ -15,11 +15,15 @@ create_tar() {
 
 echo "🚀 Деплой Шаурма Бота на сервер"
 
-# Проверка что мы в корне проекта
-if [ ! -f "package.json" ] || [ ! -f "docker-compose.yml" ]; then
-    echo "❌ Запустите скрипт из корня проекта"
+# Проверка что мы в папке deployment
+if [ ! -f "../package.json" ] || [ ! -f "../docker-compose.yml" ]; then
+    echo "❌ Запустите скрипт из папки deployment в корне проекта"
+    echo "💡 Используйте: cd deployment && ./deploy.sh"
     exit 1
 fi
+
+# Переход в корень проекта для работы с файлами
+cd ..
 
 # Загрузка переменных из .env файлов
 if [ -f ".env.production" ]; then
@@ -71,7 +75,7 @@ if ! $SSH_CMD $SERVER_USER@$SERVER_HOST "[ -d $SERVER_PATH/.git ]"; then
     echo "❌ Git репозиторий не найден"
     read -p "Запустить настройку сервера? (y/N): " AUTO_SETUP
     if [[ $AUTO_SETUP =~ ^[Yy]$ ]]; then
-        $SCP_CMD setup-server.sh $SERVER_USER@$SERVER_HOST:~/
+        $SCP_CMD deployment/setup-server.sh $SERVER_USER@$SERVER_HOST:~/
         $SSH_CMD $SERVER_USER@$SERVER_HOST "chmod +x ~/setup-server.sh && ~/setup-server.sh"
     else
         exit 1
@@ -99,6 +103,12 @@ if [ "$UPLOAD_ASSETS" = true ]; then
     $SCP_CMD assets-backup.tar.gz $SERVER_USER@$SERVER_HOST:$SERVER_PATH/
 fi
 
+# Загрузка nginx конфигурации
+if [ -f "deployment/nginx.conf" ]; then
+    echo "🔧 Загрузка nginx конфигурации..."
+    $SCP_CMD deployment/nginx.conf $SERVER_USER@$SERVER_HOST:$SERVER_PATH/
+fi
+
 # Деплой на сервере
 echo "🚀 Деплой на сервере..."
 $SSH_CMD $SERVER_USER@$SERVER_HOST << EOF
@@ -123,6 +133,35 @@ if [ -f "assets-backup.tar.gz" ]; then
     # Очистка старых бэкапов (оставляем только последние 3)
     echo "🧹 Очистка старых бэкапов..."
     ls -t assets-backup-old-*.tar.gz 2>/dev/null | tail -n +4 | xargs rm -f 2>/dev/null || true
+fi
+
+# Обновление nginx конфигурации
+if [ -f "nginx.conf" ]; then
+    echo "🔧 Обновление nginx конфигурации..."
+
+    # Проверка синтаксиса новой конфигурации
+    if nginx -t -c \$PWD/nginx.conf 2>/dev/null; then
+        # Создание бэкапа текущей конфигурации
+        sudo cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup-\$(date +%Y%m%d_%H%M%S)
+
+        # Замена конфигурации
+        sudo cp nginx.conf /etc/nginx/nginx.conf
+
+        # Перезагрузка nginx
+        if sudo nginx -t && sudo systemctl reload nginx; then
+            echo "✅ Nginx конфигурация обновлена"
+        else
+            echo "❌ Ошибка перезагрузки nginx, откат конфигурации..."
+            sudo cp /etc/nginx/nginx.conf.backup-\$(date +%Y%m%d_%H%M%S) /etc/nginx/nginx.conf
+            sudo systemctl reload nginx
+            echo "⚠️ Конфигурация nginx откачена"
+        fi
+    else
+        echo "❌ Ошибка в синтаксисе nginx.conf, пропускаем обновление"
+    fi
+
+    # Очистка старых бэкапов nginx (оставляем последние 5)
+    sudo find /etc/nginx/ -name "nginx.conf.backup-*" -type f | sort -r | tail -n +6 | sudo xargs rm -f 2>/dev/null || true
 fi
 
 echo "🔄 Перезапуск..."
@@ -154,4 +193,4 @@ echo ""
 echo "🎉 Готово!"
 echo "🔧 Команды:"
 echo "  Логи: $SSH_CMD $SERVER_USER@$SERVER_HOST 'cd $SERVER_PATH && docker-compose logs -f'"
-echo "  Статус: $SSH_CMD $SERVER_USER@$SERVER_HOST 'cd $SERVER_PATH && ./health-check.sh'"
+echo "  Статус: $SSH_CMD $SERVER_USER@$SERVER_HOST 'cd $SERVER_PATH && ./deployment/health-check.sh'"
