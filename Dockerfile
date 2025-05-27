@@ -19,6 +19,12 @@ COPY . .
 # Собираем TypeScript проект
 RUN npm run build
 
+# Проверяем что сборка прошла успешно
+RUN echo "=== Проверка сборки ==="
+RUN ls -la dist/ || echo "dist не найден"
+RUN ls -la dist/api/ || echo "dist/api не найден"
+RUN test -f dist/api/server.js && echo "server.js найден" || echo "server.js НЕ найден"
+
 # Удаляем dev зависимости после сборки
 RUN npm prune --production
 
