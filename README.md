@@ -144,6 +144,23 @@ docker-compose down
 - **Development**: http://localhost:3000/api/docs
 - **Production**: https://api.shawarma-bot.com/api/docs
 
+### Доступные домены
+
+Проект развернут на нескольких доменах для разных сервисов:
+
+- 🏪 **botgarden.store** - основной магазин Shawarma Bot (текущий)
+- 🛒 **botgarden.shop** - будущая торговая площадка ботов
+- 🔧 **botgarden.tech** - техническая документация
+- 🌐 **botcraft.tech** - будущий сервис крафт-ботов
+- 🎮 **botgrover.fun** - игровые боты
+- 🇷🇺 **botgrover.ru** - российская локализация
+
+**Доступ к API:**
+
+- http://botgarden.store/api/docs - Swagger UI
+- http://botgarden.store/health - Health check
+- http://botgarden.store/api/menu/categories - Menu API
+
 ### Основные endpoints
 
 #### Health API
