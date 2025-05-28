@@ -72,7 +72,7 @@ fi
 # Установка правильных прав доступа
 echo "🔐 Установка прав доступа..."
 chown -R nginx:nginx "$WEB_DIR"
-chmod -R 644 "$WEB_DIR/public/*.html"
+find "$WEB_DIR/public" -name "*.html" -type f -exec chmod 644 {} \;
 chmod 755 "$WEB_DIR" "$WEB_DIR/public"
 
 # Проверка nginx конфигурации
