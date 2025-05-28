@@ -109,6 +109,12 @@ if [ -f "deployment/nginx.conf" ]; then
     $SCP_CMD deployment/nginx.conf $SERVER_USER@$SERVER_HOST:$SERVER_PATH/
 fi
 
+# Загрузка скрипта настройки веб-страниц
+if [ -f "deployment/setup-landing-pages.sh" ]; then
+    echo "🌍 Загрузка скрипта настройки веб-страниц..."
+    $SCP_CMD deployment/setup-landing-pages.sh $SERVER_USER@$SERVER_HOST:$SERVER_PATH/deployment/
+fi
+
 # Деплой на сервере
 echo "🚀 Деплой на сервере..."
 $SSH_CMD $SERVER_USER@$SERVER_HOST << EOF
@@ -164,6 +170,13 @@ if [ -f "nginx.conf" ]; then
     sudo find /etc/nginx/ -name "nginx.conf.backup-*" -type f | sort -r | tail -n +6 | sudo xargs rm -f 2>/dev/null || true
 fi
 
+# Настройка веб-страниц для доменов
+if [ -f "deployment/setup-landing-pages.sh" ]; then
+    echo "🌍 Настройка лендинговых страниц..."
+    chmod +x deployment/setup-landing-pages.sh
+    sudo deployment/setup-landing-pages.sh
+fi
+
 echo "🔄 Перезапуск..."
 docker-compose down
 docker-compose build --no-cache
@@ -191,6 +204,14 @@ EOF
 
 echo ""
 echo "🎉 Готово!"
+echo "🌍 Доступные домены:"
+echo "  🏪 http://botgarden.store     - Основной магазин Shawarma Bot"
+echo "  🛒 http://botgarden.shop     - Торговая площадка ботов"
+echo "  🔧 http://botgarden.tech     - Техническая документация"
+echo "  🌐 http://botcraft.tech      - Сервис крафт-ботов"
+echo "  🎮 http://botgrover.fun      - Игровые боты"
+echo "  🇷🇺 http://botgrover.ru      - Российская локализация"
+echo ""
 echo "🔧 Команды:"
 echo "  Логи: $SSH_CMD $SERVER_USER@$SERVER_HOST 'cd $SERVER_PATH && docker-compose logs -f'"
 echo "  Статус: $SSH_CMD $SERVER_USER@$SERVER_HOST 'cd $SERVER_PATH && ./deployment/health-check.sh'"

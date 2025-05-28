@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🇷🇺 BotGrover.ru - Российская локализация</title>
+  <meta name="description"
+    content="BotGrover.ru - российская версия платформы ботов с локализацией под российский рынок и интеграциями.">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0984e3 0%, #6c5ce7 50%, #a29bfe 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .flag-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: linear-gradient(to bottom,
+          rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.1) 33%,
+          rgba(0, 123, 255, 0.1) 33%, rgba(0, 123, 255, 0.1) 66%,
+          rgba(255, 69, 69, 0.1) 66%, rgba(255, 69, 69, 0.1) 100%);
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .nav a {
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      transition: background 0.3s;
+    }
+
+    .nav a:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    main {
+      padding: 4rem 0;
+    }
+
+    .hero {
+      text-align: center;
+      color: white;
+      margin-bottom: 4rem;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+
+    .status {
+      background: linear-gradient(45deg, #d63031, #e17055);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 30px;
+      display: inline-block;
+      font-weight: bold;
+      margin-bottom: 2rem;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .feature {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .feature h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #ffd93d;
+    }
+
+    .integrations {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 3rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      text-align: center;
+    }
+
+    .integration-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .integration {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .integration h4 {
+      color: #ffd93d;
+      margin-bottom: 0.5rem;
+    }
+
+    .current-project {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 3rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .project-link {
+      background: #00b894;
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 25px;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 1rem;
+      transition: transform 0.3s;
+    }
+
+    .project-link:hover {
+      transform: translateY(-2px);
+    }
+
+    footer {
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      text-align: center;
+      padding: 2rem 0;
+      margin-top: 4rem;
+    }
+
+    .domains {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .domain {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .domain a {
+      color: #ffd93d;
+      text-decoration: none;
+    }
+
+    .russia-specific {
+      background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(0, 123, 255, 0.1), rgba(255, 69, 69, 0.1));
+      border: 2px solid rgba(255, 215, 61, 0.5);
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .integration-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="flag-bg"></div>
+
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">🇷🇺 BotGrover.ru</div>
+        <nav class="nav">
+          <a href="#features">Возможности</a>
+          <a href="#integrations">Интеграции</a>
+          <a href="http://botgarden.store">Главный проект</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>🇷🇺 BotGrover Russia</h1>
+        <p>Российская локализация платформы ботов с интеграциями под российский рынок</p>
+        <div class="status">🛠️ В планах</div>
+      </section>
+
+      <section id="features" class="features">
+        <div class="feature russia-specific">
+          <h3>🏦 Российские банки</h3>
+          <p>Интеграция с Сбербанком, ВТБ, Альфа-Банком для приема платежей и переводов.</p>
+        </div>
+
+        <div class="feature russia-specific">
+          <h3>📱 Отечественные мессенджеры</h3>
+          <p>Поддержка ВКонтакте, Одноклассников и других российских платформ.</p>
+        </div>
+
+        <div class="feature russia-specific">
+          <h3>📋 Соответствие законам РФ</h3>
+          <p>Полное соответствие российскому законодательству и требованиям регуляторов.</p>
+        </div>
+
+        <div class="feature">
+          <h3>🌍 Локализация</h3>
+          <p>Полная русификация интерфейса, документации и поддержки пользователей.</p>
+        </div>
+
+        <div class="feature">
+          <h3>🚛 Доставка и логистика</h3>
+          <p>Интеграция с Почтой России, СДЭК, Boxberry и другими службами доставки.</p>
+        </div>
+
+        <div class="feature">
+          <h3>📊 Российская аналитика</h3>
+          <p>Интеграция с Яндекс.Метрикой, Google Analytics и отечественными системами.</p>
+        </div>
+      </section>
+
+      <section id="integrations" class="integrations">
+        <h2>🔗 Российские интеграции</h2>
+        <p>Специально адаптированные интеграции для российского рынка</p>
+
+        <div class="integration-grid">
+          <div class="integration">
+            <h4>💳 Платежи</h4>
+            <p>ЮKassa, CloudPayments, Робокасса, Qiwi</p>
+          </div>
+
+          <div class="integration">
+            <h4>🏪 Маркетплейсы</h4>
+            <p>Wildberries, Ozon, Яндекс.Маркет, Авито</p>
+          </div>
+
+          <div class="integration">
+            <h4>📦 Логистика</h4>
+            <p>СДЭК, Почта России, Boxberry, DPD</p>
+          </div>
+
+          <div class="integration">
+            <h4>📱 Соцсети</h4>
+            <p>ВКонтакте, Одноклассники, Дзен</p>
+          </div>
+
+          <div class="integration">
+            <h4>💼 1С</h4>
+            <p>1С:Предприятие, 1С:Розница, 1С:УТ</p>
+          </div>
+
+          <div class="integration">
+            <h4>📧 Email</h4>
+            <p>Mail.ru, Яндекс.Почта, Unisender</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="current-project">
+        <h2>🌯 Изучите наш основной проект</h2>
+        <p>Пока мы работаем над российской локализацией, познакомьтесь с нашим флагманским продуктом</p>
+        <a href="http://botgarden.store" class="project-link">Shawarma Bot - Production Ready →</a>
+      </section>
+
+      <section class="domains">
+        <div class="domain">
+          <strong>🏪 botgarden.store</strong><br>
+          <small>Основной магазин</small><br>
+          <a href="http://botgarden.store">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🛒 botgarden.shop</strong><br>
+          <small>Торговая площадка</small><br>
+          <a href="http://botgarden.shop">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🔧 botgarden.tech</strong><br>
+          <small>Техническая документация</small><br>
+          <a href="http://botgarden.tech">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🌐 botcraft.tech</strong><br>
+          <small>Сервис крафт-ботов</small><br>
+          <a href="http://botcraft.tech">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🎮 botgrover.fun</strong><br>
+          <small>Игровые боты</small><br>
+          <a href="http://botgrover.fun">Перейти →</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 BotGrover.ru. Сделано в России для России.</p>
+      <p>🇷🇺 Российские интеграции | 📋 Соответствие законам РФ | 🏦 Отечественные банки</p>
+    </div>
+  </footer>
+</body>
+
+</html>

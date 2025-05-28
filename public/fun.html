@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 BotGrover Fun - Игровые боты</title>
+  <meta name="description"
+    content="BotGrover Fun - платформа игровых Telegram ботов. Квизы, викторины, мини-игры и развлечения.">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
+      min-height: 100vh;
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: white;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      20%,
+      50%,
+      80%,
+      100% {
+        transform: translateY(0);
+      }
+
+      40% {
+        transform: translateY(-10px);
+      }
+
+      60% {
+        transform: translateY(-5px);
+      }
+    }
+
+    .nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .nav a {
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      transition: all 0.3s;
+    }
+
+    .nav a:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    main {
+      padding: 4rem 0;
+    }
+
+    .hero {
+      text-align: center;
+      color: white;
+      margin-bottom: 4rem;
+      position: relative;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      animation: rainbow 3s linear infinite;
+    }
+
+    @keyframes rainbow {
+      0% {
+        color: #ff6b6b;
+      }
+
+      16% {
+        color: #ffa500;
+      }
+
+      33% {
+        color: #ffff00;
+      }
+
+      50% {
+        color: #00ff00;
+      }
+
+      66% {
+        color: #00bfff;
+      }
+
+      83% {
+        color: #8a2be2;
+      }
+
+      100% {
+        color: #ff6b6b;
+      }
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+
+    .status {
+      background: linear-gradient(45deg, #e17055, #d63031);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 30px;
+      display: inline-block;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .game-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: transform 0.6s;
+      transform: rotate(45deg) translate(-100%, -100%);
+    }
+
+    .game-card:hover::before {
+      transform: rotate(45deg) translate(100%, 100%);
+    }
+
+    .game-card:hover {
+      transform: translateY(-10px) rotate(-2deg);
+      border-color: #ffd93d;
+    }
+
+    .game-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .game-card p {
+      position: relative;
+      z-index: 1;
+    }
+
+    .coming-soon {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 3rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      text-align: center;
+    }
+
+    .demo-game {
+      background: linear-gradient(45deg, #00b894, #00cec9);
+      border: none;
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 25px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin: 1rem;
+      animation: wiggle 3s ease-in-out infinite;
+    }
+
+    @keyframes wiggle {
+
+      0%,
+      7% {
+        transform: rotateZ(0);
+      }
+
+      15% {
+        transform: rotateZ(-15deg);
+      }
+
+      20% {
+        transform: rotateZ(10deg);
+      }
+
+      25% {
+        transform: rotateZ(-10deg);
+      }
+
+      30% {
+        transform: rotateZ(6deg);
+      }
+
+      35% {
+        transform: rotateZ(-4deg);
+      }
+
+      40%,
+      100% {
+        transform: rotateZ(0);
+      }
+    }
+
+    .demo-game:hover {
+      transform: scale(1.1);
+      box-shadow: 0 5px 20px rgba(0, 184, 148, 0.5);
+    }
+
+    .current-link {
+      background: #6c5ce7;
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 25px;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 1rem;
+      transition: all 0.3s;
+    }
+
+    .current-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(108, 92, 231, 0.5);
+    }
+
+    footer {
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      text-align: center;
+      padding: 2rem 0;
+      margin-top: 4rem;
+    }
+
+    .domains {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .domain {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: transform 0.3s;
+    }
+
+    .domain:hover {
+      transform: scale(1.05);
+    }
+
+    .domain a {
+      color: #ffd93d;
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .games-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">🎮 BotGrover Fun</div>
+        <nav class="nav">
+          <a href="#games">Игры</a>
+          <a href="#demo">Демо</a>
+          <a href="http://botgarden.store">Другие проекты</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>🎮 Fun Games</h1>
+        <p>Платформа игровых Telegram ботов для развлечений и досуга</p>
+        <div class="status">🎯 Планируется</div>
+      </section>
+
+      <section id="games" class="games-grid">
+        <div class="game-card">
+          <h3>🧩 Квиз-бот</h3>
+          <p>Интерактивные викторины на любые темы с системой рейтингов и достижений.</p>
+        </div>
+
+        <div class="game-card">
+          <h3>🎰 Мини-казино</h3>
+          <p>Простые азартные игры: рулетка, слоты, кости с виртуальной валютой.</p>
+        </div>
+
+        <div class="game-card">
+          <h3>🏆 Турниры</h3>
+          <p>Соревновательные игры с призами и таблицами лидеров.</p>
+        </div>
+
+        <div class="game-card">
+          <h3>🎲 Настольные игры</h3>
+          <p>Крестики-нолики, шашки, морской бой для игры с друзьями.</p>
+        </div>
+
+        <div class="game-card">
+          <h3>🔤 Словесные игры</h3>
+          <p>Виселица, анаграммы, составление слов из букв.</p>
+        </div>
+
+        <div class="game-card">
+          <h3>🎪 Мини-игры</h3>
+          <p>Быстрые аркадные игры: тетрис, змейка, пинг-понг.</p>
+        </div>
+      </section>
+
+      <section id="demo" class="coming-soon">
+        <h2>🎯 Интерактивное демо</h2>
+        <p>Попробуйте простую мини-игру прямо здесь!</p>
+
+        <div style="margin: 2rem 0;">
+          <button class="demo-game" onclick="playGame()">🎲 Угадай число (1-10)</button>
+          <div id="game-result" style="margin-top: 1rem; font-size: 1.2rem;"></div>
+        </div>
+
+        <h3>🌯 А пока изучите наш основной проект</h3>
+        <a href="http://botgarden.store" class="current-link">Shawarma Bot - Production Ready →</a>
+      </section>
+
+      <section class="domains">
+        <div class="domain">
+          <strong>🏪 botgarden.store</strong><br>
+          <small>Основной магазин</small><br>
+          <a href="http://botgarden.store">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🛒 botgarden.shop</strong><br>
+          <small>Торговая площадка</small><br>
+          <a href="http://botgarden.shop">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🔧 botgarden.tech</strong><br>
+          <small>Техническая документация</small><br>
+          <a href="http://botgarden.tech">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🌐 botcraft.tech</strong><br>
+          <small>Сервис крафт-ботов</small><br>
+          <a href="http://botcraft.tech">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🇷🇺 botgrover.ru</strong><br>
+          <small>Российская локализация</small><br>
+          <a href="http://botgrover.ru">Перейти →</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 BotGrover Fun. Играй и развлекайся!</p>
+      <p>🎮 Games | 🏆 Tournaments | 🎯 Fun</p>
+    </div>
+  </footer>
+
+  <script>
+    let gameNumber = Math.floor(Math.random() * 10) + 1;
+    let attempts = 0;
+    let gameActive = true;
+
+    function playGame() {
+      if (!gameActive) {
+        gameNumber = Math.floor(Math.random() * 10) + 1;
+        attempts = 0;
+        gameActive = true;
+        document.getElementById('game-result').innerHTML = '';
+      }
+
+      const userGuess = prompt('🎲 Угадайте число от 1 до 10:');
+
+      if (userGuess === null) return;
+
+      const guess = parseInt(userGuess);
+      attempts++;
+
+      if (isNaN(guess) || guess < 1 || guess > 10) {
+        document.getElementById('game-result').innerHTML =
+          '❌ Введите число от 1 до 10!';
+        return;
+      }
+
+      if (guess === gameNumber) {
+        document.getElementById('game-result').innerHTML =
+          `🎉 Поздравляем! Вы угадали число ${gameNumber} за ${attempts} попыток!<br>
+                    <button onclick="playGame()" style="margin-top: 10px; padding: 5px 15px; border: none; border-radius: 15px; background: #00b894; color: white; cursor: pointer;">🔄 Играть снова</button>`;
+        gameActive = false;
+      } else if (guess < gameNumber) {
+        document.getElementById('game-result').innerHTML =
+          `📈 Загаданное число больше ${guess}. Попытка ${attempts}/3`;
+      } else {
+        document.getElementById('game-result').innerHTML =
+          `📉 Загаданное число меньше ${guess}. Попытка ${attempts}/3`;
+      }
+
+      if (attempts >= 3 && guess !== gameNumber) {
+        document.getElementById('game-result').innerHTML =
+          `😔 Вы не угадали! Загаданное число было ${gameNumber}.<br>
+                    <button onclick="playGame()" style="margin-top: 10px; padding: 5px 15px; border: none; border-radius: 15px; background: #00b894; color: white; cursor: pointer;">🔄 Попробовать снова</button>`;
+        gameActive = false;
+      }
+    }
+  </script>
+</body>
+
+</html>

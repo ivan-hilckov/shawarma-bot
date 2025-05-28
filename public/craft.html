@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌐 BotCraft Tech - Сервис крафт-ботов</title>
+  <meta name="description"
+    content="BotCraft Tech - инновационный сервис для создания и кастомизации Telegram ботов с помощью конструктора.">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: white;
+    }
+
+    .nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .nav a {
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      transition: background 0.3s;
+    }
+
+    .nav a:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    main {
+      padding: 4rem 0;
+    }
+
+    .hero {
+      text-align: center;
+      color: white;
+      margin-bottom: 4rem;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+
+    .status {
+      background: linear-gradient(45deg, #fd79a8, #fdcb6e);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 30px;
+      display: inline-block;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from {
+        box-shadow: 0 0 20px rgba(253, 121, 168, 0.5);
+      }
+
+      to {
+        box-shadow: 0 0 30px rgba(253, 203, 110, 0.8);
+      }
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .feature {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      transition: transform 0.3s;
+    }
+
+    .feature:hover {
+      transform: translateY(-10px);
+    }
+
+    .feature h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .craft-preview {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 3rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      text-align: center;
+    }
+
+    .craft-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .step {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .step-number {
+      background: #fd79a8;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      font-weight: bold;
+    }
+
+    .current-link {
+      background: #00b894;
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 25px;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 1rem;
+      transition: transform 0.3s;
+    }
+
+    .current-link:hover {
+      transform: translateY(-2px);
+    }
+
+    footer {
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      text-align: center;
+      padding: 2rem 0;
+      margin-top: 4rem;
+    }
+
+    .domains {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .domain {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .domain a {
+      color: #ffd93d;
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .craft-steps {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">🌐 BotCraft Tech</div>
+        <nav class="nav">
+          <a href="#features">Возможности</a>
+          <a href="#preview">Превью</a>
+          <a href="http://botgarden.store">Текущий проект</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>🌐 BotCraft</h1>
+        <p>Инновационный сервис для создания и кастомизации Telegram ботов</p>
+        <div class="status">🔮 Концепт будущего</div>
+      </section>
+
+      <section id="features" class="features">
+        <div class="feature">
+          <h3>🎨 Визуальный конструктор</h3>
+          <p>Создавайте ботов с помощью drag & drop интерфейса без программирования.</p>
+        </div>
+
+        <div class="feature">
+          <h3>🧩 Модульная архитектура</h3>
+          <p>Собирайте ботов из готовых модулей: корзина, оплата, уведомления.</p>
+        </div>
+
+        <div class="feature">
+          <h3>⚡ Мгновенный деплой</h3>
+          <p>Развертывание бота в продакшн одним кликом с автоматической настройкой.</p>
+        </div>
+
+        <div class="feature">
+          <h3>📊 Аналитика в реальном времени</h3>
+          <p>Отслеживание метрик использования и производительности ботов.</p>
+        </div>
+
+        <div class="feature">
+          <h3>🔗 API интеграции</h3>
+          <p>Подключение к внешним сервисам: платежи, CRM, склад, аналитика.</p>
+        </div>
+
+        <div class="feature">
+          <h3>🎯 AI-помощник</h3>
+          <p>Умный помощник для оптимизации логики бота и UX.</p>
+        </div>
+      </section>
+
+      <section id="preview" class="craft-preview">
+        <h2>🔮 Как это будет работать</h2>
+        <p>Представьте платформу, где создание бота занимает минуты, а не недели</p>
+
+        <div class="craft-steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <h4>Выберите шаблон</h4>
+            <p>Ресторан, магазин, сервис</p>
+          </div>
+
+          <div class="step">
+            <div class="step-number">2</div>
+            <h4>Настройте модули</h4>
+            <p>Корзина, каталог, оплата</p>
+          </div>
+
+          <div class="step">
+            <div class="step-number">3</div>
+            <h4>Кастомизируйте</h4>
+            <p>Дизайн, тексты, логика</p>
+          </div>
+
+          <div class="step">
+            <div class="step-number">4</div>
+            <h4>Запустите</h4>
+            <p>Мгновенный деплой</p>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 3rem;">🌯 А пока изучите наш опытный образец</h3>
+        <a href="http://botgarden.store" class="current-link">Shawarma Bot - Рабочий прототип →</a>
+      </section>
+
+      <section class="domains">
+        <div class="domain">
+          <strong>🏪 botgarden.store</strong><br>
+          <small>Основной магазин</small><br>
+          <a href="http://botgarden.store">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🛒 botgarden.shop</strong><br>
+          <small>Торговая площадка</small><br>
+          <a href="http://botgarden.shop">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🔧 botgarden.tech</strong><br>
+          <small>Техническая документация</small><br>
+          <a href="http://botgarden.tech">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🎮 botgrover.fun</strong><br>
+          <small>Игровые боты</small><br>
+          <a href="http://botgrover.fun">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🇷🇺 botgrover.ru</strong><br>
+          <small>Российская локализация</small><br>
+          <a href="http://botgrover.ru">Перейти →</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 BotCraft Tech. Будущее создания ботов.</p>
+      <p>🎨 Visual Builder | 🧩 Modular | ⚡ Instant Deploy</p>
+    </div>
+  </footer>
+</body>
+
+</html>

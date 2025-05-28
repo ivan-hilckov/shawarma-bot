@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔧 BotGarden Tech - Техническая документация</title>
+  <meta name="description"
+    content="BotGarden Tech - техническая документация, API справочники и руководства по разработке Telegram ботов.">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
+      background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #00ff88;
+      text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+    }
+
+    .nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .nav a {
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .nav a:hover {
+      border-color: #00ff88;
+      background: rgba(0, 255, 136, 0.1);
+    }
+
+    main {
+      padding: 4rem 0;
+    }
+
+    .hero {
+      text-align: center;
+      color: white;
+      margin-bottom: 4rem;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: #00ff88;
+      text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+
+    .terminal {
+      background: #1e1e1e;
+      border: 1px solid #555;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: #00ff88;
+      margin: 2rem 0;
+      overflow-x: auto;
+    }
+
+    .terminal::before {
+      content: "$ ";
+      color: #ff6b6b;
+    }
+
+    .docs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .doc-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+
+    .doc-card:hover {
+      transform: translateY(-5px);
+      border-color: #00ff88;
+    }
+
+    .doc-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #00ff88;
+    }
+
+    .doc-link {
+      background: transparent;
+      color: #00ff88;
+      padding: 0.5rem 1rem;
+      border: 1px solid #00ff88;
+      border-radius: 4px;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 1rem;
+      transition: all 0.3s;
+    }
+
+    .doc-link:hover {
+      background: #00ff88;
+      color: #1e1e1e;
+    }
+
+    .api-status {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 3rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      text-align: center;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #00ff88;
+      margin-right: 0.5rem;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7);
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(0, 255, 136, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(0, 255, 136, 0);
+      }
+    }
+
+    footer {
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      text-align: center;
+      padding: 2rem 0;
+      margin-top: 4rem;
+    }
+
+    .domains {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .domain {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .domain a {
+      color: #00ff88;
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .docs-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">🔧 BotGarden.tech</div>
+        <nav class="nav">
+          <a href="#docs">Документация</a>
+          <a href="#api">API</a>
+          <a href="http://botgarden.store/api/docs">Swagger</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>🔧 Tech Documentation</h1>
+        <p>Техническая документация, API справочники и руководства по разработке</p>
+
+        <div class="terminal">
+          curl http://botgarden.store/api/health
+        </div>
+      </section>
+
+      <section id="api" class="api-status">
+        <h2><span class="status-indicator"></span>API Status: Online</h2>
+        <p>REST API работает и готов к использованию</p>
+        <div class="terminal" style="text-align: left; margin-top: 2rem;">
+          # Основные endpoints<br>
+          GET /api/health # Health check<br>
+          GET /api/menu/categories # Категории меню<br>
+          GET /api/menu/items # Товары<br>
+          GET /api/orders # Заказы (auth required)
+        </div>
+      </section>
+
+      <section id="docs" class="docs-grid">
+        <div class="doc-card">
+          <h3>📚 API Documentation</h3>
+          <p>Полная документация REST API с интерактивными примерами и схемами данных.</p>
+          <a href="http://botgarden.store/api/docs" class="doc-link">Swagger UI →</a>
+        </div>
+
+        <div class="doc-card">
+          <h3>🏗️ Архитектура</h3>
+          <p>Описание архитектуры проекта, Docker контейнеров и взаимодействия сервисов.</p>
+          <a href="https://github.com/your-repo/docs/ARCHITECTURE.md" class="doc-link">Читать →</a>
+        </div>
+
+        <div class="doc-card">
+          <h3>🚀 Деплой</h3>
+          <p>Руководство по развертыванию, настройке сервера и автоматизации CI/CD.</p>
+          <a href="https://github.com/your-repo/deployment/README.md" class="doc-link">Инструкция →</a>
+        </div>
+
+        <div class="doc-card">
+          <h3>🧪 Тестирование</h3>
+          <p>Примеры тестов, покрытие кода и best practices для разработки.</p>
+          <a href="https://github.com/your-repo/docs/TESTING.md" class="doc-link">Изучить →</a>
+        </div>
+
+        <div class="doc-card">
+          <h3>📊 Мониторинг</h3>
+          <p>Настройка мониторинга, логирования и анализа производительности.</p>
+          <a href="https://github.com/your-repo/docs/MONITORING.md" class="doc-link">Настроить →</a>
+        </div>
+
+        <div class="doc-card">
+          <h3>🔒 Безопасность</h3>
+          <p>API ключи, аутентификация, rate limiting и защита от атак.</p>
+          <a href="https://github.com/your-repo/docs/SECURITY.md" class="doc-link">Защитить →</a>
+        </div>
+      </section>
+
+      <section class="domains">
+        <div class="domain">
+          <strong>🏪 botgarden.store</strong><br>
+          <small>Основной магазин</small><br>
+          <a href="http://botgarden.store">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🛒 botgarden.shop</strong><br>
+          <small>Торговая площадка</small><br>
+          <a href="http://botgarden.shop">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🌐 botcraft.tech</strong><br>
+          <small>Сервис крафт-ботов</small><br>
+          <a href="http://botcraft.tech">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🎮 botgrover.fun</strong><br>
+          <small>Игровые боты</small><br>
+          <a href="http://botgrover.fun">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🇷🇺 botgrover.ru</strong><br>
+          <small>Российская локализация</small><br>
+          <a href="http://botgrover.ru">Перейти →</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 BotGarden Tech. Документация для разработчиков.</p>
+      <p>🔧 API Docs | 🏗️ Architecture | 🚀 Deploy Guide</p>
+    </div>
+  </footer>
+</body>
+
+</html>

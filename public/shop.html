@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🛒 BotGarden Shop - Торговая площадка ботов</title>
+  <meta name="description"
+    content="BotGarden Shop - торговая площадка готовых Telegram ботов. Покупайте и продавайте готовые решения.">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: white;
+    }
+
+    .nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .nav a {
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      transition: background 0.3s;
+    }
+
+    .nav a:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    main {
+      padding: 4rem 0;
+    }
+
+    .hero {
+      text-align: center;
+      color: white;
+      margin-bottom: 4rem;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+
+    .status {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 30px;
+      display: inline-block;
+      font-weight: bold;
+      margin-bottom: 2rem;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .feature {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .feature h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .current-project {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 3rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      text-align: center;
+    }
+
+    .project-link {
+      background: #00b894;
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 25px;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 1rem;
+      transition: transform 0.3s;
+    }
+
+    .project-link:hover {
+      transform: translateY(-2px);
+    }
+
+    footer {
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      text-align: center;
+      padding: 2rem 0;
+      margin-top: 4rem;
+    }
+
+    .domains {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .domain {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .domain a {
+      color: #ffd93d;
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">🛒 BotGarden Shop</div>
+        <nav class="nav">
+          <a href="#features">Будущее</a>
+          <a href="#current">Текущий проект</a>
+          <a href="http://botgarden.store">Магазин</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>🛒 BotGarden Shop</h1>
+        <p>Будущая торговая площадка готовых Telegram ботов</p>
+        <div class="status">🚧 В разработке</div>
+      </section>
+
+      <section id="features" class="features">
+        <div class="feature">
+          <h3>💼 Marketplace ботов</h3>
+          <p>Платформа для покупки и продажи готовых Telegram ботов с проверенным качеством.</p>
+        </div>
+
+        <div class="feature">
+          <h3>🔧 Кастомизация</h3>
+          <p>Возможность заказать доработку существующих ботов под ваши требования.</p>
+        </div>
+
+        <div class="feature">
+          <h3>📊 Аналитика</h3>
+          <p>Статистика продаж, рейтинги разработчиков и отзывы покупателей.</p>
+        </div>
+      </section>
+
+      <section id="current" class="current-project">
+        <h2>🌯 Текущий проект: Shawarma Bot</h2>
+        <p>Пока мы разрабатываем торговую площадку, вы можете изучить наш флагманский проект - Shawarma Bot</p>
+        <a href="http://botgarden.store" class="project-link">Перейти к Shawarma Bot →</a>
+      </section>
+
+      <section class="domains">
+        <div class="domain">
+          <strong>🏪 botgarden.store</strong><br>
+          <small>Основной магазин</small><br>
+          <a href="http://botgarden.store">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🔧 botgarden.tech</strong><br>
+          <small>Техническая документация</small><br>
+          <a href="http://botgarden.tech">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🌐 botcraft.tech</strong><br>
+          <small>Сервис крафт-ботов</small><br>
+          <a href="http://botcraft.tech">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🎮 botgrover.fun</strong><br>
+          <small>Игровые боты</small><br>
+          <a href="http://botgrover.fun">Перейти →</a>
+        </div>
+
+        <div class="domain">
+          <strong>🇷🇺 botgrover.ru</strong><br>
+          <small>Российская локализация</small><br>
+          <a href="http://botgrover.ru">Перейти →</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 BotGarden Shop. Скоро откроется!</p>
+      <p>🛒 Marketplace | 🔧 Custom Development | 📊 Analytics</p>
+    </div>
+  </footer>
+</body>
+
+</html>
