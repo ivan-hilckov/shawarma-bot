@@ -1,21 +1,21 @@
-import { Pool, PoolClient } from "pg";
+import { Pool, PoolClient } from 'pg';
 
-import config from "./config";
-import { createLogger } from "./logger";
-import { CartItem, Order } from "./types";
+import config from './config';
+import { createLogger } from './logger';
+import { CartItem, Order } from './types';
 
 export class DatabaseService {
   private pool: Pool;
-  private logger = createLogger("DatabaseService");
+  private logger = createLogger('DatabaseService');
 
   constructor() {
     // Отключаем SSL для Docker окружения (когда DATABASE_URL содержит @postgres:)
-    const isDockerEnvironment = config.DATABASE_URL.includes("@postgres:");
+    const isDockerEnvironment = config.DATABASE_URL.includes('@postgres:');
 
     this.pool = new Pool({
       connectionString: config.DATABASE_URL,
       ssl:
-        config.NODE_ENV === "production" && !isDockerEnvironment
+        config.NODE_ENV === 'production' && !isDockerEnvironment
           ? { rejectUnauthorized: false }
           : false,
       // Настройки connection pooling
@@ -26,12 +26,12 @@ export class DatabaseService {
       maxUses: 7500, // максимальное количество использований соединения
     });
 
-    this.pool.on("error", (err) => {
-      this.logger.error("PostgreSQL Pool Error", { error: err.message });
+    this.pool.on('error', err => {
+      this.logger.error('PostgreSQL Pool Error', { error: err.message });
     });
 
-    this.pool.on("connect", () => {
-      this.logger.info("Connected to PostgreSQL");
+    this.pool.on('connect', () => {
+      this.logger.info('Connected to PostgreSQL');
     });
   }
 
@@ -93,7 +93,7 @@ export class DatabaseService {
   async createOrder(userId: number, cartItems: CartItem[], totalPrice: number): Promise<string> {
     const client = await this.getClient();
     try {
-      await client.query("BEGIN");
+      await client.query('BEGIN');
 
       // Убеждаемся что пользователь существует
       await this.upsertUser(userId);
@@ -121,10 +121,10 @@ export class DatabaseService {
         );
       }
 
-      await client.query("COMMIT");
+      await client.query('COMMIT');
       return orderId.toString();
     } catch (error) {
-      await client.query("ROLLBACK");
+      await client.query('ROLLBACK');
       throw error;
     } finally {
       client.release();
@@ -163,13 +163,13 @@ export class DatabaseService {
         [orderId]
       );
 
-      const items: CartItem[] = itemsResult.rows.map((row) => ({
+      const items: CartItem[] = itemsResult.rows.map(row => ({
         menuItem: {
           id: row.menu_item_id.toString(),
           name: row.name,
           description: row.description,
           price: parseFloat(row.price),
-          category: row.category === "shawarma" ? "shawarma" : "drinks",
+          category: row.category === 'shawarma' ? 'shawarma' : 'drinks',
         },
         quantity: row.quantity,
       }));
@@ -177,7 +177,7 @@ export class DatabaseService {
       return {
         id: orderRow.id.toString(),
         userId: orderRow.user_id,
-        userName: orderRow.user_name || "Пользователь",
+        userName: orderRow.user_name || 'Пользователь',
         items,
         totalPrice: parseFloat(orderRow.total_price),
         status: orderRow.status,
@@ -230,7 +230,7 @@ export class DatabaseService {
           ordersMap.set(orderId, {
             id: orderId,
             userId: row.user_id,
-            userName: row.user_name || "Пользователь",
+            userName: row.user_name || 'Пользователь',
             items: [],
             totalPrice: parseFloat(row.total_price),
             status: row.status,
@@ -247,7 +247,7 @@ export class DatabaseService {
               name: row.item_name,
               description: row.item_description,
               price: parseFloat(row.item_price),
-              category: row.category === "shawarma" ? "shawarma" : "drinks",
+              category: row.category === 'shawarma' ? 'shawarma' : 'drinks',
             },
             quantity: row.quantity,
           });
@@ -262,7 +262,7 @@ export class DatabaseService {
   }
 
   // Обновление статуса заказа
-  async updateOrderStatus(orderId: string, status: Order["status"]): Promise<void> {
+  async updateOrderStatus(orderId: string, status: Order['status']): Promise<void> {
     const client = await this.getClient();
     try {
       await client.query(
@@ -309,13 +309,296 @@ export class DatabaseService {
   async testConnection(): Promise<boolean> {
     const client = await this.getClient();
     try {
-      await client.query("SELECT 1");
+      await client.query('SELECT 1');
       return true;
     } catch (error) {
-      this.logger.error("Database connection test failed", {
+      this.logger.error('Database connection test failed', {
         error: error instanceof Error ? error.message : String(error),
       });
       return false;
+    } finally {
+      client.release();
+    }
+  }
+
+  // ===== МЕТОДЫ ДЛЯ ЭТАПА 3: ПРОДВИНУТЫЕ УЛУЧШЕНИЯ =====
+
+  // ===== СИСТЕМА ИЗБРАННОГО =====
+
+  // Добавление товара в избранное
+  async addToFavorites(userId: number, menuItemId: string): Promise<void> {
+    const client = await this.getClient();
+    try {
+      await client.query(
+        `
+        INSERT INTO user_favorites (user_id, menu_item_id)
+        VALUES ($1, $2)
+        ON CONFLICT (user_id, menu_item_id) DO NOTHING
+      `,
+        [userId, menuItemId]
+      );
+    } finally {
+      client.release();
+    }
+  }
+
+  // Удаление товара из избранного
+  async removeFromFavorites(userId: number, menuItemId: string): Promise<void> {
+    const client = await this.getClient();
+    try {
+      await client.query(
+        `
+        DELETE FROM user_favorites
+        WHERE user_id = $1 AND menu_item_id = $2
+      `,
+        [userId, menuItemId]
+      );
+    } finally {
+      client.release();
+    }
+  }
+
+  // Получение избранных товаров пользователя
+  async getUserFavorites(userId: number): Promise<any[]> {
+    const client = await this.getClient();
+    try {
+      const result = await client.query(
+        `
+        SELECT
+          uf.id,
+          uf.created_at,
+          mi.id as menu_item_id,
+          mi.name,
+          mi.description,
+          mi.price,
+          c.name as category,
+          mi.image_url
+        FROM user_favorites uf
+        JOIN menu_items mi ON uf.menu_item_id = mi.id
+        JOIN categories c ON mi.category_id = c.id
+        WHERE uf.user_id = $1 AND mi.is_available = true
+        ORDER BY uf.created_at DESC
+      `,
+        [userId]
+      );
+
+      return result.rows.map(row => ({
+        id: row.id.toString(),
+        userId,
+        menuItem: {
+          id: row.menu_item_id.toString(),
+          name: row.name,
+          description: row.description,
+          price: parseFloat(row.price),
+          category: row.category === 'shawarma' ? 'shawarma' : 'drinks',
+          photo: row.image_url,
+        },
+        createdAt: row.created_at,
+      }));
+    } finally {
+      client.release();
+    }
+  }
+
+  // Проверка, добавлен ли товар в избранное
+  async isInFavorites(userId: number, menuItemId: string): Promise<boolean> {
+    const client = await this.getClient();
+    try {
+      const result = await client.query(
+        `
+        SELECT EXISTS(
+          SELECT 1 FROM user_favorites
+          WHERE user_id = $1 AND menu_item_id = $2
+        )
+      `,
+        [userId, menuItemId]
+      );
+
+      return result.rows[0].exists;
+    } finally {
+      client.release();
+    }
+  }
+
+  // ===== ПЕРСОНАЛЬНЫЕ РЕКОМЕНДАЦИИ =====
+
+  // Получение часто заказываемых товаров пользователя
+  async getUserPopularItems(userId: number, limit: number = 5): Promise<any[]> {
+    const client = await this.getClient();
+    try {
+      const result = await client.query(
+        `
+        SELECT
+          ua.menu_item_id,
+          mi.name,
+          mi.description,
+          mi.price,
+          c.name as category,
+          mi.image_url,
+          ua.order_count,
+          ua.total_spent,
+          ua.last_ordered,
+          ua.order_count::float / GREATEST(1, EXTRACT(days FROM CURRENT_TIMESTAMP - ua.last_ordered)) as frequency_score
+        FROM user_analytics ua
+        JOIN menu_items mi ON ua.menu_item_id = mi.id
+        JOIN categories c ON mi.category_id = c.id
+        WHERE ua.user_id = $1 AND mi.is_available = true AND ua.order_count >= 2
+        ORDER BY ua.order_count DESC, ua.last_ordered DESC
+        LIMIT $2
+      `,
+        [userId, limit]
+      );
+
+      return result.rows.map(row => ({
+        type: 'frequent',
+        menuItem: {
+          id: row.menu_item_id.toString(),
+          name: row.name,
+          description: row.description,
+          price: parseFloat(row.price),
+          category: row.category === 'shawarma' ? 'shawarma' : 'drinks',
+          photo: row.image_url,
+        },
+        reason: `Вы заказывали ${row.order_count} раз`,
+        priority: row.order_count,
+      }));
+    } finally {
+      client.release();
+    }
+  }
+
+  // Получение популярных товаров по времени суток
+  async getTimeBasedRecommendations(userId: number, limit: number = 3): Promise<any[]> {
+    const client = await this.getClient();
+    try {
+      const currentHour = new Date().getHours();
+      let categoryPreference = 'shawarma';
+      let timeMessage = '';
+
+      if (currentHour >= 7 && currentHour <= 11) {
+        categoryPreference = 'drinks';
+        timeMessage = 'Доброе утро! Как насчет напитка?';
+      } else if (currentHour >= 12 && currentHour <= 16) {
+        categoryPreference = 'shawarma';
+        timeMessage = 'Время обеда! Попробуйте нашу шаурму';
+      } else if (currentHour >= 17 && currentHour <= 22) {
+        categoryPreference = 'shawarma';
+        timeMessage = 'Вечерний перекус? У нас есть отличные варианты';
+      } else {
+        categoryPreference = 'drinks';
+        timeMessage = 'Поздний перекус? Возьмите напиток';
+      }
+
+      const result = await client.query(
+        `
+        SELECT
+          mi.id as menu_item_id,
+          mi.name,
+          mi.description,
+          mi.price,
+          c.name as category,
+          mi.image_url,
+          COUNT(oi.id) as popularity
+        FROM menu_items mi
+        JOIN categories c ON mi.category_id = c.id
+        LEFT JOIN order_items oi ON mi.id = oi.menu_item_id
+        LEFT JOIN orders o ON oi.order_id = o.id
+        WHERE c.name = $1 AND mi.is_available = true
+          AND (o.created_at IS NULL OR EXTRACT(hour FROM o.created_at) BETWEEN $2 AND $3)
+        GROUP BY mi.id, mi.name, mi.description, mi.price, c.name, mi.image_url
+        ORDER BY popularity DESC, mi.price ASC
+        LIMIT $4
+      `,
+        [categoryPreference, Math.max(0, currentHour - 2), Math.min(23, currentHour + 2), limit]
+      );
+
+      return result.rows.map(row => ({
+        type: 'time_based',
+        menuItem: {
+          id: row.menu_item_id.toString(),
+          name: row.name,
+          description: row.description,
+          price: parseFloat(row.price),
+          category: row.category === 'shawarma' ? 'shawarma' : 'drinks',
+          photo: row.image_url,
+        },
+        reason: timeMessage,
+        priority: parseInt(row.popularity) || 0,
+      }));
+    } finally {
+      client.release();
+    }
+  }
+
+  // Получение общих рекомендаций для пользователя
+  async getUserRecommendations(userId: number): Promise<any[]> {
+    const recommendations: any[] = [];
+
+    try {
+      // Добавляем часто заказываемые товары
+      const popularItems = await this.getUserPopularItems(userId, 3);
+      recommendations.push(...popularItems);
+
+      // Добавляем рекомендации по времени
+      const timeBasedItems = await this.getTimeBasedRecommendations(userId, 2);
+      recommendations.push(...timeBasedItems);
+
+      // Сортируем по приоритету
+      return recommendations.sort((a, b) => b.priority - a.priority).slice(0, 5);
+    } catch (error) {
+      this.logger.error('Error getting user recommendations', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return [];
+    }
+  }
+
+  // ===== АНАЛИТИКА =====
+
+  // Получение статистики пользователя
+  async getUserStats(userId: number): Promise<{
+    totalOrders: number;
+    totalSpent: number;
+    favoriteCategory: string;
+    avgOrderValue: number;
+  }> {
+    const client = await this.getClient();
+    try {
+      const result = await client.query(
+        `
+        SELECT
+          COUNT(DISTINCT o.id) as total_orders,
+          COALESCE(SUM(o.total_price), 0) as total_spent,
+          COALESCE(AVG(o.total_price), 0) as avg_order_value
+        FROM orders o
+        WHERE o.user_id = $1
+      `,
+        [userId]
+      );
+
+      const categoryResult = await client.query(
+        `
+        SELECT c.name, COUNT(*) as category_count
+        FROM user_analytics ua
+        JOIN menu_items mi ON ua.menu_item_id = mi.id
+        JOIN categories c ON mi.category_id = c.id
+        WHERE ua.user_id = $1
+        GROUP BY c.name
+        ORDER BY category_count DESC
+        LIMIT 1
+      `,
+        [userId]
+      );
+
+      const stats = result.rows[0];
+      const favoriteCategory = categoryResult.rows[0]?.name || 'shawarma';
+
+      return {
+        totalOrders: parseInt(stats.total_orders),
+        totalSpent: parseFloat(stats.total_spent),
+        favoriteCategory,
+        avgOrderValue: parseFloat(stats.avg_order_value),
+      };
     } finally {
       client.release();
     }

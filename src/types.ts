@@ -55,6 +55,38 @@ export interface Order {
   createdAt: Date;
 }
 
+// Новые типы для Этапа 3
+
+export interface UserFavorite {
+  id: string;
+  userId: number;
+  menuItem: MenuItem;
+  createdAt: Date;
+}
+
+export interface UserAnalytics {
+  id: string;
+  userId: number;
+  menuItem: MenuItem;
+  orderCount: number;
+  lastOrdered: Date;
+  totalSpent: number;
+  frequencyLevel: 'frequent' | 'regular' | 'occasional';
+}
+
+export interface Recommendation {
+  type: 'frequent' | 'popular' | 'new' | 'time_based';
+  menuItem: MenuItem;
+  reason: string;
+  priority: number;
+}
+
+export interface CartSummary {
+  itemsCount: number;
+  total: number;
+  isEmpty: boolean;
+}
+
 export type BotMessage = TelegramBot.Message;
 export type BotCallbackQuery = TelegramBot.CallbackQuery;
 export type BotInstance = TelegramBot;

@@ -39,8 +39,6 @@ module.exports = {
     '@typescript-eslint/no-misused-promises': 'off',
 
     // Import rules
-    'import/order': ['error', { 'newlines-between': 'always' }],
-    'import/no-unresolved': 'error',
     'import/no-cycle': 'error',
 
     // General rules

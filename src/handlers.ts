@@ -2,7 +2,16 @@ import botApiClient from './api-client';
 import config from './config';
 import databaseService from './database';
 import { getMenuByCategory, getItemById } from './menu';
-import { BotInstance, BotMessage, BotCallbackQuery, MenuItem, CartItem } from './types';
+import {
+  BotInstance,
+  BotMessage,
+  BotCallbackQuery,
+  MenuItem,
+  CartItem,
+  UserFavorite,
+  Recommendation,
+  CartSummary,
+} from './types';
 
 // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 
@@ -130,7 +139,7 @@ async function createCatalogKeyboard(
 // Обновить главное меню с актуальным счетчиком корзины
 async function updateMainKeyboard(bot: BotInstance, chatId: number, userId: number): Promise<void> {
   try {
-    const keyboard = await createMainKeyboardWithBadge(userId);
+    const keyboard = await createMainKeyboardWithBadge(userId || 0);
     const message = `
 🥙 Главное меню
 
@@ -142,6 +151,197 @@ async function updateMainKeyboard(bot: BotInstance, chatId: number, userId: numb
     });
   } catch (error) {
     console.error('Error updating main keyboard:', error);
+  }
+}
+
+// ===== НОВЫЕ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ЭТАПА 3 =====
+
+// Создать клавиатуру для товара с кнопкой избранного
+async function createItemKeyboardWithFavorites(
+  itemId: string,
+  currentQuantity: number,
+  userId: number
+): Promise<Array<Array<{ text: string; callback_data: string }>>> {
+  const keyboard = [];
+
+  // Проверяем, добавлен ли товар в избранное
+  const isInFavorites = await databaseService.isInFavorites(userId, itemId);
+
+  if (currentQuantity === 0) {
+    // Если товара нет в корзине, показываем кнопку "Добавить в корзину"
+    keyboard.push([{ text: '🛒 Добавить в корзину', callback_data: `add_to_cart_${itemId}` }]);
+  } else {
+    // Если товар есть в корзине, показываем +/- интерфейс
+    keyboard.push([
+      { text: '➖', callback_data: `decrease_from_item_${itemId}` },
+      { text: `${currentQuantity} шт.`, callback_data: `quantity_${itemId}` },
+      { text: '➕', callback_data: `increase_from_item_${itemId}` },
+    ]);
+
+    // Добавляем кнопку быстрого удаления
+    keyboard.push([
+      { text: '🗑 Убрать все из корзины', callback_data: `remove_all_from_item_${itemId}` },
+    ]);
+  }
+
+  // Кнопка избранного
+  const favoriteText = isInFavorites ? '💔 Убрать из избранного' : '❤️ Добавить в избранное';
+  const favoriteAction = isInFavorites ? `remove_favorite_${itemId}` : `add_favorite_${itemId}`;
+  keyboard.push([{ text: favoriteText, callback_data: favoriteAction }]);
+
+  // Кнопки навигации
+  keyboard.push([
+    { text: '🛒 Перейти в корзину', callback_data: 'view_cart' },
+    { text: '🔙 Назад к каталогу', callback_data: 'back_to_menu' },
+  ]);
+
+  return keyboard;
+}
+
+// Создать клавиатуру главного меню с рекомендациями
+async function createMainKeyboardWithRecommendations(userId: number): Promise<any> {
+  let cartText = '🛒 Корзина';
+
+  if (userId) {
+    try {
+      const cartTotal = await botApiClient.getCartTotal(userId);
+      if (cartTotal.itemsCount > 0) {
+        cartText = `🛒 Корзина (${cartTotal.itemsCount})`;
+      }
+    } catch (error) {
+      console.error('Error getting cart total for badge:', error);
+    }
+  }
+
+  return {
+    keyboard: [
+      [{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }],
+      [{ text: cartText }, { text: '📋 Мои заказы' }],
+      [{ text: '⭐ Избранное' }, { text: '🎯 Рекомендации' }],
+      [{ text: '📱 Mini App' }, { text: 'ℹ️ О нас' }],
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: false,
+  };
+}
+
+// Создать сообщение с рекомендациями
+async function createRecommendationsMessage(userId: number): Promise<{
+  message: string;
+  keyboard: Array<Array<{ text: string; callback_data: string }>>;
+}> {
+  try {
+    const recommendations = await databaseService.getUserRecommendations(userId);
+    const userStats = await databaseService.getUserStats(userId);
+
+    let message = '🎯 Персональные рекомендации\n\n';
+
+    if (userStats.totalOrders > 0) {
+      message += `📊 Ваша статистика:\n`;
+      message += `• Заказов: ${userStats.totalOrders}\n`;
+      message += `• Потрачено: ${userStats.totalSpent.toFixed(0)}₽\n`;
+      message += `• Средний чек: ${userStats.avgOrderValue.toFixed(0)}₽\n\n`;
+    }
+
+    if (recommendations.length === 0) {
+      message +=
+        '🤔 Пока нет персональных рекомендаций\n\nСделайте несколько заказов, чтобы мы могли предложить что-то особенное!';
+
+      return {
+        message,
+        keyboard: [[{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]],
+      };
+    }
+
+    message += '✨ Специально для вас:\n\n';
+
+    const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
+
+    recommendations.forEach((rec, index) => {
+      const typeEmoji =
+        {
+          frequent: '🔥',
+          time_based: '⏰',
+          popular: '⭐',
+          new: '🆕',
+        }[rec.type as 'frequent' | 'time_based' | 'popular' | 'new'] || '💡';
+
+      message += `${index + 1}. ${typeEmoji} ${rec.menuItem.name} - ${rec.menuItem.price}₽\n`;
+      message += `   📝 ${rec.reason}\n\n`;
+
+      // Кнопка для каждой рекомендации
+      keyboard.push([
+        { text: `👁 ${rec.menuItem.name}`, callback_data: `item_${rec.menuItem.id}` },
+        { text: '➕ Добавить', callback_data: `quick_add_${rec.menuItem.id}` },
+      ]);
+    });
+
+    keyboard.push([{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]);
+
+    return { message, keyboard };
+  } catch (error) {
+    console.error('Error creating recommendations message:', error);
+    return {
+      message: '❌ Ошибка загрузки рекомендаций\n\nПопробуйте позже.',
+      keyboard: [[{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]],
+    };
+  }
+}
+
+// Создать сообщение с избранными товарами
+async function createFavoritesMessage(userId: number): Promise<{
+  message: string;
+  keyboard: Array<Array<{ text: string; callback_data: string }>>;
+}> {
+  try {
+    const favorites = await databaseService.getUserFavorites(userId);
+
+    if (favorites.length === 0) {
+      return {
+        message: '⭐ Избранное пусто\n\nДобавьте товары в избранное, нажав ❤️ на экране товара!',
+        keyboard: [[{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]],
+      };
+    }
+
+    let message = '⭐ Ваши избранные товары:\n\n';
+
+    const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
+
+    favorites.forEach((favorite, index) => {
+      const photoIcon = favorite.menuItem.photo ? '📸 ' : '';
+      message += `${index + 1}. ${photoIcon}${favorite.menuItem.name} - ${favorite.menuItem.price}₽\n`;
+      message += `   📝 ${favorite.menuItem.description}\n\n`;
+
+      // Кнопки для каждого избранного товара
+      keyboard.push([
+        { text: `👁 ${favorite.menuItem.name}`, callback_data: `item_${favorite.menuItem.id}` },
+        { text: '➕ Добавить', callback_data: `quick_add_${favorite.menuItem.id}` },
+      ]);
+    });
+
+    keyboard.push([{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]);
+
+    return { message, keyboard };
+  } catch (error) {
+    console.error('Error creating favorites message:', error);
+    return {
+      message: '❌ Ошибка загрузки избранного\n\nПопробуйте позже.',
+      keyboard: [[{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]],
+    };
+  }
+}
+
+// Получить информацию о корзине для виджета
+async function getCartWidget(userId: number): Promise<string> {
+  try {
+    const cartTotal = await botApiClient.getCartTotal(userId);
+    if (cartTotal.itemsCount === 0) {
+      return '';
+    }
+    return `\n\n🛒 В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`;
+  } catch (error) {
+    console.error('Error getting cart widget:', error);
+    return '';
   }
 }
 
@@ -162,7 +362,7 @@ export async function handleStart(bot: BotInstance, msg: BotMessage): Promise<vo
   `;
 
   // Создаем клавиатуру с индикатором корзины
-  const keyboard = await createMainKeyboardWithBadge(userId);
+  const keyboard = await createMainKeyboardWithRecommendations(userId || 0);
 
   // Отправляем приветствие с обновленной клавиатурой
   bot.sendMessage(chatId, welcomeMessage, {
@@ -324,7 +524,7 @@ export async function handleItemSelection(
 
   // Создаем клавиатуру с +/- интерфейсом
   const keyboard = {
-    inline_keyboard: createItemQuantityKeyboard(itemId, currentQuantity),
+    inline_keyboard: await createItemKeyboardWithFavorites(itemId, currentQuantity, userId),
   };
 
   // Если у товара есть фотография, отправляем её
@@ -383,7 +583,7 @@ export async function handleBackToMenu(bot: BotInstance, query: BotCallbackQuery
   `;
 
   // Создаем клавиатуру с актуальным счетчиком корзины
-  const keyboard = await createMainKeyboardWithBadge(userId);
+  const keyboard = await createMainKeyboardWithRecommendations(userId || 0);
 
   if (query.message?.message_id) {
     bot
@@ -1425,5 +1625,175 @@ export async function handleQuickDecrease(
   } catch (error) {
     console.error('Error quick decreasing quantity:', error);
     bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
+  }
+}
+
+// ===== НОВЫЕ ОБРАБОТЧИКИ ДЛЯ ЭТАПА 3: ПРОДВИНУТЫЕ УЛУЧШЕНИЯ =====
+
+// Обработчик избранного
+export async function handleFavorites(
+  bot: BotInstance,
+  msg: BotMessage | BotCallbackQuery
+): Promise<void> {
+  const chatId = 'chat' in msg ? msg.chat.id : msg.message?.chat.id;
+  const userId = msg.from?.id;
+
+  if (!chatId || !userId) {
+    return;
+  }
+
+  try {
+    const { message, keyboard } = await createFavoritesMessage(userId);
+
+    if ('data' in msg) {
+      // Это callback query
+      if (msg.message?.message_id) {
+        bot
+          .editMessageText(message, {
+            chat_id: chatId,
+            message_id: msg.message.message_id,
+            reply_markup: { inline_keyboard: keyboard },
+          })
+          .catch(() => {});
+      }
+      bot.answerCallbackQuery(msg.id, { text: '⭐ Избранное' }).catch(() => {});
+    } else {
+      // Это обычное сообщение
+      bot.sendMessage(chatId, message, {
+        reply_markup: { inline_keyboard: keyboard },
+      });
+    }
+  } catch (error) {
+    console.error('Error viewing favorites:', error);
+    const errorMessage = 'Ошибка при загрузке избранного';
+
+    if ('data' in msg) {
+      bot.answerCallbackQuery(msg.id, { text: errorMessage }).catch(() => {});
+    } else {
+      bot.sendMessage(chatId, errorMessage);
+    }
+  }
+}
+
+// Обработчик рекомендаций
+export async function handleRecommendations(
+  bot: BotInstance,
+  msg: BotMessage | BotCallbackQuery
+): Promise<void> {
+  const chatId = 'chat' in msg ? msg.chat.id : msg.message?.chat.id;
+  const userId = msg.from?.id;
+
+  if (!chatId || !userId) {
+    return;
+  }
+
+  try {
+    const { message, keyboard } = await createRecommendationsMessage(userId);
+
+    if ('data' in msg) {
+      // Это callback query
+      if (msg.message?.message_id) {
+        bot
+          .editMessageText(message, {
+            chat_id: chatId,
+            message_id: msg.message.message_id,
+            reply_markup: { inline_keyboard: keyboard },
+          })
+          .catch(() => {});
+      }
+      bot.answerCallbackQuery(msg.id, { text: '🎯 Рекомендации' }).catch(() => {});
+    } else {
+      // Это обычное сообщение
+      bot.sendMessage(chatId, message, {
+        reply_markup: { inline_keyboard: keyboard },
+      });
+    }
+  } catch (error) {
+    console.error('Error viewing recommendations:', error);
+    const errorMessage = 'Ошибка при загрузке рекомендаций';
+
+    if ('data' in msg) {
+      bot.answerCallbackQuery(msg.id, { text: errorMessage }).catch(() => {});
+    } else {
+      bot.sendMessage(chatId, errorMessage);
+    }
+  }
+}
+
+// Обработчик добавления в избранное
+export async function handleAddToFavorites(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  const userId = query.from?.id;
+  const itemId = query.data?.replace('add_favorite_', '');
+
+  if (!userId || !itemId) {
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
+    return;
+  }
+
+  const item = getItemById(itemId);
+  if (!item) {
+    bot.answerCallbackQuery(query.id, { text: 'Товар не найден' }).catch(() => {});
+    return;
+  }
+
+  try {
+    await databaseService.addToFavorites(userId, itemId);
+
+    bot
+      .answerCallbackQuery(query.id, {
+        text: `❤️ ${item.name} добавлен в избранное!`,
+      })
+      .catch(() => {});
+
+    // Обновляем экран товара
+    const updatedQuery = { ...query, data: `item_${itemId}` };
+    await handleItemSelection(bot, updatedQuery);
+  } catch (error) {
+    console.error('Error adding to favorites:', error);
+    bot
+      .answerCallbackQuery(query.id, { text: 'Ошибка при добавлении в избранное' })
+      .catch(() => {});
+  }
+}
+
+// Обработчик удаления из избранного
+export async function handleRemoveFromFavorites(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  const userId = query.from?.id;
+  const itemId = query.data?.replace('remove_favorite_', '');
+
+  if (!userId || !itemId) {
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
+    return;
+  }
+
+  const item = getItemById(itemId);
+  if (!item) {
+    bot.answerCallbackQuery(query.id, { text: 'Товар не найден' }).catch(() => {});
+    return;
+  }
+
+  try {
+    await databaseService.removeFromFavorites(userId, itemId);
+
+    bot
+      .answerCallbackQuery(query.id, {
+        text: `💔 ${item.name} удален из избранного`,
+      })
+      .catch(() => {});
+
+    // Обновляем экран товара
+    const updatedQuery = { ...query, data: `item_${itemId}` };
+    await handleItemSelection(bot, updatedQuery);
+  } catch (error) {
+    console.error('Error removing from favorites:', error);
+    bot
+      .answerCallbackQuery(query.id, { text: 'Ошибка при удалении из избранного' })
+      .catch(() => {});
   }
 }
