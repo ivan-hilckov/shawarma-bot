@@ -93,7 +93,7 @@ describe('Handlers Module', () => {
         expect.objectContaining({
           reply_markup: expect.objectContaining({
             keyboard: expect.arrayContaining([
-              expect.arrayContaining([{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }]),
+              expect.arrayContaining([{ text: 'Шаурма' }, { text: 'Напитки' }]),
             ]),
           }),
         })
@@ -107,7 +107,7 @@ describe('Handlers Module', () => {
       expect(mockBot.sendMessage).toHaveBeenNthCalledWith(
         2,
         123456,
-        expect.stringContaining('🚀 Попробуйте наше новое Mini App!'),
+        expect.stringContaining('Попробуйте наше мини-приложение! 🚀'),
         expect.objectContaining({
           reply_markup: expect.objectContaining({
             inline_keyboard: expect.arrayContaining([
@@ -119,8 +119,8 @@ describe('Handlers Module', () => {
               ]),
               expect.arrayContaining([
                 expect.objectContaining({
-                  text: '📱 Что такое Mini App?',
                   callback_data: 'about_miniapp',
+                  text: '📱 Что такое Mini App?',
                 }),
               ]),
             ]),
@@ -156,7 +156,7 @@ describe('Handlers Module', () => {
     test('должен отправлять информацию о заведении', () => {
       handleAbout(mockBot, mockMessage);
 
-      expect(mockBot.sendMessage).toHaveBeenCalledWith(123456, expect.stringContaining('О нас:'));
+      expect(mockBot.sendMessage).toHaveBeenCalledWith(123456, expect.stringContaining('О нас ℹ️'));
     });
   });
 
@@ -178,7 +178,7 @@ describe('Handlers Module', () => {
       expect(getMenuByCategory).toHaveBeenCalledWith('shawarma');
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
-        expect.stringContaining('Наша шаурма:'),
+        expect.stringContaining('Наша шаурма 🌯'),
         expect.objectContaining({
           reply_markup: expect.objectContaining({
             inline_keyboard: expect.any(Array),
@@ -195,10 +195,10 @@ describe('Handlers Module', () => {
 
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
-        expect.stringContaining('Наша шаурма:'),
+        expect.stringContaining('Наша шаурма 🌯'),
         expect.objectContaining({
           reply_markup: expect.objectContaining({
-            inline_keyboard: [[{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]],
+            inline_keyboard: [[{ callback_data: 'back_to_menu', text: 'Назад в меню' }]],
           }),
         })
       );
@@ -251,7 +251,7 @@ describe('Handlers Module', () => {
       expect(getMenuByCategory).toHaveBeenCalledWith('drinks');
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
-        expect.stringContaining('Наши напитки:'),
+        expect.stringContaining('Наши напитки 🥤'),
         expect.objectContaining({
           reply_markup: expect.objectContaining({
             inline_keyboard: expect.any(Array),
@@ -268,10 +268,10 @@ describe('Handlers Module', () => {
 
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
-        expect.stringContaining('Наши напитки:'),
+        expect.stringContaining('Наши напитки 🥤'),
         expect.objectContaining({
           reply_markup: expect.objectContaining({
-            inline_keyboard: [[{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]],
+            inline_keyboard: [[{ callback_data: 'back_to_menu', text: 'Назад в меню' }]],
           }),
         })
       );
@@ -436,7 +436,7 @@ describe('Handlers Module', () => {
 
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
-        expect.stringContaining('🚀 Привет, TestUser! Добро пожаловать в наше Mini App!'),
+        expect.stringContaining('Привет, TestUser! 👋'),
         expect.objectContaining({
           reply_markup: expect.objectContaining({
             inline_keyboard: expect.arrayContaining([
@@ -448,14 +448,14 @@ describe('Handlers Module', () => {
               ]),
               expect.arrayContaining([
                 expect.objectContaining({
-                  text: '📱 Что такое Mini App?',
                   callback_data: 'about_miniapp',
+                  text: '📱 Что такое Mini App?',
                 }),
               ]),
               expect.arrayContaining([
                 expect.objectContaining({
-                  text: '🔙 Назад в меню',
                   callback_data: 'back_to_menu',
+                  text: 'Назад в меню',
                 }),
               ]),
             ]),
@@ -474,7 +474,7 @@ describe('Handlers Module', () => {
 
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
-        expect.stringContaining('🚀 Привет, Друг! Добро пожаловать в наше Mini App!'),
+        expect.stringContaining('Привет, Друг! 👋'),
         expect.any(Object)
       );
     });
@@ -485,7 +485,7 @@ describe('Handlers Module', () => {
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
         expect.stringMatching(
-          /Просматривать полное меню с фотографиями[\s\S]*Добавлять товары в корзину[\s\S]*Оформлять заказы онлайн/
+          /Полное меню с фотографиями[\s\S]*Удобное добавление товаров в корзину[\s\S]*Оформление заказов онлайн/
         ),
         expect.any(Object)
       );
@@ -497,11 +497,11 @@ describe('Handlers Module', () => {
       await handleAboutMiniApp(mockBot, mockCallbackQuery);
 
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
-        text: 'ℹ️ Информация о Mini App',
+        text: 'Информация о Mini App',
       });
 
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining('📱 Что такое Telegram Mini App?'),
+        expect.stringContaining('Что такое Telegram Mini App? 📱'),
         expect.objectContaining({
           chat_id: 123456,
           message_id: 1,
@@ -515,8 +515,8 @@ describe('Handlers Module', () => {
               ]),
               expect.arrayContaining([
                 expect.objectContaining({
-                  text: '🔙 Назад к началу',
                   callback_data: 'back_to_start',
+                  text: 'Назад к началу',
                 }),
               ]),
             ]),
@@ -534,7 +534,7 @@ describe('Handlers Module', () => {
       await handleAboutMiniApp(mockBot, queryWithoutMessage);
 
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
-        text: 'ℹ️ Информация о Mini App',
+        text: 'Информация о Mini App',
       });
       expect(mockBot.editMessageText).not.toHaveBeenCalled();
     });
@@ -556,11 +556,11 @@ describe('Handlers Module', () => {
       await handleBackToStart(mockBot, mockCallbackQuery);
 
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
-        text: '🏠 Возврат к началу',
+        text: 'Возврат к началу',
       });
 
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining('🚀 Попробуйте наше новое Mini App!'),
+        expect.stringContaining('Попробуйте наше мини-приложение! 🚀'),
         expect.objectContaining({
           chat_id: 123456,
           message_id: 1,
@@ -574,8 +574,8 @@ describe('Handlers Module', () => {
               ]),
               expect.arrayContaining([
                 expect.objectContaining({
-                  text: '📱 Что такое Mini App?',
                   callback_data: 'about_miniapp',
+                  text: '📱 Что такое Mini App?',
                 }),
               ]),
             ]),
@@ -593,7 +593,7 @@ describe('Handlers Module', () => {
       await handleBackToStart(mockBot, queryWithoutMessage);
 
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
-        text: '🏠 Возврат к началу',
+        text: 'Возврат к началу',
       });
       expect(mockBot.editMessageText).not.toHaveBeenCalled();
     });

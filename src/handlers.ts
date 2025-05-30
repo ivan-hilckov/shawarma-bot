@@ -36,25 +36,25 @@ function createItemQuantityKeyboard(
 
   if (currentQuantity === 0) {
     // Если товара нет в корзине, показываем кнопку "Добавить в корзину"
-    keyboard.push([{ text: '🛒 Добавить в корзину', callback_data: `add_to_cart_${itemId}` }]);
+    keyboard.push([{ text: 'Добавить в корзину', callback_data: `add_to_cart_${itemId}` }]);
   } else {
     // Если товар есть в корзине, показываем +/- интерфейс
     keyboard.push([
-      { text: '➖', callback_data: `decrease_from_item_${itemId}` },
+      { text: '−', callback_data: `decrease_from_item_${itemId}` },
       { text: `${currentQuantity} шт.`, callback_data: `quantity_${itemId}` },
-      { text: '➕', callback_data: `increase_from_item_${itemId}` },
+      { text: '+', callback_data: `increase_from_item_${itemId}` },
     ]);
 
     // Добавляем кнопку быстрого удаления
     keyboard.push([
-      { text: '🗑 Убрать все из корзины', callback_data: `remove_all_from_item_${itemId}` },
+      { text: 'Убрать все из корзины', callback_data: `remove_all_from_item_${itemId}` },
     ]);
   }
 
   // Кнопки навигации
   keyboard.push([
-    { text: '🛒 Перейти в корзину', callback_data: 'view_cart' },
-    { text: '🔙 Назад к каталогу', callback_data: 'back_to_menu' },
+    { text: 'Перейти в корзину', callback_data: 'view_cart' },
+    { text: 'Назад к каталогу', callback_data: 'back_to_menu' },
   ]);
 
   return keyboard;
@@ -62,13 +62,13 @@ function createItemQuantityKeyboard(
 
 // Создать главную клавиатуру с индикатором корзины
 async function createMainKeyboardWithBadge(userId?: number): Promise<any> {
-  let cartText = '🛒 Корзина';
+  let cartText = 'Корзина';
 
   if (userId) {
     try {
       const cartTotal = await botApiClient.getCartTotal(userId);
       if (cartTotal.itemsCount > 0) {
-        cartText = `🛒 Корзина (${cartTotal.itemsCount})`;
+        cartText = `Корзина (${cartTotal.itemsCount})`;
       }
     } catch (error) {
       console.error('Error getting cart total for badge:', error);
@@ -77,9 +77,9 @@ async function createMainKeyboardWithBadge(userId?: number): Promise<any> {
 
   return {
     keyboard: [
-      [{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }],
-      [{ text: cartText }, { text: '📋 Мои заказы' }],
-      [{ text: '📱 Mini App' }, { text: 'ℹ️ О нас' }],
+      [{ text: 'Шаурма' }, { text: 'Напитки' }],
+      [{ text: cartText }, { text: 'Мои заказы' }],
+      [{ text: 'Mini App' }, { text: 'О нас' }],
     ],
     resize_keyboard: true,
     one_time_keyboard: false,
@@ -115,23 +115,23 @@ async function createCatalogKeyboard(
     // Строка с товаром и быстрыми кнопками
     if (quantity === 0) {
       keyboard.push([
-        { text: `👁 ${photoIcon}${item.name} - ${item.price}₽`, callback_data: `item_${item.id}` },
-        { text: '➕', callback_data: `quick_add_${item.id}` },
+        { text: `${photoIcon}${item.name} — ${item.price}₽`, callback_data: `item_${item.id}` },
+        { text: '+', callback_data: `quick_add_${item.id}` },
       ]);
     } else {
       keyboard.push([
-        { text: `👁 ${photoIcon}${item.name} - ${item.price}₽`, callback_data: `item_${item.id}` },
+        { text: `${photoIcon}${item.name} — ${item.price}₽`, callback_data: `item_${item.id}` },
       ]);
       keyboard.push([
-        { text: '➖', callback_data: `quick_decrease_${item.id}` },
+        { text: '−', callback_data: `quick_decrease_${item.id}` },
         { text: `${quantity} шт.`, callback_data: `item_${item.id}` },
-        { text: '➕', callback_data: `quick_increase_${item.id}` },
+        { text: '+', callback_data: `quick_increase_${item.id}` },
       ]);
     }
   });
 
   // Кнопка назад
-  keyboard.push([{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]);
+  keyboard.push([{ text: 'Назад в меню', callback_data: 'back_to_menu' }]);
 
   return keyboard;
 }
@@ -141,9 +141,9 @@ async function updateMainKeyboard(bot: BotInstance, chatId: number, userId: numb
   try {
     const keyboard = await createMainKeyboardWithBadge(userId || 0);
     const message = `
-🥙 Главное меню
+Главное меню 🏠
 
-Выберите действие:
+Выберите нужное действие:
     `;
 
     await bot.sendMessage(chatId, message, {
@@ -169,30 +169,30 @@ async function createItemKeyboardWithFavorites(
 
   if (currentQuantity === 0) {
     // Если товара нет в корзине, показываем кнопку "Добавить в корзину"
-    keyboard.push([{ text: '🛒 Добавить в корзину', callback_data: `add_to_cart_${itemId}` }]);
+    keyboard.push([{ text: 'Добавить в корзину', callback_data: `add_to_cart_${itemId}` }]);
   } else {
     // Если товар есть в корзине, показываем +/- интерфейс
     keyboard.push([
-      { text: '➖', callback_data: `decrease_from_item_${itemId}` },
+      { text: '−', callback_data: `decrease_from_item_${itemId}` },
       { text: `${currentQuantity} шт.`, callback_data: `quantity_${itemId}` },
-      { text: '➕', callback_data: `increase_from_item_${itemId}` },
+      { text: '+', callback_data: `increase_from_item_${itemId}` },
     ]);
 
     // Добавляем кнопку быстрого удаления
     keyboard.push([
-      { text: '🗑 Убрать все из корзины', callback_data: `remove_all_from_item_${itemId}` },
+      { text: 'Убрать все из корзины', callback_data: `remove_all_from_item_${itemId}` },
     ]);
   }
 
   // Кнопка избранного
-  const favoriteText = isInFavorites ? '💔 Убрать из избранного' : '❤️ Добавить в избранное';
+  const favoriteText = isInFavorites ? 'Убрать из избранного' : 'Добавить в избранное';
   const favoriteAction = isInFavorites ? `remove_favorite_${itemId}` : `add_favorite_${itemId}`;
   keyboard.push([{ text: favoriteText, callback_data: favoriteAction }]);
 
   // Кнопки навигации
   keyboard.push([
-    { text: '🛒 Перейти в корзину', callback_data: 'view_cart' },
-    { text: '🔙 Назад к каталогу', callback_data: 'back_to_menu' },
+    { text: 'Перейти в корзину', callback_data: 'view_cart' },
+    { text: 'Назад к каталогу', callback_data: 'back_to_menu' },
   ]);
 
   return keyboard;
@@ -200,13 +200,13 @@ async function createItemKeyboardWithFavorites(
 
 // Создать клавиатуру главного меню с рекомендациями
 async function createMainKeyboardWithRecommendations(userId: number): Promise<any> {
-  let cartText = '🛒 Корзина';
+  let cartText = 'Корзина';
 
   if (userId) {
     try {
       const cartTotal = await botApiClient.getCartTotal(userId);
       if (cartTotal.itemsCount > 0) {
-        cartText = `🛒 Корзина (${cartTotal.itemsCount})`;
+        cartText = `Корзина (${cartTotal.itemsCount})`;
       }
     } catch (error) {
       console.error('Error getting cart total for badge:', error);
@@ -215,10 +215,10 @@ async function createMainKeyboardWithRecommendations(userId: number): Promise<an
 
   return {
     keyboard: [
-      [{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }],
-      [{ text: cartText }, { text: '📋 Мои заказы' }],
-      [{ text: '⭐ Избранное' }, { text: '🎯 Рекомендации' }],
-      [{ text: '📱 Mini App' }, { text: 'ℹ️ О нас' }],
+      [{ text: 'Шаурма' }, { text: 'Напитки' }],
+      [{ text: cartText }, { text: 'Мои заказы' }],
+      [{ text: 'Избранное' }, { text: 'Рекомендации' }],
+      [{ text: 'Mini App' }, { text: 'О нас' }],
     ],
     resize_keyboard: true,
     one_time_keyboard: false,
@@ -234,10 +234,10 @@ async function createRecommendationsMessage(userId: number): Promise<{
     const recommendations = await databaseService.getUserRecommendations(userId);
     const userStats = await databaseService.getUserStats(userId);
 
-    let message = '🎯 Персональные рекомендации\n\n';
+    let message = 'Персональные рекомендации 🎯\n\n';
 
     if (userStats.totalOrders > 0) {
-      message += `📊 Ваша статистика:\n`;
+      message += `Ваша статистика:\n`;
       message += `• Заказов: ${userStats.totalOrders}\n`;
       message += `• Потрачено: ${userStats.totalSpent.toFixed(0)}₽\n`;
       message += `• Средний чек: ${userStats.avgOrderValue.toFixed(0)}₽\n\n`;
@@ -245,15 +245,15 @@ async function createRecommendationsMessage(userId: number): Promise<{
 
     if (recommendations.length === 0) {
       message +=
-        '🤔 Пока нет персональных рекомендаций\n\nСделайте несколько заказов, чтобы мы могли предложить что-то особенное!';
+        'Пока нет персональных рекомендаций.\n\nСделайте несколько заказов, чтобы мы могли предложить что-то особенное!';
 
       return {
         message,
-        keyboard: [[{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]],
+        keyboard: [[{ text: 'Назад в меню', callback_data: 'back_to_menu' }]],
       };
     }
 
-    message += '✨ Специально для вас:\n\n';
+    message += 'Специально для вас:\n\n';
 
     const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
 
@@ -266,24 +266,24 @@ async function createRecommendationsMessage(userId: number): Promise<{
           new: '🆕',
         }[rec.type as 'frequent' | 'time_based' | 'popular' | 'new'] || '💡';
 
-      message += `${index + 1}. ${typeEmoji} ${rec.menuItem.name} - ${rec.menuItem.price}₽\n`;
-      message += `   📝 ${rec.reason}\n\n`;
+      message += `${index + 1}. ${typeEmoji} ${rec.menuItem.name} — ${rec.menuItem.price}₽\n`;
+      message += `${rec.reason}\n\n`;
 
       // Кнопка для каждой рекомендации
       keyboard.push([
-        { text: `👁 ${rec.menuItem.name}`, callback_data: `item_${rec.menuItem.id}` },
-        { text: '➕ Добавить', callback_data: `quick_add_${rec.menuItem.id}` },
+        { text: rec.menuItem.name, callback_data: `item_${rec.menuItem.id}` },
+        { text: 'Добавить', callback_data: `quick_add_${rec.menuItem.id}` },
       ]);
     });
 
-    keyboard.push([{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]);
+    keyboard.push([{ text: 'Назад в меню', callback_data: 'back_to_menu' }]);
 
     return { message, keyboard };
   } catch (error) {
     console.error('Error creating recommendations message:', error);
     return {
-      message: '❌ Ошибка загрузки рекомендаций\n\nПопробуйте позже.',
-      keyboard: [[{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]],
+      message: 'Ошибка загрузки рекомендаций\n\nПопробуйте позже.',
+      keyboard: [[{ text: 'Назад в меню', callback_data: 'back_to_menu' }]],
     };
   }
 }
@@ -298,35 +298,36 @@ async function createFavoritesMessage(userId: number): Promise<{
 
     if (favorites.length === 0) {
       return {
-        message: '⭐ Избранное пусто\n\nДобавьте товары в избранное, нажав ❤️ на экране товара!',
-        keyboard: [[{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]],
+        message:
+          'Избранное пусто ⭐\n\nДобавьте товары в избранное, нажав соответствующую кнопку на экране товара!',
+        keyboard: [[{ text: 'Назад в меню', callback_data: 'back_to_menu' }]],
       };
     }
 
-    let message = '⭐ Ваши избранные товары:\n\n';
+    let message = 'Ваши избранные товары ⭐\n\n';
 
     const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
 
     favorites.forEach((favorite, index) => {
       const photoIcon = favorite.menuItem.photo ? '📸 ' : '';
-      message += `${index + 1}. ${photoIcon}${favorite.menuItem.name} - ${favorite.menuItem.price}₽\n`;
-      message += `   📝 ${favorite.menuItem.description}\n\n`;
+      message += `${index + 1}. ${photoIcon}${favorite.menuItem.name} — ${favorite.menuItem.price}₽\n`;
+      message += `${favorite.menuItem.description}\n\n`;
 
       // Кнопки для каждого избранного товара
       keyboard.push([
-        { text: `👁 ${favorite.menuItem.name}`, callback_data: `item_${favorite.menuItem.id}` },
-        { text: '➕ Добавить', callback_data: `quick_add_${favorite.menuItem.id}` },
+        { text: favorite.menuItem.name, callback_data: `item_${favorite.menuItem.id}` },
+        { text: 'Добавить', callback_data: `quick_add_${favorite.menuItem.id}` },
       ]);
     });
 
-    keyboard.push([{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]);
+    keyboard.push([{ text: 'Назад в меню', callback_data: 'back_to_menu' }]);
 
     return { message, keyboard };
   } catch (error) {
     console.error('Error creating favorites message:', error);
     return {
-      message: '❌ Ошибка загрузки избранного\n\nПопробуйте позже.',
-      keyboard: [[{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]],
+      message: 'Ошибка загрузки избранного\n\nПопробуйте позже.',
+      keyboard: [[{ text: 'Назад в меню', callback_data: 'back_to_menu' }]],
     };
   }
 }
@@ -338,7 +339,7 @@ async function getCartWidget(userId: number): Promise<string> {
     if (cartTotal.itemsCount === 0) {
       return '';
     }
-    return `\n\n🛒 В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`;
+    return `\n\nВ корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`;
   } catch (error) {
     console.error('Error getting cart widget:', error);
     return '';
@@ -354,11 +355,17 @@ export async function handleStart(bot: BotInstance, msg: BotMessage): Promise<vo
   const userName = msg.from?.first_name || 'Друг';
 
   const welcomeMessage = `
-🥙 Привет, ${userName}! Добро пожаловать в Шаурма Бот!
+Привет, ${userName}! 👋
 
-Здесь вы можете посмотреть наше меню и выбрать что-то вкусное.
+Добро пожаловать в наш бот для заказа вкусной шаурмы!
 
-Выберите действие:
+Здесь вы можете:
+• Посмотреть наше меню
+• Добавить товары в корзину
+• Оформить заказ
+• Отследить статус заказа
+
+Выберите нужное действие в меню ниже.
   `;
 
   // Создаем клавиатуру с индикатором корзины
@@ -371,15 +378,15 @@ export async function handleStart(bot: BotInstance, msg: BotMessage): Promise<vo
 
   // Отправляем отдельное сообщение с кнопкой Mini App
   const miniAppMessage = `
-🚀 Попробуйте наше новое Mini App!
+Попробуйте наше мини-приложение! 🚀
 
-В мини-приложении вы можете:
-• Просматривать меню с фотографиями
-• Управлять корзиной
-• Отслеживать заказы
-• Получать персональные рекомендации
+В нём доступны дополнительные возможности:
+• Полное меню с фотографиями товаров
+• Удобное управление корзиной
+• Отслеживание заказов в реальном времени
+• Персональные рекомендации
 
-Нажмите кнопку ниже, чтобы открыть приложение:
+Нажмите кнопку ниже, чтобы открыть приложение.
   `;
 
   const miniAppKeyboard = {
@@ -415,16 +422,16 @@ export async function handleShawarmaMenu(bot: BotInstance, msg: BotMessage): Pro
     return;
   }
 
-  let message = '🌯 Наша шаурма:\n\n';
+  let message = 'Наша шаурма 🌯\n\n';
 
   // Добавляем краткое описание товаров в текст
   items.forEach((item, index) => {
     const photoIcon = item.photo ? '📸 ' : '';
-    message += `${index + 1}. ${photoIcon}${item.name} - ${item.price}₽\n`;
-    message += `   📝 ${item.description}\n\n`;
+    message += `${index + 1}. ${photoIcon}${item.name} — ${item.price}₽\n`;
+    message += `${item.description}\n\n`;
   });
 
-  message += `💡 Используйте кнопки ➕ для быстрого добавления или 👁 для подробной информации о товаре.`;
+  message += `Используйте кнопки для быстрого добавления товаров в корзину или нажмите на название для подробной информации.`;
 
   // Создаем клавиатуру с быстрыми кнопками
   const keyboard = await createCatalogKeyboard(items, userId);
@@ -445,15 +452,15 @@ export async function handleDrinksMenu(bot: BotInstance, msg: BotMessage): Promi
     return;
   }
 
-  let message = '🥤 Наши напитки:\n\n';
+  let message = 'Наши напитки 🥤\n\n';
 
   // Добавляем краткое описание товаров в текст
   items.forEach((item, index) => {
-    message += `${index + 1}. ${item.name} - ${item.price}₽\n`;
-    message += `   📝 ${item.description}\n\n`;
+    message += `${index + 1}. ${item.name} — ${item.price}₽\n`;
+    message += `${item.description}\n\n`;
   });
 
-  message += `💡 Используйте кнопки ➕ для быстрого добавления или 👁 для подробной информации о товаре.`;
+  message += `Используйте кнопки для быстрого добавления товаров в корзину или нажмите на название для подробной информации.`;
 
   // Создаем клавиатуру с быстрыми кнопками
   const keyboard = await createCatalogKeyboard(items, userId);
@@ -468,14 +475,15 @@ export function handleAbout(bot: BotInstance, msg: BotMessage): void {
   const chatId = msg.chat.id;
 
   const aboutMessage = `
-ℹ️ О нас:
+О нас ℹ️
 
-🏪 Лучшая шаурма в городе!
-🕐 Время работы: 10:00 - 23:00
-📱 Телефон: +7 (999) 123-45-67
-📍 Адрес: г. Москва, ул. Примерная, д. 1
+Мы готовим самую вкусную шаурму в городе!
 
-Это демо-версия бота. В будущем здесь будет возможность оформления заказов!
+Время работы: 10:00 — 23:00
+Телефон: +7 (999) 123-45-67
+Адрес: г. Москва, ул. Примерная, д. 1
+
+Это демо-версия бота. В будущем здесь будет возможность оформления реальных заказов!
   `;
 
   bot.sendMessage(chatId, aboutMessage);
@@ -507,17 +515,16 @@ export async function handleItemSelection(
 
   // Формируем сообщение с подробной информацией
   let message = `
-📦 ${item.name}
+${item.name}
 
-💰 Цена: ${item.price} руб.
-📝 ${item.description}
+Цена: ${item.price} руб.
+${item.description}
 `;
 
   // Добавляем информацию о корзине
   if (currentQuantity > 0) {
     const subtotal = item.price * currentQuantity;
-    message += `\n🛒 В корзине: ${currentQuantity} шт.`;
-    message += `\n💰 Подытог: ${subtotal}₽`;
+    message += `\nВ корзине: ${currentQuantity} шт. (${subtotal}₽)`;
   }
 
   message += `\n\nВыберите действие:`;
@@ -558,7 +565,7 @@ export async function handleItemSelection(
 
   // Улучшенное уведомление
   const notificationText =
-    currentQuantity > 0 ? `📦 ${item.name} • В корзине: ${currentQuantity} шт.` : `📦 ${item.name}`;
+    currentQuantity > 0 ? `${item.name} • В корзине: ${currentQuantity} шт.` : item.name;
 
   bot.answerCallbackQuery(query.id, { text: notificationText }).catch(() => {});
 }
@@ -575,11 +582,11 @@ export async function handleBackToMenu(bot: BotInstance, query: BotCallbackQuery
   }
 
   const welcomeMessage = `
-🥙 Привет, ${userName}! Добро пожаловать в Шаурма Бот!
+Привет, ${userName}! 👋
 
-Здесь вы можете посмотреть наше меню и выбрать что-то вкусное.
+Добро пожаловать в наш бот для заказа вкусной шаурмы!
 
-Выберите категорию:
+Выберите нужную категорию из меню ниже.
   `;
 
   // Создаем клавиатуру с актуальным счетчиком корзины
@@ -595,11 +602,11 @@ export async function handleBackToMenu(bot: BotInstance, query: BotCallbackQuery
   }
 
   // Обновляем главную клавиатуру с актуальным счетчиком
-  bot.sendMessage(chatId, '🏠 Главное меню обновлен', {
+  bot.sendMessage(chatId, 'Главное меню обновлено 🏠', {
     reply_markup: keyboard,
   });
 
-  bot.answerCallbackQuery(query.id, { text: '🏠 Возврат в главное меню' }).catch(() => {});
+  bot.answerCallbackQuery(query.id, { text: 'Возврат в главное меню' }).catch(() => {});
 }
 
 // Обработчик добавления товара в корзину
@@ -629,7 +636,7 @@ export async function handleAddToCart(bot: BotInstance, query: BotCallbackQuery)
     // Улучшенное уведомление с подробной информацией
     bot
       .answerCallbackQuery(query.id, {
-        text: `✅ ${item.name} добавлен! В корзине: ${cartCount} товаров на ${cartTotalPrice}₽`,
+        text: `${item.name} добавлен! В корзине: ${cartCount} товаров на ${cartTotalPrice}₽`,
       })
       .catch(() => {});
 
@@ -666,7 +673,7 @@ export async function handleViewCart(
     const total = cartTotal.total;
 
     if (cart.length === 0) {
-      const message = '🛒 Ваша корзина пуста\n\nВыберите товары из меню!';
+      const message = 'Ваша корзина пуста 🛒\n\nВыберите товары из меню для заказа.';
 
       if ('data' in msg) {
         // Это callback query
@@ -676,7 +683,7 @@ export async function handleViewCart(
               chat_id: chatId,
               message_id: msg.message.message_id,
               reply_markup: {
-                inline_keyboard: [[{ text: '🔙 Назад к меню', callback_data: 'back_to_menu' }]],
+                inline_keyboard: [[{ text: 'Назад к меню', callback_data: 'back_to_menu' }]],
               },
             })
             .catch(() => {});
@@ -689,7 +696,7 @@ export async function handleViewCart(
       return;
     }
 
-    let message = '🛒 Ваша корзина:\n\n';
+    let message = 'Ваша корзина 🛒\n\n';
     const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
 
     cart.forEach((cartItem, index) => {
@@ -697,25 +704,25 @@ export async function handleViewCart(
       const subtotal = item.price * cartItem.quantity;
 
       message += `${index + 1}. ${item.name}\n`;
-      message += `   💰 ${item.price}₽ × ${cartItem.quantity} = ${subtotal}₽\n\n`;
+      message += `${item.price}₽ × ${cartItem.quantity} = ${subtotal}₽\n\n`;
 
       // Кнопки для изменения количества
       keyboard.push([
-        { text: '➖', callback_data: `decrease_${item.id}` },
+        { text: '−', callback_data: `decrease_${item.id}` },
         { text: `${cartItem.quantity} шт.`, callback_data: `quantity_${item.id}` },
-        { text: '➕', callback_data: `increase_${item.id}` },
-        { text: '🗑', callback_data: `remove_${item.id}` },
+        { text: '+', callback_data: `increase_${item.id}` },
+        { text: 'Удалить', callback_data: `remove_${item.id}` },
       ]);
     });
 
-    message += `💰 Общая сумма: ${total}₽`;
+    message += `Общая сумма: ${total}₽`;
 
     // Кнопки управления корзиной
     keyboard.push([
-      { text: '🗑 Очистить корзину', callback_data: 'clear_cart' },
-      { text: '📦 Оформить заказ', callback_data: 'checkout' },
+      { text: 'Очистить корзину', callback_data: 'clear_cart' },
+      { text: 'Оформить заказ', callback_data: 'checkout' },
     ]);
-    keyboard.push([{ text: '🔙 Назад к меню', callback_data: 'back_to_menu' }]);
+    keyboard.push([{ text: 'Назад к меню', callback_data: 'back_to_menu' }]);
 
     if ('data' in msg) {
       // Это callback query
@@ -744,107 +751,6 @@ export async function handleViewCart(
     } else {
       bot.sendMessage(chatId, errorMessage);
     }
-  }
-}
-
-// Обработчик увеличения количества товара
-export async function handleIncreaseQuantity(
-  bot: BotInstance,
-  query: BotCallbackQuery
-): Promise<void> {
-  const userId = query.from?.id;
-  const itemId = query.data?.replace('increase_', '');
-
-  if (!userId || !itemId) {
-    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
-    return;
-  }
-
-  try {
-    const cart = await botApiClient.getCart(userId);
-    const cartItem = cart.find((item: any) => item.menuItem.id === itemId);
-
-    if (cartItem) {
-      await botApiClient.updateCartQuantity(userId, itemId, cartItem.quantity + 1);
-      await handleViewCart(bot, query);
-    }
-  } catch (error) {
-    console.error('Error increasing quantity:', error);
-    bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
-  }
-}
-
-// Обработчик уменьшения количества товара
-export async function handleDecreaseQuantity(
-  bot: BotInstance,
-  query: BotCallbackQuery
-): Promise<void> {
-  const userId = query.from?.id;
-  const itemId = query.data?.replace('decrease_', '');
-
-  if (!userId || !itemId) {
-    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
-    return;
-  }
-
-  try {
-    const cart = await botApiClient.getCart(userId);
-    const cartItem = cart.find((item: any) => item.menuItem.id === itemId);
-
-    if (cartItem) {
-      const newQuantity = cartItem.quantity - 1;
-      if (newQuantity <= 0) {
-        await botApiClient.removeFromCart(userId, itemId);
-      } else {
-        await botApiClient.updateCartQuantity(userId, itemId, newQuantity);
-      }
-      await handleViewCart(bot, query);
-    }
-  } catch (error) {
-    console.error('Error decreasing quantity:', error);
-    bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
-  }
-}
-
-// Обработчик удаления товара из корзины
-export async function handleRemoveFromCart(
-  bot: BotInstance,
-  query: BotCallbackQuery
-): Promise<void> {
-  const userId = query.from?.id;
-  const itemId = query.data?.replace('remove_', '');
-
-  if (!userId || !itemId) {
-    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
-    return;
-  }
-
-  try {
-    await botApiClient.removeFromCart(userId, itemId);
-    bot.answerCallbackQuery(query.id, { text: 'Товар удален из корзины' }).catch(() => {});
-    await handleViewCart(bot, query);
-  } catch (error) {
-    console.error('Error removing from cart:', error);
-    bot.answerCallbackQuery(query.id, { text: 'Ошибка при удалении товара' }).catch(() => {});
-  }
-}
-
-// Обработчик очистки корзины
-export async function handleClearCart(bot: BotInstance, query: BotCallbackQuery): Promise<void> {
-  const userId = query.from?.id;
-
-  if (!userId) {
-    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
-    return;
-  }
-
-  try {
-    await botApiClient.clearCart(userId);
-    bot.answerCallbackQuery(query.id, { text: 'Корзина очищена' }).catch(() => {});
-    await handleViewCart(bot, query);
-  } catch (error) {
-    console.error('Error clearing cart:', error);
-    bot.answerCallbackQuery(query.id, { text: 'Ошибка при очистке корзины' }).catch(() => {});
   }
 }
 
@@ -891,21 +797,21 @@ export async function handleCheckout(bot: BotInstance, query: BotCallbackQuery):
     await botApiClient.clearCart(userId);
 
     const message = `
-✅ Заказ успешно оформлен!
+Заказ успешно оформлен! ✅
 
-📦 Номер заказа: #${orderId}
-💰 Сумма заказа: ${total}₽
+Номер заказа: #${orderId}
+Сумма заказа: ${total}₽
 
 Ваш заказ принят в обработку.
-Статус заказа: В ожидании
+Текущий статус: В ожидании
 
-Спасибо за заказ! 🥙
+Спасибо за заказ!
     `;
 
     const keyboard = {
       inline_keyboard: [
-        [{ text: '📋 Мои заказы', callback_data: 'my_orders' }],
-        [{ text: '🔙 Главное меню', callback_data: 'back_to_menu' }],
+        [{ text: 'Мои заказы', callback_data: 'my_orders' }],
+        [{ text: 'Главное меню', callback_data: 'back_to_menu' }],
       ],
     };
 
@@ -943,7 +849,7 @@ export async function handleMyOrders(
 
     if (orders.length === 0) {
       const message =
-        '📋 У вас пока нет заказов\n\nВыберите товары из меню и оформите первый заказ!';
+        'У вас пока нет заказов 📋\n\nВыберите товары из меню и оформите первый заказ!';
 
       if ('data' in msg) {
         // Это callback query
@@ -953,7 +859,7 @@ export async function handleMyOrders(
               chat_id: chatId,
               message_id: msg.message.message_id,
               reply_markup: {
-                inline_keyboard: [[{ text: '🔙 Назад к меню', callback_data: 'back_to_menu' }]],
+                inline_keyboard: [[{ text: 'Назад к меню', callback_data: 'back_to_menu' }]],
               },
             })
             .catch(() => {});
@@ -966,7 +872,7 @@ export async function handleMyOrders(
       return;
     }
 
-    let message = '📋 Ваши заказы:\n\n';
+    let message = 'Ваши заказы 📋\n\n';
     const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
 
     orders.forEach((order, index) => {
@@ -980,17 +886,15 @@ export async function handleMyOrders(
         }[order.status] || '❓';
 
       message += `${index + 1}. Заказ #${order.id}\n`;
-      message += `   ${statusEmoji} Статус: ${getStatusText(order.status)}\n`;
-      message += `   💰 Сумма: ${order.totalPrice}₽\n`;
-      message += `   📅 ${formatDate(order.createdAt)}\n\n`;
+      message += `${statusEmoji} Статус: ${getStatusText(order.status)}\n`;
+      message += `Сумма: ${order.totalPrice}₽\n`;
+      message += `Дата: ${formatDate(order.createdAt)}\n\n`;
 
       // Кнопка для просмотра деталей заказа
-      keyboard.push([
-        { text: `📦 Заказ #${order.id}`, callback_data: `order_details_${order.id}` },
-      ]);
+      keyboard.push([{ text: `Заказ #${order.id}`, callback_data: `order_details_${order.id}` }]);
     });
 
-    keyboard.push([{ text: '🔙 Назад к меню', callback_data: 'back_to_menu' }]);
+    keyboard.push([{ text: 'Назад к меню', callback_data: 'back_to_menu' }]);
 
     if ('data' in msg) {
       // Это callback query
@@ -1050,23 +954,23 @@ export async function handleOrderDetails(bot: BotInstance, query: BotCallbackQue
         delivered: '✅',
       }[order.status] || '❓';
 
-    let message = `📦 Заказ #${order.id}\n\n`;
+    let message = `Заказ #${order.id} 📦\n\n`;
     message += `${statusEmoji} Статус: ${getStatusText(order.status)}\n`;
-    message += `📅 Дата: ${formatDate(order.createdAt)}\n\n`;
-    message += `🛒 Состав заказа:\n`;
+    message += `Дата: ${formatDate(order.createdAt)}\n\n`;
+    message += `Состав заказа:\n`;
 
     order.items.forEach((item, index) => {
       const subtotal = item.menuItem.price * item.quantity;
       message += `${index + 1}. ${item.menuItem.name}\n`;
-      message += `   💰 ${item.menuItem.price}₽ × ${item.quantity} = ${subtotal}₽\n`;
+      message += `${item.menuItem.price}₽ × ${item.quantity} = ${subtotal}₽\n`;
     });
 
-    message += `\n💰 Общая сумма: ${order.totalPrice}₽`;
+    message += `\nОбщая сумма: ${order.totalPrice}₽`;
 
     const keyboard = {
       inline_keyboard: [
-        [{ text: '📋 Все заказы', callback_data: 'my_orders' }],
-        [{ text: '🔙 Главное меню', callback_data: 'back_to_menu' }],
+        [{ text: 'Все заказы', callback_data: 'my_orders' }],
+        [{ text: 'Главное меню', callback_data: 'back_to_menu' }],
       ],
     };
 
@@ -1215,28 +1119,29 @@ function getStatusEmoji(status: string): string {
 // Обработчик информации о Mini App
 export async function handleAboutMiniApp(bot: BotInstance, query: BotCallbackQuery): Promise<void> {
   const message = `
-📱 Что такое Telegram Mini App?
+Что такое Telegram Mini App? 📱
 
-Mini App - это веб-приложение, встроенное прямо в Telegram. Преимущества:
+Mini App — это веб-приложение, встроенное прямо в Telegram.
 
-✅ Не нужно устанавливать отдельное приложение
-✅ Быстрый доступ прямо из чата
-✅ Адаптируется под тему Telegram
-✅ Безопасная передача данных
-✅ Работает на всех устройствах
+Преимущества:
+• Не нужно устанавливать отдельное приложение
+• Быстрый доступ прямо из чата
+• Адаптируется под тему Telegram
+• Безопасная передача данных
+• Работает на всех устройствах
 
-🌯 В нашем Mini App вы можете:
+В нашем Mini App вы можете:
 • Просматривать полное меню с фотографиями
 • Добавлять товары в корзину
 • Оформлять заказы онлайн
 • Отслеживать статус заказов
 • Получать персональные рекомендации
 
-Попробуйте прямо сейчас! 👆
+Попробуйте прямо сейчас!
   `;
 
   try {
-    await bot.answerCallbackQuery(query.id, { text: 'ℹ️ Информация о Mini App' });
+    await bot.answerCallbackQuery(query.id, { text: 'Информация о Mini App' });
 
     if (query.message?.message_id) {
       await bot.editMessageText(message, {
@@ -1252,7 +1157,7 @@ Mini App - это веб-приложение, встроенное прямо �
             ],
             [
               {
-                text: '🔙 Назад к началу',
+                text: 'Назад к началу',
                 callback_data: 'back_to_start',
               },
             ],
@@ -1268,15 +1173,15 @@ Mini App - это веб-приложение, встроенное прямо �
 // Обработчик возврата к началу
 export async function handleBackToStart(bot: BotInstance, query: BotCallbackQuery): Promise<void> {
   const miniAppMessage = `
-🚀 Попробуйте наше новое Mini App!
+Попробуйте наше мини-приложение! 🚀
 
-В мини-приложении вы можете:
-• Просматривать меню с фотографиями
-• Управлять корзиной
-• Отслеживать заказы
-• Получать персональные рекомендации
+В нём доступны дополнительные возможности:
+• Полное меню с фотографиями товаров
+• Удобное управление корзиной
+• Отслеживание заказов в реальном времени
+• Персональные рекомендации
 
-Нажмите кнопку ниже, чтобы открыть приложение:
+Нажмите кнопку ниже, чтобы открыть приложение.
   `;
 
   const miniAppKeyboard = {
@@ -1297,7 +1202,7 @@ export async function handleBackToStart(bot: BotInstance, query: BotCallbackQuer
   };
 
   try {
-    await bot.answerCallbackQuery(query.id, { text: '🏠 Возврат к началу' });
+    await bot.answerCallbackQuery(query.id, { text: 'Возврат к началу' });
 
     if (query.message?.message_id) {
       await bot.editMessageText(miniAppMessage, {
@@ -1317,17 +1222,19 @@ export function handleMiniApp(bot: BotInstance, msg: BotMessage): void {
   const userName = msg.from?.first_name || 'Друг';
 
   const miniAppMessage = `
-🚀 Привет, ${userName}! Добро пожаловать в наше Mini App!
+Привет, ${userName}! 👋
 
-В мини-приложении вы можете:
-• 🍽️ Просматривать полное меню с фотографиями
-• 🛒 Добавлять товары в корзину
-• 📦 Оформлять заказы онлайн
-• 📊 Отслеживать статус заказов в реальном времени
-• 🎯 Получать персональные рекомендации
-• 🎨 Пользоваться интерфейсом, адаптированным под вашу тему Telegram
+Добро пожаловать в наше мини-приложение!
 
-Нажмите кнопку ниже, чтобы открыть приложение:
+В нём доступны расширенные возможности:
+• Полное меню с фотографиями товаров
+• Удобное добавление товаров в корзину
+• Оформление заказов онлайн
+• Отслеживание статуса заказов в реальном времени
+• Персональные рекомендации на основе ваших предпочтений
+• Интерфейс, адаптированный под вашу тему Telegram
+
+Нажмите кнопку ниже, чтобы открыть приложение.
   `;
 
   const miniAppKeyboard = {
@@ -1346,7 +1253,7 @@ export function handleMiniApp(bot: BotInstance, msg: BotMessage): void {
       ],
       [
         {
-          text: '🔙 Назад в меню',
+          text: 'Назад в меню',
           callback_data: 'back_to_menu',
         },
       ],
@@ -1356,6 +1263,107 @@ export function handleMiniApp(bot: BotInstance, msg: BotMessage): void {
   bot.sendMessage(chatId, miniAppMessage, {
     reply_markup: miniAppKeyboard,
   });
+}
+
+// Обработчик увеличения количества товара
+export async function handleIncreaseQuantity(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  const userId = query.from?.id;
+  const itemId = query.data?.replace('increase_', '');
+
+  if (!userId || !itemId) {
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
+    return;
+  }
+
+  try {
+    const cart = await botApiClient.getCart(userId);
+    const cartItem = cart.find((item: any) => item.menuItem.id === itemId);
+
+    if (cartItem) {
+      await botApiClient.updateCartQuantity(userId, itemId, cartItem.quantity + 1);
+      await handleViewCart(bot, query);
+    }
+  } catch (error) {
+    console.error('Error increasing quantity:', error);
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
+  }
+}
+
+// Обработчик уменьшения количества товара
+export async function handleDecreaseQuantity(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  const userId = query.from?.id;
+  const itemId = query.data?.replace('decrease_', '');
+
+  if (!userId || !itemId) {
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
+    return;
+  }
+
+  try {
+    const cart = await botApiClient.getCart(userId);
+    const cartItem = cart.find((item: any) => item.menuItem.id === itemId);
+
+    if (cartItem) {
+      const newQuantity = cartItem.quantity - 1;
+      if (newQuantity <= 0) {
+        await botApiClient.removeFromCart(userId, itemId);
+      } else {
+        await botApiClient.updateCartQuantity(userId, itemId, newQuantity);
+      }
+      await handleViewCart(bot, query);
+    }
+  } catch (error) {
+    console.error('Error decreasing quantity:', error);
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
+  }
+}
+
+// Обработчик удаления товара из корзины
+export async function handleRemoveFromCart(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  const userId = query.from?.id;
+  const itemId = query.data?.replace('remove_', '');
+
+  if (!userId || !itemId) {
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
+    return;
+  }
+
+  try {
+    await botApiClient.removeFromCart(userId, itemId);
+    bot.answerCallbackQuery(query.id, { text: 'Товар удален из корзины' }).catch(() => {});
+    await handleViewCart(bot, query);
+  } catch (error) {
+    console.error('Error removing from cart:', error);
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка при удалении товара' }).catch(() => {});
+  }
+}
+
+// Обработчик очистки корзины
+export async function handleClearCart(bot: BotInstance, query: BotCallbackQuery): Promise<void> {
+  const userId = query.from?.id;
+
+  if (!userId) {
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
+    return;
+  }
+
+  try {
+    await botApiClient.clearCart(userId);
+    bot.answerCallbackQuery(query.id, { text: 'Корзина очищена' }).catch(() => {});
+    await handleViewCart(bot, query);
+  } catch (error) {
+    console.error('Error clearing cart:', error);
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка при очистке корзины' }).catch(() => {});
+  }
 }
 
 // Обработчик увеличения количества товара с экрана товара
@@ -1384,7 +1392,7 @@ export async function handleIncreaseFromItem(
 
       bot
         .answerCallbackQuery(query.id, {
-          text: `➕ ${item?.name} добавлен! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
+          text: `${item?.name} добавлен! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
         })
         .catch(() => {});
 
@@ -1419,7 +1427,7 @@ export async function handleDecreaseFromItem(
       const newQuantity = cartItem.quantity - 1;
       if (newQuantity <= 0) {
         await botApiClient.removeFromCart(userId, itemId);
-        bot.answerCallbackQuery(query.id, { text: '🗑 Товар удален из корзины' }).catch(() => {});
+        bot.answerCallbackQuery(query.id, { text: 'Товар удален из корзины' }).catch(() => {});
       } else {
         await botApiClient.updateCartQuantity(userId, itemId, newQuantity);
 
@@ -1429,7 +1437,7 @@ export async function handleDecreaseFromItem(
 
         bot
           .answerCallbackQuery(query.id, {
-            text: `➖ ${item?.name} убран! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
+            text: `${item?.name} убран! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
           })
           .catch(() => {});
       }
@@ -1462,7 +1470,7 @@ export async function handleRemoveAllFromItem(
     const item = getItemById(itemId);
 
     bot
-      .answerCallbackQuery(query.id, { text: `🗑 ${item?.name} полностью удален из корзины` })
+      .answerCallbackQuery(query.id, { text: `${item?.name} полностью удален из корзины` })
       .catch(() => {});
 
     // Обновляем экран товара
@@ -1496,7 +1504,7 @@ export async function handleQuickAdd(bot: BotInstance, query: BotCallbackQuery):
 
     bot
       .answerCallbackQuery(query.id, {
-        text: `✅ ${item.name} добавлен! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
+        text: `${item.name} добавлен! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
       })
       .catch(() => {});
 
@@ -1544,7 +1552,7 @@ export async function handleQuickIncrease(
 
       bot
         .answerCallbackQuery(query.id, {
-          text: `➕ ${item?.name} добавлен! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
+          text: `${item?.name} добавлен! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
         })
         .catch(() => {});
 
@@ -1592,7 +1600,7 @@ export async function handleQuickDecrease(
 
         const item = getItemById(itemId);
         bot
-          .answerCallbackQuery(query.id, { text: `🗑 ${item?.name} удален из корзины` })
+          .answerCallbackQuery(query.id, { text: `${item?.name} удален из корзины` })
           .catch(() => {});
       } else {
         await botApiClient.updateCartQuantity(userId, itemId, newQuantity);
@@ -1602,7 +1610,7 @@ export async function handleQuickDecrease(
 
         bot
           .answerCallbackQuery(query.id, {
-            text: `➖ ${item?.name} убран! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
+            text: `${item?.name} убран! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
           })
           .catch(() => {});
       }
@@ -1627,8 +1635,6 @@ export async function handleQuickDecrease(
     bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
   }
 }
-
-// ===== НОВЫЕ ОБРАБОТЧИКИ ДЛЯ ЭТАПА 3: ПРОДВИНУТЫЕ УЛУЧШЕНИЯ =====
 
 // Обработчик избранного
 export async function handleFavorites(
@@ -1656,7 +1662,7 @@ export async function handleFavorites(
           })
           .catch(() => {});
       }
-      bot.answerCallbackQuery(msg.id, { text: '⭐ Избранное' }).catch(() => {});
+      bot.answerCallbackQuery(msg.id, { text: 'Избранное' }).catch(() => {});
     } else {
       // Это обычное сообщение
       bot.sendMessage(chatId, message, {
@@ -1701,7 +1707,7 @@ export async function handleRecommendations(
           })
           .catch(() => {});
       }
-      bot.answerCallbackQuery(msg.id, { text: '🎯 Рекомендации' }).catch(() => {});
+      bot.answerCallbackQuery(msg.id, { text: 'Рекомендации' }).catch(() => {});
     } else {
       // Это обычное сообщение
       bot.sendMessage(chatId, message, {
@@ -1744,7 +1750,7 @@ export async function handleAddToFavorites(
 
     bot
       .answerCallbackQuery(query.id, {
-        text: `❤️ ${item.name} добавлен в избранное!`,
+        text: `${item.name} добавлен в избранное!`,
       })
       .catch(() => {});
 
@@ -1783,7 +1789,7 @@ export async function handleRemoveFromFavorites(
 
     bot
       .answerCallbackQuery(query.id, {
-        text: `💔 ${item.name} удален из избранного`,
+        text: `${item.name} удален из избранного`,
       })
       .catch(() => {});
 

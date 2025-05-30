@@ -125,7 +125,7 @@ describe('Async Handlers', () => {
 
       // Проверяем улучшенное уведомление
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
-        text: '✅ Тестовая шаурма добавлен! В корзине: 3 товаров на 750₽',
+        text: 'Тестовая шаурма добавлен! В корзине: 3 товаров на 750₽',
       });
 
       // После изменений handleAddToCart теперь вызывает handleItemSelection
@@ -174,13 +174,13 @@ describe('Async Handlers', () => {
       expect(botApiClient.getCart).toHaveBeenCalledWith(789);
       expect(botApiClient.getCartTotal).toHaveBeenCalledWith(789);
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining('🛒 Ваша корзина:'),
+        expect.stringContaining('Ваша корзина 🛒'),
         expect.objectContaining({
           chat_id: 123456,
           message_id: 1,
           reply_markup: expect.objectContaining({
             inline_keyboard: expect.arrayContaining([
-              expect.arrayContaining([expect.objectContaining({ text: '📦 Оформить заказ' })]),
+              expect.arrayContaining([expect.objectContaining({ text: 'Оформить заказ' })]),
             ]),
           }),
         })
@@ -195,7 +195,7 @@ describe('Async Handlers', () => {
       await handleViewCart(mockBot, mockCallbackQuery);
 
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining('🛒 Ваша корзина пуста'),
+        expect.stringContaining('Ваша корзина пуста 🛒'),
         expect.objectContaining({
           chat_id: 123456,
           message_id: 1,
@@ -216,7 +216,7 @@ describe('Async Handlers', () => {
 
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
-        expect.stringContaining('🛒 Ваша корзина:'),
+        expect.stringContaining('Ваша корзина 🛒'),
         expect.any(Object)
       );
     });
@@ -353,7 +353,7 @@ describe('Async Handlers', () => {
       expect(databaseService.createOrder).toHaveBeenCalledWith(789, [mockCartItem], 500);
       expect(botApiClient.clearCart).toHaveBeenCalledWith(789);
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining('✅ Заказ успешно оформлен!'),
+        expect.stringContaining('Заказ успешно оформлен! ✅'),
         expect.objectContaining({
           chat_id: 123456,
           message_id: 1,
@@ -406,7 +406,7 @@ describe('Async Handlers', () => {
 
       expect(databaseService.getUserOrders).toHaveBeenCalledWith(789, 5);
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining('📋 Ваши заказы:'),
+        expect.stringContaining('Ваши заказы 📋'),
         expect.objectContaining({
           chat_id: 123456,
           message_id: 1,
@@ -422,7 +422,7 @@ describe('Async Handlers', () => {
       await handleMyOrders(mockBot, mockCallbackQuery);
 
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining('📋 У вас пока нет заказов'),
+        expect.stringContaining('У вас пока нет заказов 📋'),
         expect.objectContaining({
           chat_id: 123456,
           message_id: 1,
@@ -449,7 +449,7 @@ describe('Async Handlers', () => {
 
       expect(databaseService.getOrderById).toHaveBeenCalledWith('42');
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining('📦 Заказ #42'),
+        expect.stringContaining('Заказ #42 📦'),
         expect.objectContaining({
           chat_id: 123456,
           message_id: 1,
