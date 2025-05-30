@@ -62,13 +62,13 @@ function createItemQuantityKeyboard(
 
 // Создать главную клавиатуру с индикатором корзины
 async function createMainKeyboardWithBadge(userId?: number): Promise<any> {
-  let cartText = 'Корзина';
+  let cartText = '🛒 Корзина';
 
   if (userId) {
     try {
       const cartTotal = await botApiClient.getCartTotal(userId);
       if (cartTotal.itemsCount > 0) {
-        cartText = `Корзина (${cartTotal.itemsCount})`;
+        cartText = `🛒 Корзина (${cartTotal.itemsCount})`;
       }
     } catch (error) {
       console.error('Error getting cart total for badge:', error);
@@ -77,9 +77,9 @@ async function createMainKeyboardWithBadge(userId?: number): Promise<any> {
 
   return {
     keyboard: [
-      [{ text: 'Шаурма' }, { text: 'Напитки' }],
-      [{ text: cartText }, { text: 'Мои заказы' }],
-      [{ text: 'Mini App' }, { text: 'О нас' }],
+      [{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }],
+      [{ text: cartText }, { text: '📋 Мои заказы' }],
+      [{ text: '📱 Mini App' }, { text: 'ℹ️ О нас' }],
     ],
     resize_keyboard: true,
     one_time_keyboard: false,
@@ -200,13 +200,13 @@ async function createItemKeyboardWithFavorites(
 
 // Создать клавиатуру главного меню с рекомендациями
 async function createMainKeyboardWithRecommendations(userId: number): Promise<any> {
-  let cartText = 'Корзина';
+  let cartText = '🛒 Корзина';
 
   if (userId) {
     try {
       const cartTotal = await botApiClient.getCartTotal(userId);
       if (cartTotal.itemsCount > 0) {
-        cartText = `Корзина (${cartTotal.itemsCount})`;
+        cartText = `🛒 Корзина (${cartTotal.itemsCount})`;
       }
     } catch (error) {
       console.error('Error getting cart total for badge:', error);
@@ -215,10 +215,10 @@ async function createMainKeyboardWithRecommendations(userId: number): Promise<an
 
   return {
     keyboard: [
-      [{ text: 'Шаурма' }, { text: 'Напитки' }],
-      [{ text: cartText }, { text: 'Мои заказы' }],
-      [{ text: 'Избранное' }, { text: 'Рекомендации' }],
-      [{ text: 'Mini App' }, { text: 'О нас' }],
+      [{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }],
+      [{ text: cartText }, { text: '📋 Мои заказы' }],
+      [{ text: '⭐ Избранное' }, { text: '🎯 Рекомендации' }],
+      [{ text: '📱 Mini App' }, { text: 'ℹ️ О нас' }],
     ],
     resize_keyboard: true,
     one_time_keyboard: false,
