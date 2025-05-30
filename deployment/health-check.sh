@@ -152,14 +152,16 @@ if [ -d "/var/www/shawarma-bot/assets" ]; then
     echo "✅ Найдено изображений: $IMAGES_COUNT"
 
     # Проверка доступности через nginx
-    if curl -s -o /dev/null -w "%{http_code}" "http://localhost/assets/XXL.jpeg" -H "Host: botgarden.store" | grep -q "200"; then
+    if curl -s -o /dev/null -w "%{http_code}" "http://localhost/assets/xxl.jpeg" -H "Host: botgarden.store" | grep -q "200"; then
         echo "✅ Изображения доступны через nginx"
     else
         echo "❌ Изображения недоступны через nginx"
+        echo "  - Проверьте настройки nginx"
+        echo "  - Убедитесь что файлы находятся в /var/www/shawarma-bot/assets/"
     fi
 
     # Проверка прав доступа
-    if [ -r "/var/www/shawarma-bot/assets/XXL.jpeg" ]; then
+    if [ -r "/var/www/shawarma-bot/assets/xxl.jpeg" ]; then
         echo "✅ Права доступа к изображениям настроены"
     else
         echo "⚠️ Проблемы с правами доступа к изображениям"
@@ -209,5 +211,5 @@ echo "- Перезапуск: docker-compose restart"
 echo "- API документация: http://localhost:3000/api/docs"
 echo "- Тест API: curl http://localhost:3000/api/health"
 echo "- Тест Mini App: curl -H 'Host: botgarden.store' http://localhost/"
-echo "- Тест изображений: curl -H 'Host: botgarden.store' http://localhost/assets/XXL.jpeg"
+echo "- Тест изображений: curl -H 'Host: botgarden.store' http://localhost/assets/xxl.jpeg"
 echo "- Проверка nginx: sudo nginx -t && sudo systemctl status nginx"

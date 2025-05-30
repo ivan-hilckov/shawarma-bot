@@ -153,7 +153,7 @@ else
 fi
 
 # Проверка наличия изображений
-if [ ! -d "assets" ] || [ ! -f "assets/XXL.jpeg" ]; then
+if [ ! -d "assets" ] || [ ! -f "assets/xxl.jpeg" ]; then
     echo "⚠️ Папка assets отсутствует или пуста"
     echo "Загрузите изображения одним из способов:"
     echo "1. scp -r assets/ user@server:~/shawarma-bot/"

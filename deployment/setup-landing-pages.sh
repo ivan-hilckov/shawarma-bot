@@ -157,12 +157,12 @@ check_image() {
     fi
 }
 
-if [ -f "$WEB_DIR/assets/XXL.jpeg" ]; then
-    check_image "XXL.jpeg"
+if [ -f "$WEB_DIR/assets/xxl.jpeg" ]; then
+    check_image "xxl.jpeg"
 fi
 
-if [ -f "$WEB_DIR/assets/XXL (3).jpeg" ]; then
-    check_image "XXL%20(3).jpeg"
+if [ -f "$WEB_DIR/assets/xxl-3.jpeg" ]; then
+    check_image "xxl-3.jpeg"
 fi
 
 echo ""
