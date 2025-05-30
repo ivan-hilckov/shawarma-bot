@@ -3,17 +3,12 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🏪 BotGarden Store - Главный магазин ботов</title>
-  <meta name="description"
-    content="BotGarden Store - ваш надежный магазин готовых Telegram ботов. Shawarma Bot и другие решения для бизнеса.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🌯 Шаурма от Райхана</title>
+  <meta name="description" content="Лучшая шаурма в городе! Закажите прямо в Telegram.">
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="🏪 BotGarden Store - Главный магазин ботов">
-  <meta property="og:description"
-    content="Готовые Telegram боты для вашего бизнеса. Shawarma Bot - система заказов с корзиной и API.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="http://botgarden.store">
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
     * {
@@ -24,285 +19,462 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--tg-theme-bg-color, #ffffff);
+      color: var(--tg-theme-text-color, #333333);
       min-height: 100vh;
-      color: #333;
+      line-height: 1.5;
+      padding: 0;
+      margin: 0;
     }
 
     .container {
-      max-width: 1200px;
-      margin: 0 auto;
+      max-width: 100%;
+      padding: 20px;
+    }
+
+    /* Навигация */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--tg-theme-bg-color, #ffffff);
+      border-bottom: 1px solid var(--tg-theme-hint-color, #e5e5e5);
+      z-index: 100;
+      padding: 10px 0;
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
       padding: 0 20px;
     }
 
-    header {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      padding: 1rem 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    .nav-button {
+      background: var(--tg-theme-button-color, #007AFF);
+      color: var(--tg-theme-button-text-color, #ffffff);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      flex: 1;
+      max-width: 120px;
     }
 
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .nav-button:hover {
+      opacity: 0.8;
     }
 
-    .logo {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: white;
+    .nav-button.active {
+      background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+      color: var(--tg-theme-text-color, #333333);
     }
 
-    .nav {
-      display: flex;
-      gap: 1rem;
+    /* Основной контент */
+    .main-content {
+      margin-top: 70px;
+      padding-bottom: 20px;
     }
 
-    .nav a {
-      color: rgba(255, 255, 255, 0.9);
-      text-decoration: none;
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      transition: background 0.3s;
+    .page {
+      display: none;
     }
 
-    .nav a:hover {
-      background: rgba(255, 255, 255, 0.2);
+    .page.active {
+      display: block;
     }
 
-    main {
-      padding: 4rem 0;
-    }
-
+    /* Главная страница */
     .hero {
       text-align: center;
+      padding: 30px 0;
+      background: linear-gradient(135deg, var(--tg-theme-button-color, #007AFF) 0%, var(--tg-theme-link-color, #0066CC) 100%);
       color: white;
-      margin-bottom: 4rem;
+      margin: -20px -20px 30px -20px;
     }
 
     .hero h1 {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      font-size: 2rem;
+      margin-bottom: 10px;
+      font-weight: bold;
     }
 
     .hero p {
-      font-size: 1.2rem;
+      font-size: 1rem;
       opacity: 0.9;
-      max-width: 600px;
-      margin: 0 auto 2rem;
+      margin-bottom: 20px;
     }
 
-    .cta-button {
-      display: inline-block;
-      background: #ff6b6b;
-      color: white;
-      padding: 1rem 2rem;
-      border-radius: 30px;
-      text-decoration: none;
-      font-weight: bold;
-      transition: transform 0.3s, box-shadow 0.3s;
-      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    .menu-grid {
+      display: grid;
+      gap: 15px;
+      margin-top: 20px;
     }
 
-    .cta-button:hover {
+    .menu-category {
+      background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+      border: 1px solid var(--tg-theme-hint-color, #e5e5e5);
+    }
+
+    .menu-category:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
     }
 
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      margin-bottom: 4rem;
+    .menu-category h3 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: var(--tg-theme-text-color, #333333);
     }
 
-    .feature {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      padding: 2rem;
-      border-radius: 15px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
+    .menu-category p {
+      color: var(--tg-theme-hint-color, #666666);
+      font-size: 0.9rem;
     }
 
-    .feature h3 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
+    /* Список заказов */
+    .orders-container {
+      margin-top: 20px;
     }
 
-    .api-section {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      padding: 3rem;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      text-align: center;
+    .order-card {
+      background: var(--tg-theme-secondary-bg-color, #f8f8f8);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      border: 1px solid var(--tg-theme-hint-color, #e5e5e5);
     }
 
-    .api-links {
+    .order-header {
       display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-top: 2rem;
-      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
     }
 
-    .api-link {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      padding: 0.8rem 1.5rem;
-      border-radius: 25px;
-      text-decoration: none;
-      transition: background 0.3s;
+    .order-id {
+      font-weight: bold;
+      color: var(--tg-theme-text-color, #333333);
     }
 
-    .api-link:hover {
-      background: rgba(255, 255, 255, 0.3);
+    .order-status {
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
     }
 
-    footer {
-      background: rgba(0, 0, 0, 0.3);
-      color: white;
+    .status-pending {
+      background: #FFF3CD;
+      color: #856404;
+    }
+
+    .status-confirmed {
+      background: #D4EDDA;
+      color: #155724;
+    }
+
+    .status-ready {
+      background: #D1ECF1;
+      color: #0C5460;
+    }
+
+    .order-details {
+      color: var(--tg-theme-hint-color, #666666);
+      font-size: 0.9rem;
+    }
+
+    .order-total {
+      font-weight: bold;
+      color: var(--tg-theme-text-color, #333333);
+      margin-top: 10px;
+    }
+
+    .empty-state {
       text-align: center;
-      padding: 2rem 0;
-      margin-top: 4rem;
+      padding: 40px 20px;
+      color: var(--tg-theme-hint-color, #666666);
     }
 
-    .domains {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
-      margin-top: 2rem;
+    .empty-state h3 {
+      margin-bottom: 10px;
+      color: var(--tg-theme-text-color, #333333);
     }
 
-    .domain {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 1rem;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+    /* Кнопки действий */
+    .action-button {
+      background: var(--tg-theme-button-color, #007AFF);
+      color: var(--tg-theme-button-text-color, #ffffff);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      transition: opacity 0.2s;
     }
 
-    .domain a {
-      color: #ffd93d;
-      text-decoration: none;
+    .action-button:hover {
+      opacity: 0.8;
     }
 
-    .domain a:hover {
-      text-decoration: underline;
+    .action-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
-    @media (max-width: 768px) {
+    /* Адаптивность */
+    @media (max-width: 480px) {
       .hero h1 {
-        font-size: 2rem;
+        font-size: 1.5rem;
       }
 
-      .nav {
-        flex-direction: column;
-        gap: 0.5rem;
+      .container {
+        padding: 15px;
       }
 
-      .api-links {
-        flex-direction: column;
-        align-items: center;
+      .nav-button {
+        padding: 8px 16px;
+        font-size: 13px;
       }
     }
   </style>
 </head>
 
 <body>
-  <header>
-    <div class="container">
-      <div class="header-content">
-        <div class="logo">🏪 BotGarden Store</div>
-        <nav class="nav">
-          <a href="#features">Возможности</a>
-          <a href="#api">API</a>
-          <a href="/api/docs">Документация</a>
-        </nav>
+  <!-- Навигация -->
+  <nav class="nav">
+    <div class="nav-buttons">
+      <button class="nav-button active" onclick="showPage('page-main')">🏠 Главная</button>
+      <button class="nav-button" onclick="showPage('page-orders')">📋 Мои заказы</button>
+    </div>
+  </nav>
+
+  <!-- Основной контент -->
+  <div class="main-content">
+    <!-- Страница "Главная" -->
+    <div id="page-main" class="page active">
+      <div class="container">
+        <div class="hero">
+          <h1>🌯 Шаурма от Райхана</h1>
+          <p>Лучшая шаурма в городе!<br>Свежие ингредиенты, быстрая доставка</p>
+        </div>
+
+        <div class="menu-grid">
+          <div class="menu-category" onclick="openCategory('shawarma')">
+            <h3>🌯 Шаурма</h3>
+            <p>Классическая, вегетарианская, в сырном лаваше</p>
+          </div>
+
+          <div class="menu-category" onclick="openCategory('drinks')">
+            <h3>🥤 Напитки</h3>
+            <p>Газированные напитки, соки, вода</p>
+          </div>
+
+          <div class="menu-category" onclick="openCategory('cart')">
+            <h3>🛒 Корзина</h3>
+            <p>Ваши выбранные товары</p>
+          </div>
+        </div>
+
+        <button class="action-button" onclick="testTelegramData()">
+          📱 Проверить данные Telegram
+        </button>
       </div>
     </div>
-  </header>
 
-  <main>
-    <div class="container">
-      <section class="hero">
-        <h1>🌯 Shawarma Bot</h1>
-        <p>Production-ready Telegram бот для заказа шаурмы с полным функционалом корзины, системой заказов и REST API
-        </p>
-        <a href="/api/docs" class="cta-button">🚀 Попробовать API</a>
-      </section>
+    <!-- Страница "Список заказов" -->
+    <div id="page-orders" class="page">
+      <div class="container">
+        <h2>📋 Мои заказы</h2>
 
-      <section id="features" class="features">
-        <div class="feature">
-          <h3>🤖 Telegram Bot</h3>
-          <p>Полнофункциональный бот с корзиной товаров, системой заказов и уведомлениями для персонала.</p>
+        <div class="orders-container" id="orders-list">
+          <!-- Заказы будут загружены динамически -->
         </div>
 
-        <div class="feature">
-          <h3>🚀 REST API</h3>
-          <p>Современный API с Swagger документацией, аутентификацией и rate limiting для интеграций.</p>
-        </div>
-
-        <div class="feature">
-          <h3>🏗️ Production Ready</h3>
-          <p>Docker контейнеризация, автоматический деплой, мониторинг и логирование.</p>
-        </div>
-      </section>
-
-      <section id="api" class="api-section">
-        <h2>📡 API Endpoints</h2>
-        <p>Наш REST API предоставляет полный доступ к функционалу бота</p>
-
-        <div class="api-links">
-          <a href="/api/docs" class="api-link">📚 Swagger UI</a>
-          <a href="/health" class="api-link">❤️ Health Check</a>
-          <a href="/api/menu/categories" class="api-link">🍽️ Menu API</a>
-        </div>
-      </section>
-
-      <section class="domains">
-        <div class="domain">
-          <strong>🛒 botgarden.shop</strong><br>
-          <small>Торговая площадка ботов</small><br>
-          <a href="http://botgarden.shop" target="_blank">Перейти →</a>
-        </div>
-
-        <div class="domain">
-          <strong>🔧 botgarden.tech</strong><br>
-          <small>Техническая документация</small><br>
-          <a href="http://botgarden.tech" target="_blank">Перейти →</a>
-        </div>
-
-        <div class="domain">
-          <strong>🌐 botcraft.tech</strong><br>
-          <small>Сервис крафт-ботов</small><br>
-          <a href="http://botcraft.tech" target="_blank">Перейти →</a>
-        </div>
-
-        <div class="domain">
-          <strong>🎮 botgrover.fun</strong><br>
-          <small>Игровые боты</small><br>
-          <a href="http://botgrover.fun" target="_blank">Перейти →</a>
-        </div>
-
-        <div class="domain">
-          <strong>🇷🇺 botgrover.ru</strong><br>
-          <small>Российская локализация</small><br>
-          <a href="http://botgrover.ru" target="_blank">Перейти →</a>
-        </div>
-      </section>
+        <button class="action-button" onclick="loadOrders()">
+          🔄 Обновить заказы
+        </button>
+      </div>
     </div>
-  </main>
+  </div>
 
-  <footer>
-    <div class="container">
-      <p>&copy; 2025 BotGarden Store. Сделано с ❤️ для любителей шаурмы и качественных ботов.</p>
-      <p>🌯 Shawarma Bot v2.5 | 📡 REST API | 🐳 Docker Ready</p>
-    </div>
-  </footer>
+  <script>
+    // Инициализация Telegram Web App
+    const tg = window.Telegram?.WebApp;
+
+    // Расширяем приложение на весь экран
+    if (tg) {
+      tg.ready();
+      tg.expand();
+
+      // Устанавливаем цвета темы
+      document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
+      document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#333333');
+      document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#007AFF');
+      document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#ffffff');
+      document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', tg.themeParams.secondary_bg_color || '#f8f8f8');
+      document.documentElement.style.setProperty('--tg-theme-hint-color', tg.themeParams.hint_color || '#999999');
+      document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams.link_color || '#0066CC');
+
+      console.log('Telegram Web App инициализирован:', tg.initData);
+    }
+
+    // Функция переключения страниц
+    function showPage(pageId) {
+      // Скрываем все страницы
+      document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+      });
+
+      // Убираем активный класс с кнопок навигации
+      document.querySelectorAll('.nav-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // Показываем выбранную страницу
+      document.getElementById(pageId).classList.add('active');
+
+      // Активируем соответствующую кнопку навигации
+      const activeButton = pageId === 'page-main' ? 0 : 1;
+      document.querySelectorAll('.nav-button')[activeButton].classList.add('active');
+
+      // Обновляем URL hash (опционально)
+      const hashMap = {
+        'page-main': '#main',
+        'page-orders': '#orders'
+      };
+      location.hash = hashMap[pageId] || '#main';
+
+      // Загружаем данные страницы
+      if (pageId === 'page-orders') {
+        loadOrders();
+      }
+    }
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function () {
+      // Определяем стартовую страницу по hash
+      const defaultPage = location.hash === '#orders' ? 'page-orders' : 'page-main';
+      showPage(defaultPage);
+
+      // Слушаем изменения hash
+      window.addEventListener('hashchange', () => {
+        if (location.hash === '#orders') {
+          showPage('page-orders');
+        } else {
+          showPage('page-main');
+        }
+      });
+    });
+
+    // Функция открытия категории (заглушка)
+    function openCategory(category) {
+      if (tg) {
+        tg.showAlert(`Открываем категорию: ${category}\n\nВ полной версии здесь будет меню товаров.`);
+      } else {
+        alert(`Открываем категорию: ${category}`);
+      }
+    }
+
+    // Функция тестирования данных Telegram
+    function testTelegramData() {
+      if (tg) {
+        const user = tg.initDataUnsafe?.user;
+        const message = user
+          ? `Привет, ${user.first_name}!\n\nТвой ID: ${user.id}\nUsername: ${user.username || 'не указан'}\nПремиум: ${user.is_premium ? 'да' : 'нет'}`
+          : 'Данные пользователя недоступны';
+
+        tg.showAlert(message);
+      } else {
+        alert('Telegram Web App SDK недоступен.\nВозможно, вы открыли страницу не в Telegram.');
+      }
+    }
+
+    // Функция загрузки заказов
+    function loadOrders() {
+      const ordersList = document.getElementById('orders-list');
+
+      // Показываем индикатор загрузки
+      ordersList.innerHTML = '<div style="text-align: center; padding: 20px;">🔄 Загрузка...</div>';
+
+      // Имитируем загрузку данных
+      setTimeout(() => {
+        // Пример данных заказов
+        const mockOrders = [
+          {
+            id: '12345',
+            status: 'confirmed',
+            items: ['Шаурма классик большая', 'Кола'],
+            total: 370,
+            date: '2025-01-01 14:30'
+          },
+          {
+            id: '12346',
+            status: 'ready',
+            items: ['Шаурма вегетарианская', 'Сок апельсиновый'],
+            total: 340,
+            date: '2025-01-01 15:15'
+          }
+        ];
+
+        if (mockOrders.length === 0) {
+          ordersList.innerHTML = `
+            <div class="empty-state">
+              <h3>📭 Заказов пока нет</h3>
+              <p>Выберите товары из меню и оформите первый заказ!</p>
+            </div>
+          `;
+        } else {
+          ordersList.innerHTML = mockOrders.map(order => `
+            <div class="order-card">
+              <div class="order-header">
+                <span class="order-id">Заказ #${order.id}</span>
+                <span class="order-status status-${order.status}">
+                  ${getStatusText(order.status)}
+                </span>
+              </div>
+              <div class="order-details">
+                📅 ${order.date}<br>
+                🛒 ${order.items.join(', ')}
+              </div>
+              <div class="order-total">💰 ${order.total}₽</div>
+            </div>
+          `).join('');
+        }
+      }, 1000);
+    }
+
+    // Функция получения текста статуса
+    function getStatusText(status) {
+      const statusMap = {
+        'pending': '⏳ В ожидании',
+        'confirmed': '✅ Подтвержден',
+        'preparing': '👨‍🍳 Готовится',
+        'ready': '🎉 Готов',
+        'delivered': '✅ Доставлен'
+      };
+      return statusMap[status] || '❓ Неизвестно';
+    }
+
+    // Обработчик изменения темы
+    if (tg) {
+      tg.onEvent('themeChanged', () => {
+        console.log('Тема изменилась');
+        // Можно обновить CSS переменные
+      });
+    }
+  </script>
 </body>
 
 </html>

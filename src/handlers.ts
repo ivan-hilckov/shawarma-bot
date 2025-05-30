@@ -16,7 +16,7 @@ export function handleStart(bot: BotInstance, msg: BotMessage): void {
 
 Здесь вы можете посмотреть наше меню и выбрать что-то вкусное.
 
-Выберите категорию:
+Выберите действие:
   `;
 
   const keyboard = {
@@ -29,8 +29,43 @@ export function handleStart(bot: BotInstance, msg: BotMessage): void {
     one_time_keyboard: false,
   };
 
+  // Отправляем приветствие с обычной клавиатурой
   bot.sendMessage(chatId, welcomeMessage, {
     reply_markup: keyboard,
+  });
+
+  // Отправляем отдельное сообщение с кнопкой Mini App
+  const miniAppMessage = `
+🚀 Попробуйте наше новое Mini App!
+
+В мини-приложении вы можете:
+• Просматривать меню с фотографиями
+• Управлять корзиной
+• Отслеживать заказы
+• Получать персональные рекомендации
+
+Нажмите кнопку ниже, чтобы открыть приложение:
+  `;
+
+  const miniAppKeyboard = {
+    inline_keyboard: [
+      [
+        {
+          text: '🌯 Открыть Шаурма App',
+          web_app: { url: 'https://botgarden.store/' },
+        },
+      ],
+      [
+        {
+          text: '📱 Что такое Mini App?',
+          callback_data: 'about_miniapp',
+        },
+      ],
+    ],
+  };
+
+  bot.sendMessage(chatId, miniAppMessage, {
+    reply_markup: miniAppKeyboard,
   });
 }
 
@@ -836,4 +871,103 @@ function getStatusEmoji(status: string): string {
     delivered: '✅',
   };
   return statusMap[status] || '❓';
+}
+
+// Обработчик информации о Mini App
+export async function handleAboutMiniApp(bot: BotInstance, query: BotCallbackQuery): Promise<void> {
+  const message = `
+📱 Что такое Telegram Mini App?
+
+Mini App - это веб-приложение, встроенное прямо в Telegram. Преимущества:
+
+✅ Не нужно устанавливать отдельное приложение
+✅ Быстрый доступ прямо из чата
+✅ Адаптируется под тему Telegram
+✅ Безопасная передача данных
+✅ Работает на всех устройствах
+
+🌯 В нашем Mini App вы можете:
+• Просматривать полное меню с фотографиями
+• Добавлять товары в корзину
+• Оформлять заказы онлайн
+• Отслеживать статус заказов
+• Получать персональные рекомендации
+
+Попробуйте прямо сейчас! 👆
+  `;
+
+  try {
+    await bot.answerCallbackQuery(query.id, { text: 'ℹ️ Информация о Mini App' });
+
+    if (query.message?.message_id) {
+      await bot.editMessageText(message, {
+        chat_id: query.message.chat.id,
+        message_id: query.message.message_id,
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: '🌯 Открыть Шаурма App',
+                web_app: { url: 'https://botgarden.store/' },
+              },
+            ],
+            [
+              {
+                text: '🔙 Назад к началу',
+                callback_data: 'back_to_start',
+              },
+            ],
+          ],
+        },
+      });
+    }
+  } catch (error) {
+    console.error('Error handling about mini app:', error);
+  }
+}
+
+// Обработчик возврата к началу
+export async function handleBackToStart(bot: BotInstance, query: BotCallbackQuery): Promise<void> {
+  const miniAppMessage = `
+🚀 Попробуйте наше новое Mini App!
+
+В мини-приложении вы можете:
+• Просматривать меню с фотографиями
+• Управлять корзиной
+• Отслеживать заказы
+• Получать персональные рекомендации
+
+Нажмите кнопку ниже, чтобы открыть приложение:
+  `;
+
+  const miniAppKeyboard = {
+    inline_keyboard: [
+      [
+        {
+          text: '🌯 Открыть Шаурма App',
+          web_app: { url: 'https://botgarden.store/' },
+        },
+      ],
+      [
+        {
+          text: '📱 Что такое Mini App?',
+          callback_data: 'about_miniapp',
+        },
+      ],
+    ],
+  };
+
+  try {
+    await bot.answerCallbackQuery(query.id, { text: '🏠 Возврат к началу' });
+
+    if (query.message?.message_id) {
+      await bot.editMessageText(miniAppMessage, {
+        chat_id: query.message.chat.id,
+        message_id: query.message.message_id,
+        reply_markup: miniAppKeyboard,
+      });
+    }
+  } catch (error) {
+    console.error('Error handling back to start:', error);
+  }
 }

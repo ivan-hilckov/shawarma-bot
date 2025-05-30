@@ -114,6 +114,36 @@ else
     echo "❌ Папка assets не найдена"
 fi
 
+# Проверка Telegram Mini App
+echo ""
+echo "📱 Telegram Mini App:"
+if [ -f "/var/www/shawarma-bot/public/index.html" ]; then
+    echo "✅ Mini App файл найден"
+
+    # Проверка доступности через nginx
+    if curl -s -o /dev/null -w "%{http_code}" "http://localhost" -H "Host: botgarden.store" | grep -q "200"; then
+        echo "✅ Mini App доступен через nginx"
+
+        # Проверка Telegram WebApp SDK в HTML
+        if grep -q "telegram-web-app.js" "/var/www/shawarma-bot/public/index.html"; then
+            echo "✅ Telegram WebApp SDK подключен"
+        else
+            echo "⚠️ Telegram WebApp SDK не найден в HTML"
+        fi
+
+        # Проверка основных функций
+        if grep -q "showPage\|testTelegramData\|loadOrders" "/var/www/shawarma-bot/public/index.html"; then
+            echo "✅ Основные функции Mini App найдены"
+        else
+            echo "⚠️ Некоторые функции Mini App отсутствуют"
+        fi
+    else
+        echo "❌ Mini App недоступен через nginx"
+    fi
+else
+    echo "❌ Mini App файл не найден"
+fi
+
 # Проверка сетевого подключения между сервисами
 echo ""
 echo "🌐 Сетевое подключение:"
@@ -154,3 +184,5 @@ echo "- Логи API: docker-compose logs -f api"
 echo "- Перезапуск: docker-compose restart"
 echo "- API документация: http://localhost:3000/api/docs"
 echo "- Тест API: curl http://localhost:3000/api/health"
+echo "- Тест Mini App: curl -H 'Host: botgarden.store' http://localhost/"
+echo "- Проверка nginx: sudo nginx -t && sudo systemctl status nginx"
