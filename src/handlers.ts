@@ -23,7 +23,7 @@ export function handleStart(bot: BotInstance, msg: BotMessage): void {
     keyboard: [
       [{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }],
       [{ text: '🛒 Корзина' }, { text: '📋 Мои заказы' }],
-      [{ text: 'ℹ️ О нас' }],
+      [{ text: '📱 Mini App' }, { text: 'ℹ️ О нас' }],
     ],
     resize_keyboard: true,
     one_time_keyboard: false,
@@ -970,4 +970,51 @@ export async function handleBackToStart(bot: BotInstance, query: BotCallbackQuer
   } catch (error) {
     console.error('Error handling back to start:', error);
   }
+}
+
+// Обработчик кнопки Mini App из главного меню
+export function handleMiniApp(bot: BotInstance, msg: BotMessage): void {
+  const chatId = msg.chat.id;
+  const userName = msg.from?.first_name || 'Друг';
+
+  const miniAppMessage = `
+🚀 Привет, ${userName}! Добро пожаловать в наше Mini App!
+
+В мини-приложении вы можете:
+• 🍽️ Просматривать полное меню с фотографиями
+• 🛒 Добавлять товары в корзину
+• 📦 Оформлять заказы онлайн
+• 📊 Отслеживать статус заказов в реальном времени
+• 🎯 Получать персональные рекомендации
+• 🎨 Пользоваться интерфейсом, адаптированным под вашу тему Telegram
+
+Нажмите кнопку ниже, чтобы открыть приложение:
+  `;
+
+  const miniAppKeyboard = {
+    inline_keyboard: [
+      [
+        {
+          text: '🌯 Открыть Шаурма App',
+          web_app: { url: 'https://botgarden.store/' },
+        },
+      ],
+      [
+        {
+          text: '📱 Что такое Mini App?',
+          callback_data: 'about_miniapp',
+        },
+      ],
+      [
+        {
+          text: '🔙 Назад в меню',
+          callback_data: 'back_to_menu',
+        },
+      ],
+    ],
+  };
+
+  bot.sendMessage(chatId, miniAppMessage, {
+    reply_markup: miniAppKeyboard,
+  });
 }

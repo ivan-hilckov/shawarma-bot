@@ -18,6 +18,7 @@ import {
   handleMyOrders,
   handleOrderDetails,
   handleAdminOrderAction,
+  handleMiniApp,
   handleAboutMiniApp,
   handleBackToStart,
 } from './handlers';
@@ -80,6 +81,10 @@ bot.on('message', (msg: BotMessage) => {
 
     case '📋 Мои заказы':
       handleMyOrders(bot, msg);
+      break;
+
+    case '📱 Mini App':
+      handleMiniApp(bot, msg);
       break;
 
     default:

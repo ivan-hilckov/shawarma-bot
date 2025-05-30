@@ -5,6 +5,7 @@ import {
   handleAbout,
   handleItemSelection,
   handleBackToMenu,
+  handleMiniApp,
   handleAboutMiniApp,
   handleBackToStart,
 } from '../src/handlers';
@@ -413,6 +414,68 @@ describe('Handlers Module', () => {
 
       expect(mockBot.editMessageText).not.toHaveBeenCalled();
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123');
+    });
+  });
+
+  describe('handleMiniApp', () => {
+    test('должен отправлять информацию о Mini App с кнопкой запуска', () => {
+      handleMiniApp(mockBot, mockMessage);
+
+      expect(mockBot.sendMessage).toHaveBeenCalledWith(
+        123456,
+        expect.stringContaining('🚀 Привет, TestUser! Добро пожаловать в наше Mini App!'),
+        expect.objectContaining({
+          reply_markup: expect.objectContaining({
+            inline_keyboard: expect.arrayContaining([
+              expect.arrayContaining([
+                expect.objectContaining({
+                  text: '🌯 Открыть Шаурма App',
+                  web_app: { url: 'https://botgarden.store/' },
+                }),
+              ]),
+              expect.arrayContaining([
+                expect.objectContaining({
+                  text: '📱 Что такое Mini App?',
+                  callback_data: 'about_miniapp',
+                }),
+              ]),
+              expect.arrayContaining([
+                expect.objectContaining({
+                  text: '🔙 Назад в меню',
+                  callback_data: 'back_to_menu',
+                }),
+              ]),
+            ]),
+          }),
+        })
+      );
+    });
+
+    test("должен использовать 'Друг' если имя пользователя не указано", () => {
+      const messageWithoutName = {
+        ...mockMessage,
+        from: { id: 789 },
+      } as BotMessage;
+
+      handleMiniApp(mockBot, messageWithoutName);
+
+      expect(mockBot.sendMessage).toHaveBeenCalledWith(
+        123456,
+        expect.stringContaining('🚀 Привет, Друг! Добро пожаловать в наше Mini App!'),
+        expect.any(Object)
+      );
+    });
+
+    test('должен отправлять сообщение с корректным содержимым', () => {
+      handleMiniApp(mockBot, mockMessage);
+
+      expect(mockBot.sendMessage).toHaveBeenCalledWith(
+        123456,
+        expect.stringMatching(
+          /Просматривать полное меню с фотографиями[\s\S]*Добавлять товары в корзину[\s\S]*Оформлять заказы онлайн/
+        ),
+        expect.any(Object)
+      );
     });
   });
 
