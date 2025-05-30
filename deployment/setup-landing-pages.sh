@@ -23,6 +23,21 @@ fi
 # Создание директории для веб-файлов
 echo "📁 Создание директории $WEB_DIR..."
 mkdir -p "$WEB_DIR/public"
+mkdir -p "$WEB_DIR/assets"
+
+# Копирование изображений меню
+echo "📸 Копирование изображений меню..."
+
+if [ -d "$PROJECT_DIR/assets" ]; then
+    cp -r "$PROJECT_DIR/assets/"* "$WEB_DIR/assets/"
+    echo "✅ Папка assets скопирована"
+
+    # Подсчет изображений
+    IMAGES_COUNT=$(find "$WEB_DIR/assets" -name "*.jpeg" -o -name "*.jpg" -o -name "*.png" -o -name "*.gif" | wc -l)
+    echo "📊 Скопировано $IMAGES_COUNT изображений"
+else
+    echo "⚠️ Папка assets не найдена в $PROJECT_DIR/"
+fi
 
 # Копирование HTML файлов
 echo "📄 Копирование HTML страниц..."
@@ -73,7 +88,8 @@ fi
 echo "🔐 Установка прав доступа..."
 chown -R nginx:nginx "$WEB_DIR"
 find "$WEB_DIR/public" -name "*.html" -type f -exec chmod 644 {} \;
-chmod 755 "$WEB_DIR" "$WEB_DIR/public"
+find "$WEB_DIR/assets" -name "*.jpeg" -o -name "*.jpg" -o -name "*.png" -o -name "*.gif" | xargs chmod 644 2>/dev/null || true
+chmod 755 "$WEB_DIR" "$WEB_DIR/public" "$WEB_DIR/assets"
 
 # Проверка nginx конфигурации
 echo "🔧 Проверка nginx конфигурации..."
@@ -126,6 +142,28 @@ check_page "botgarden.tech" "Техническая документация"
 check_page "botcraft.tech" "Сервис крафт-ботов"
 check_page "botgrover.fun" "Игровые боты"
 check_page "botgrover.ru" "Российская локализация"
+
+# Проверка доступности изображений
+echo ""
+echo "🖼️ Проверка доступности изображений..."
+
+check_image() {
+    local image_name=$1
+
+    if curl -s -o /dev/null -w "%{http_code}" "http://localhost/assets/$image_name" -H "Host: botgarden.store" | grep -q "200"; then
+        echo "✅ /assets/$image_name - OK"
+    else
+        echo "❌ /assets/$image_name - FAIL"
+    fi
+}
+
+if [ -f "$WEB_DIR/assets/XXL.jpeg" ]; then
+    check_image "XXL.jpeg"
+fi
+
+if [ -f "$WEB_DIR/assets/XXL (3).jpeg" ]; then
+    check_image "XXL%20(3).jpeg"
+fi
 
 echo ""
 echo "🎯 Настройка завершена!"

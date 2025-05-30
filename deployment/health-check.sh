@@ -144,6 +144,30 @@ else
     echo "❌ Mini App файл не найден"
 fi
 
+# Проверка изображений меню
+echo ""
+echo "🖼️ Изображения меню:"
+if [ -d "/var/www/shawarma-bot/assets" ]; then
+    IMAGES_COUNT=$(find /var/www/shawarma-bot/assets -name "*.jpeg" -o -name "*.jpg" -o -name "*.png" -o -name "*.gif" | wc -l)
+    echo "✅ Найдено изображений: $IMAGES_COUNT"
+
+    # Проверка доступности через nginx
+    if curl -s -o /dev/null -w "%{http_code}" "http://localhost/assets/XXL.jpeg" -H "Host: botgarden.store" | grep -q "200"; then
+        echo "✅ Изображения доступны через nginx"
+    else
+        echo "❌ Изображения недоступны через nginx"
+    fi
+
+    # Проверка прав доступа
+    if [ -r "/var/www/shawarma-bot/assets/XXL.jpeg" ]; then
+        echo "✅ Права доступа к изображениям настроены"
+    else
+        echo "⚠️ Проблемы с правами доступа к изображениям"
+    fi
+else
+    echo "❌ Папка с изображениями не найдена"
+fi
+
 # Проверка сетевого подключения между сервисами
 echo ""
 echo "🌐 Сетевое подключение:"
@@ -185,4 +209,5 @@ echo "- Перезапуск: docker-compose restart"
 echo "- API документация: http://localhost:3000/api/docs"
 echo "- Тест API: curl http://localhost:3000/api/health"
 echo "- Тест Mini App: curl -H 'Host: botgarden.store' http://localhost/"
+echo "- Тест изображений: curl -H 'Host: botgarden.store' http://localhost/assets/XXL.jpeg"
 echo "- Проверка nginx: sudo nginx -t && sudo systemctl status nginx"
