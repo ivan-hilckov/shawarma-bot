@@ -114,6 +114,7 @@ describe('Types Module', () => {
         NODE_ENV: 'test',
         REDIS_URL: 'redis://localhost:6379',
         DATABASE_URL: 'postgresql://localhost:5432/test',
+        ASSETS_BASE_URL: 'https://example.com/assets',
 
         // API Configuration
         API_PORT: 3000,
@@ -137,6 +138,7 @@ describe('Types Module', () => {
       expect(config.NODE_ENV).toBe('test');
       expect(config.REDIS_URL).toBe('redis://localhost:6379');
       expect(config.DATABASE_URL).toBe('postgresql://localhost:5432/test');
+      expect(config.ASSETS_BASE_URL).toBe('https://example.com/assets');
       expect(config.API_PORT).toBe(3000);
       expect(config.API_HOST).toBe('localhost');
       expect(config.API_PREFIX).toBe('/api');
@@ -152,6 +154,7 @@ describe('Types Module', () => {
       expect(typeof config.NODE_ENV).toBe('string');
       expect(typeof config.REDIS_URL).toBe('string');
       expect(typeof config.DATABASE_URL).toBe('string');
+      expect(typeof config.ASSETS_BASE_URL).toBe('string');
       expect(typeof config.API_PORT).toBe('number');
       expect(typeof config.API_HOST).toBe('string');
       expect(typeof config.API_PREFIX).toBe('string');

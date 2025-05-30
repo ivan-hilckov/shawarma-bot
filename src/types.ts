@@ -5,6 +5,7 @@ export interface Config {
   NODE_ENV: string;
   REDIS_URL: string;
   DATABASE_URL: string;
+  ASSETS_BASE_URL: string; // Базовый URL для изображений (например, https://botgarden.store/assets)
   NOTIFICATIONS_CHAT_ID?: string; // ID канала/группы для уведомлений персонала
   ADMIN_USER_IDS?: string; // Список ID администраторов через запятую
 

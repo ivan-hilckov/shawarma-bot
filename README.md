@@ -350,6 +350,9 @@ BOT_TOKEN=your_telegram_bot_token
 NOTIFICATIONS_CHAT_ID=your_notifications_chat_id
 ADMIN_USER_IDS=123456789,987654321
 
+# Assets Configuration
+ASSETS_BASE_URL=https://botgarden.store/assets
+
 # Database
 DATABASE_URL=postgresql://shawarma_user:shawarma_pass@localhost:5432/shawarma_db
 

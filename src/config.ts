@@ -11,6 +11,7 @@ const config: Config = {
   DATABASE_URL:
     process.env.DATABASE_URL ||
     'postgresql://shawarma_user:shawarma_pass@localhost:5432/shawarma_db',
+  ASSETS_BASE_URL: process.env.ASSETS_BASE_URL || 'https://botgarden.store/assets',
 
   // API Configuration
   API_PORT: parseInt(process.env.API_PORT || '3000'),

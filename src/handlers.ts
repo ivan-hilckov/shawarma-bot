@@ -1,7 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
-
 import botApiClient from './api-client';
+import config from './config';
 import databaseService from './database';
 import { getMenuByCategory, getItemById } from './menu';
 import { BotInstance, BotMessage, BotCallbackQuery } from './types';
@@ -181,26 +179,20 @@ export function handleItemSelection(bot: BotInstance, query: BotCallbackQuery): 
 
   // Если у товара есть фотография, отправляем её
   if (item.photo) {
-    const photoPath = path.join(process.cwd(), item.photo);
+    // Формируем URL изображения вместо локального пути
+    const photoUrl = `${config.ASSETS_BASE_URL}/${item.photo.replace('assets/', '')}`;
 
-    // Проверяем, существует ли файл
-    if (fs.existsSync(photoPath)) {
-      console.log(`📸 Отправляем фото: ${photoPath}`);
-      bot
-        .sendPhoto(chatId, photoPath, {
-          caption: message,
-          reply_markup: keyboard,
-        })
-        .catch(error => {
-          console.error('❌ Ошибка отправки фото:', error);
-          // Если не удалось отправить фото, отправляем обычное сообщение
-          bot.sendMessage(chatId, message, { reply_markup: keyboard }).catch(() => {});
-        });
-    } else {
-      console.warn(`⚠️ Фото не найдено: ${photoPath}`);
-      // Если файл не найден, отправляем обычное сообщение
-      bot.sendMessage(chatId, message, { reply_markup: keyboard }).catch(() => {});
-    }
+    console.log(`📸 Отправляем фото по URL: ${photoUrl}`);
+    bot
+      .sendPhoto(chatId, photoUrl, {
+        caption: message,
+        reply_markup: keyboard,
+      })
+      .catch(error => {
+        console.error('❌ Ошибка отправки фото:', error);
+        // Если не удалось отправить фото, отправляем обычное сообщение
+        bot.sendMessage(chatId, message, { reply_markup: keyboard }).catch(() => {});
+      });
   } else {
     // Если фото нет, отправляем обычное сообщение
     if (query.message?.message_id) {

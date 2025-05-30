@@ -109,6 +109,9 @@ NODE_ENV=production
 # Database Configuration (для Docker)
 DATABASE_URL=postgresql://shawarma_user:shawarma_pass@postgres:5432/shawarma_db
 
+# Assets Configuration
+ASSETS_BASE_URL=https://botgarden.store/assets
+
 # PostgreSQL Configuration
 POSTGRES_DB=shawarma_db
 POSTGRES_USER=shawarma_user

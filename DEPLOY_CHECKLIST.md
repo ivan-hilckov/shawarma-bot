@@ -123,6 +123,11 @@ docker exec shawarma-bot env | grep API_BASE_URL
 
 # Должно быть: API_BASE_URL=http://api:3000/api
 
+# Проверить ASSETS_BASE_URL для изображений
+docker exec shawarma-bot env | grep ASSETS_BASE_URL
+
+# Должно быть: ASSETS_BASE_URL=https://botgarden.store/assets
+
 # Проверить сетевое подключение
 docker exec shawarma-bot wget -q --spider http://api:3000/api/health
 ```
