@@ -133,6 +133,7 @@ async function buildServer() {
 
     // Middleware для логирования запросов (отключено в тестах)
     if (config.NODE_ENV !== 'test') {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       fastify.addHook('onRequest', async (request, _reply) => {
         request.log.info(
           {

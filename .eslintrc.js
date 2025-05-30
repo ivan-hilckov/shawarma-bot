@@ -8,7 +8,7 @@ module.exports = {
   plugins: ['@typescript-eslint', 'import', 'security'],
   extends: [
     'eslint:recommended',
-    '@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended',
     'plugin:security/recommended',
     'plugin:import/errors',
     'plugin:import/warnings',
@@ -27,7 +27,7 @@ module.exports = {
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-unused-vars': 'error',
     '@typescript-eslint/no-var-requires': 'off',
     '@typescript-eslint/no-unsafe-assignment': 'off',

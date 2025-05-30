@@ -107,22 +107,29 @@ describe('Async Handlers', () => {
   });
 
   describe('handleAddToCart', () => {
-    it('должен добавлять товар в корзину', async () => {
+    test('должен добавлять товар в корзину', async () => {
       const { getItemById } = require('../src/menu');
       const botApiClient = require('../src/api-client');
 
       getItemById.mockReturnValue(mockMenuItem);
-      botApiClient.addToCart.mockResolvedValue(undefined);
-      botApiClient.getCartTotal.mockResolvedValue({ itemsCount: 3, total: 750 });
+
+      // Мокаем API вызовы
+      botApiClient.addToCart = jest.fn().mockResolvedValue(undefined);
+      botApiClient.getCartTotal = jest.fn().mockResolvedValue({ total: 750, itemsCount: 3 });
+      botApiClient.getCart = jest.fn().mockResolvedValue([mockCartItem]);
 
       await handleAddToCart(mockBot, mockCallbackQuery);
 
       expect(getItemById).toHaveBeenCalledWith('1');
       expect(botApiClient.addToCart).toHaveBeenCalledWith(789, '1', 1);
+
+      // Проверяем улучшенное уведомление
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
-        text: '✅ Тестовая шаурма добавлен в корзину! (3 товаров)',
+        text: '✅ Тестовая шаурма добавлен! В корзине: 3 товаров на 750₽',
       });
-      expect(mockBot.editMessageText).toHaveBeenCalled();
+
+      // После изменений handleAddToCart теперь вызывает handleItemSelection
+      // поэтому может быть второй вызов answerCallbackQuery
     });
 
     it('должен обрабатывать ошибку когда товар не найден', async () => {

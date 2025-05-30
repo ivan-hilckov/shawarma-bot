@@ -21,6 +21,12 @@ import {
   handleMiniApp,
   handleAboutMiniApp,
   handleBackToStart,
+  handleIncreaseFromItem,
+  handleDecreaseFromItem,
+  handleRemoveAllFromItem,
+  handleQuickAdd,
+  handleQuickIncrease,
+  handleQuickDecrease,
 } from './handlers';
 import NotificationService from './notifications';
 import { BotInstance, BotMessage, BotCallbackQuery } from './types';
@@ -75,10 +81,6 @@ bot.on('message', (msg: BotMessage) => {
       handleAbout(bot, msg);
       break;
 
-    case '🛒 Корзина':
-      handleViewCart(bot, msg);
-      break;
-
     case '📋 Мои заказы':
       handleMyOrders(bot, msg);
       break;
@@ -88,6 +90,12 @@ bot.on('message', (msg: BotMessage) => {
       break;
 
     default:
+      // Проверяем кнопку корзины (может быть с индикатором)
+      if (text && text.startsWith('🛒 Корзина')) {
+        handleViewCart(bot, msg);
+        break;
+      }
+
       // Если сообщение не распознано, показываем помощь
       bot.sendMessage(
         chatId,
@@ -131,6 +139,18 @@ bot.on('callback_query', (query: BotCallbackQuery) => {
       handleAboutMiniApp(bot, query);
     } else if (data === 'back_to_start') {
       handleBackToStart(bot, query);
+    } else if (data?.startsWith('increase_from_item_')) {
+      handleIncreaseFromItem(bot, query);
+    } else if (data?.startsWith('decrease_from_item_')) {
+      handleDecreaseFromItem(bot, query);
+    } else if (data?.startsWith('remove_all_from_item_')) {
+      handleRemoveAllFromItem(bot, query);
+    } else if (data?.startsWith('quick_add_')) {
+      handleQuickAdd(bot, query);
+    } else if (data?.startsWith('quick_increase_')) {
+      handleQuickIncrease(bot, query);
+    } else if (data?.startsWith('quick_decrease_')) {
+      handleQuickDecrease(bot, query);
     } else {
       bot.answerCallbackQuery(query.id, { text: 'Неизвестная команда' }).catch(() => {});
     }

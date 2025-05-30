@@ -2,11 +2,155 @@ import botApiClient from './api-client';
 import config from './config';
 import databaseService from './database';
 import { getMenuByCategory, getItemById } from './menu';
-import { BotInstance, BotMessage, BotCallbackQuery } from './types';
+import { BotInstance, BotMessage, BotCallbackQuery, MenuItem, CartItem } from './types';
+
+// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+
+// Получить количество товара в корзине пользователя
+async function getItemQuantityInCart(userId: number, itemId: string): Promise<number> {
+  try {
+    const cart = await botApiClient.getCart(userId);
+    const cartItem = cart.find(item => item.menuItem.id === itemId);
+    return cartItem ? cartItem.quantity : 0;
+  } catch (error) {
+    console.error('Error getting item quantity from cart:', error);
+    return 0;
+  }
+}
+
+// Создать клавиатуру с +/- для товара
+function createItemQuantityKeyboard(
+  itemId: string,
+  currentQuantity: number
+): Array<Array<{ text: string; callback_data: string }>> {
+  const keyboard = [];
+
+  if (currentQuantity === 0) {
+    // Если товара нет в корзине, показываем кнопку "Добавить в корзину"
+    keyboard.push([{ text: '🛒 Добавить в корзину', callback_data: `add_to_cart_${itemId}` }]);
+  } else {
+    // Если товар есть в корзине, показываем +/- интерфейс
+    keyboard.push([
+      { text: '➖', callback_data: `decrease_from_item_${itemId}` },
+      { text: `${currentQuantity} шт.`, callback_data: `quantity_${itemId}` },
+      { text: '➕', callback_data: `increase_from_item_${itemId}` },
+    ]);
+
+    // Добавляем кнопку быстрого удаления
+    keyboard.push([
+      { text: '🗑 Убрать все из корзины', callback_data: `remove_all_from_item_${itemId}` },
+    ]);
+  }
+
+  // Кнопки навигации
+  keyboard.push([
+    { text: '🛒 Перейти в корзину', callback_data: 'view_cart' },
+    { text: '🔙 Назад к каталогу', callback_data: 'back_to_menu' },
+  ]);
+
+  return keyboard;
+}
+
+// Создать главную клавиатуру с индикатором корзины
+async function createMainKeyboardWithBadge(userId?: number): Promise<any> {
+  let cartText = '🛒 Корзина';
+
+  if (userId) {
+    try {
+      const cartTotal = await botApiClient.getCartTotal(userId);
+      if (cartTotal.itemsCount > 0) {
+        cartText = `🛒 Корзина (${cartTotal.itemsCount})`;
+      }
+    } catch (error) {
+      console.error('Error getting cart total for badge:', error);
+    }
+  }
+
+  return {
+    keyboard: [
+      [{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }],
+      [{ text: cartText }, { text: '📋 Мои заказы' }],
+      [{ text: '📱 Mini App' }, { text: 'ℹ️ О нас' }],
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: false,
+  };
+}
+
+// Создать каталог с быстрыми кнопками +/-
+async function createCatalogKeyboard(
+  items: MenuItem[],
+  userId: number
+): Promise<Array<Array<{ text: string; callback_data: string }>>> {
+  const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
+
+  // Получаем корзину пользователя один раз
+  let cart: CartItem[] = [];
+  try {
+    cart = await botApiClient.getCart(userId);
+    // Убеждаемся что cart это массив
+    if (!Array.isArray(cart)) {
+      cart = [];
+    }
+  } catch (error) {
+    console.error('Error getting cart for catalog:', error);
+    cart = [];
+  }
+
+  items.forEach(item => {
+    const cartItem = cart.find(cartItem => cartItem.menuItem.id === item.id);
+    const quantity = cartItem ? cartItem.quantity : 0;
+
+    const photoIcon = item.photo ? '📸 ' : '';
+
+    // Строка с товаром и быстрыми кнопками
+    if (quantity === 0) {
+      keyboard.push([
+        { text: `👁 ${photoIcon}${item.name} - ${item.price}₽`, callback_data: `item_${item.id}` },
+        { text: '➕', callback_data: `quick_add_${item.id}` },
+      ]);
+    } else {
+      keyboard.push([
+        { text: `👁 ${photoIcon}${item.name} - ${item.price}₽`, callback_data: `item_${item.id}` },
+      ]);
+      keyboard.push([
+        { text: '➖', callback_data: `quick_decrease_${item.id}` },
+        { text: `${quantity} шт.`, callback_data: `item_${item.id}` },
+        { text: '➕', callback_data: `quick_increase_${item.id}` },
+      ]);
+    }
+  });
+
+  // Кнопка назад
+  keyboard.push([{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]);
+
+  return keyboard;
+}
+
+// Обновить главное меню с актуальным счетчиком корзины
+async function updateMainKeyboard(bot: BotInstance, chatId: number, userId: number): Promise<void> {
+  try {
+    const keyboard = await createMainKeyboardWithBadge(userId);
+    const message = `
+🥙 Главное меню
+
+Выберите действие:
+    `;
+
+    await bot.sendMessage(chatId, message, {
+      reply_markup: keyboard,
+    });
+  } catch (error) {
+    console.error('Error updating main keyboard:', error);
+  }
+}
+
+// ===== ОБРАБОТЧИКИ =====
 
 // Обработчик команды /start
-export function handleStart(bot: BotInstance, msg: BotMessage): void {
+export async function handleStart(bot: BotInstance, msg: BotMessage): Promise<void> {
   const chatId = msg.chat.id;
+  const userId = msg.from?.id;
   const userName = msg.from?.first_name || 'Друг';
 
   const welcomeMessage = `
@@ -17,17 +161,10 @@ export function handleStart(bot: BotInstance, msg: BotMessage): void {
 Выберите действие:
   `;
 
-  const keyboard = {
-    keyboard: [
-      [{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }],
-      [{ text: '🛒 Корзина' }, { text: '📋 Мои заказы' }],
-      [{ text: '📱 Mini App' }, { text: 'ℹ️ О нас' }],
-    ],
-    resize_keyboard: true,
-    one_time_keyboard: false,
-  };
+  // Создаем клавиатуру с индикатором корзины
+  const keyboard = await createMainKeyboardWithBadge(userId);
 
-  // Отправляем приветствие с обычной клавиатурой
+  // Отправляем приветствие с обновленной клавиатурой
   bot.sendMessage(chatId, welcomeMessage, {
     reply_markup: keyboard,
   });
@@ -68,29 +205,29 @@ export function handleStart(bot: BotInstance, msg: BotMessage): void {
 }
 
 // Обработчик категории "Шаурма"
-export function handleShawarmaMenu(bot: BotInstance, msg: BotMessage): void {
+export async function handleShawarmaMenu(bot: BotInstance, msg: BotMessage): Promise<void> {
   const chatId = msg.chat.id;
+  const userId = msg.from?.id;
   const items = getMenuByCategory('shawarma');
+
+  if (!userId) {
+    bot.sendMessage(chatId, 'Ошибка: не удалось определить пользователя');
+    return;
+  }
 
   let message = '🌯 Наша шаурма:\n\n';
 
-  const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
-
+  // Добавляем краткое описание товаров в текст
   items.forEach((item, index) => {
     const photoIcon = item.photo ? '📸 ' : '';
-    message += `${index + 1}. ${photoIcon}${item.name}\n`;
-    message += `   💰 ${item.price} руб.\n`;
+    message += `${index + 1}. ${photoIcon}${item.name} - ${item.price}₽\n`;
     message += `   📝 ${item.description}\n\n`;
-
-    keyboard.push([
-      {
-        text: `${photoIcon}${item.name} - ${item.price}₽`,
-        callback_data: `item_${item.id}`,
-      },
-    ]);
   });
 
-  keyboard.push([{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]);
+  message += `💡 Используйте кнопки ➕ для быстрого добавления или 👁 для подробной информации о товаре.`;
+
+  // Создаем клавиатуру с быстрыми кнопками
+  const keyboard = await createCatalogKeyboard(items, userId);
 
   bot.sendMessage(chatId, message, {
     reply_markup: { inline_keyboard: keyboard },
@@ -98,28 +235,28 @@ export function handleShawarmaMenu(bot: BotInstance, msg: BotMessage): void {
 }
 
 // Обработчик категории "Напитки"
-export function handleDrinksMenu(bot: BotInstance, msg: BotMessage): void {
+export async function handleDrinksMenu(bot: BotInstance, msg: BotMessage): Promise<void> {
   const chatId = msg.chat.id;
+  const userId = msg.from?.id;
   const items = getMenuByCategory('drinks');
+
+  if (!userId) {
+    bot.sendMessage(chatId, 'Ошибка: не удалось определить пользователя');
+    return;
+  }
 
   let message = '🥤 Наши напитки:\n\n';
 
-  const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
-
+  // Добавляем краткое описание товаров в текст
   items.forEach((item, index) => {
-    message += `${index + 1}. ${item.name}\n`;
-    message += `   💰 ${item.price} руб.\n`;
+    message += `${index + 1}. ${item.name} - ${item.price}₽\n`;
     message += `   📝 ${item.description}\n\n`;
-
-    keyboard.push([
-      {
-        text: `${item.name} - ${item.price}₽`,
-        callback_data: `item_${item.id}`,
-      },
-    ]);
   });
 
-  keyboard.push([{ text: '🔙 Назад в меню', callback_data: 'back_to_menu' }]);
+  message += `💡 Используйте кнопки ➕ для быстрого добавления или 👁 для подробной информации о товаре.`;
+
+  // Создаем клавиатуру с быстрыми кнопками
+  const keyboard = await createCatalogKeyboard(items, userId);
 
   bot.sendMessage(chatId, message, {
     reply_markup: { inline_keyboard: keyboard },
@@ -145,11 +282,15 @@ export function handleAbout(bot: BotInstance, msg: BotMessage): void {
 }
 
 // Обработчик выбора товара
-export function handleItemSelection(bot: BotInstance, query: BotCallbackQuery): void {
+export async function handleItemSelection(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
   const chatId = query.message?.chat.id;
+  const userId = query.from?.id;
   const itemId = query.data?.replace('item_', '');
 
-  if (!chatId || !itemId) {
+  if (!chatId || !itemId || !userId) {
     bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
     return;
   }
@@ -161,20 +302,29 @@ export function handleItemSelection(bot: BotInstance, query: BotCallbackQuery): 
     return;
   }
 
-  const message = `
-✅ ${item.name}
+  // Получаем текущее количество товара в корзине
+  const currentQuantity = await getItemQuantityInCart(userId, itemId);
+
+  // Формируем сообщение с подробной информацией
+  let message = `
+📦 ${item.name}
 
 💰 Цена: ${item.price} руб.
 📝 ${item.description}
+`;
 
-Выберите действие:
-  `;
+  // Добавляем информацию о корзине
+  if (currentQuantity > 0) {
+    const subtotal = item.price * currentQuantity;
+    message += `\n🛒 В корзине: ${currentQuantity} шт.`;
+    message += `\n💰 Подытог: ${subtotal}₽`;
+  }
 
+  message += `\n\nВыберите действие:`;
+
+  // Создаем клавиатуру с +/- интерфейсом
   const keyboard = {
-    inline_keyboard: [
-      [{ text: '🛒 Добавить в корзину', callback_data: `add_to_cart_${item.id}` }],
-      [{ text: '🔙 Назад к меню', callback_data: 'back_to_menu' }],
-    ],
+    inline_keyboard: createItemQuantityKeyboard(itemId, currentQuantity),
   };
 
   // Если у товара есть фотография, отправляем её
@@ -194,7 +344,7 @@ export function handleItemSelection(bot: BotInstance, query: BotCallbackQuery): 
         bot.sendMessage(chatId, message, { reply_markup: keyboard }).catch(() => {});
       });
   } else {
-    // Если фото нет, отправляем обычное сообщение
+    // Если фото нет, отправляем/редактируем сообщение
     if (query.message?.message_id) {
       bot
         .editMessageText(message, {
@@ -206,15 +356,20 @@ export function handleItemSelection(bot: BotInstance, query: BotCallbackQuery): 
     }
   }
 
-  bot.answerCallbackQuery(query.id, { text: `Выбрано: ${item.name}` }).catch(() => {});
+  // Улучшенное уведомление
+  const notificationText =
+    currentQuantity > 0 ? `📦 ${item.name} • В корзине: ${currentQuantity} шт.` : `📦 ${item.name}`;
+
+  bot.answerCallbackQuery(query.id, { text: notificationText }).catch(() => {});
 }
 
 // Обработчик возврата в главное меню
-export function handleBackToMenu(bot: BotInstance, query: BotCallbackQuery): void {
+export async function handleBackToMenu(bot: BotInstance, query: BotCallbackQuery): Promise<void> {
   const chatId = query.message?.chat.id;
+  const userId = query.from?.id;
   const userName = query.from?.first_name || 'Друг';
 
-  if (!chatId) {
+  if (!chatId || !userId) {
     bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
     return;
   }
@@ -227,6 +382,9 @@ export function handleBackToMenu(bot: BotInstance, query: BotCallbackQuery): voi
 Выберите категорию:
   `;
 
+  // Создаем клавиатуру с актуальным счетчиком корзины
+  const keyboard = await createMainKeyboardWithBadge(userId);
+
   if (query.message?.message_id) {
     bot
       .editMessageText(welcomeMessage, {
@@ -236,7 +394,12 @@ export function handleBackToMenu(bot: BotInstance, query: BotCallbackQuery): voi
       .catch(() => {});
   }
 
-  bot.answerCallbackQuery(query.id).catch(() => {});
+  // Обновляем главную клавиатуру с актуальным счетчиком
+  bot.sendMessage(chatId, '🏠 Главное меню обновлен', {
+    reply_markup: keyboard,
+  });
+
+  bot.answerCallbackQuery(query.id, { text: '🏠 Возврат в главное меню' }).catch(() => {});
 }
 
 // Обработчик добавления товара в корзину
@@ -261,40 +424,24 @@ export async function handleAddToCart(bot: BotInstance, query: BotCallbackQuery)
     await botApiClient.addToCart(userId, item.id, 1);
     const cartTotal = await botApiClient.getCartTotal(userId);
     const cartCount = cartTotal.itemsCount;
+    const cartTotalPrice = cartTotal.total;
 
+    // Улучшенное уведомление с подробной информацией
     bot
       .answerCallbackQuery(query.id, {
-        text: `✅ ${item.name} добавлен в корзину! (${cartCount} товаров)`,
+        text: `✅ ${item.name} добавлен! В корзине: ${cartCount} товаров на ${cartTotalPrice}₽`,
       })
       .catch(() => {});
 
-    // Обновляем сообщение с кнопкой "Перейти в корзину"
-    const message = `
-✅ ${item.name} добавлен в корзину!
-
-💰 Цена: ${item.price} руб.
-📝 ${item.description}
-
-🛒 В корзине: ${cartCount} товаров
-    `;
-
-    const keyboard = {
-      inline_keyboard: [
-        [{ text: '🛒 Перейти в корзину', callback_data: 'view_cart' }],
-        [{ text: '➕ Добавить еще', callback_data: `add_to_cart_${item.id}` }],
-        [{ text: '🔙 Назад к меню', callback_data: 'back_to_menu' }],
-      ],
+    // Вместо смены интерфейса, обновляем тот же экран товара
+    // Создаем новый query объект для вызова handleItemSelection
+    const updatedQuery = {
+      ...query,
+      data: `item_${itemId}`,
     };
 
-    if (query.message?.message_id) {
-      bot
-        .editMessageText(message, {
-          chat_id: chatId,
-          message_id: query.message.message_id,
-          reply_markup: keyboard,
-        })
-        .catch(() => {});
-    }
+    // Вызываем обработчик выбора товара для обновления интерфейса
+    await handleItemSelection(bot, updatedQuery);
   } catch (error) {
     console.error('Error adding to cart:', error);
     bot.answerCallbackQuery(query.id, { text: 'Ошибка при добавлении в корзину' }).catch(() => {});
@@ -1009,4 +1156,274 @@ export function handleMiniApp(bot: BotInstance, msg: BotMessage): void {
   bot.sendMessage(chatId, miniAppMessage, {
     reply_markup: miniAppKeyboard,
   });
+}
+
+// Обработчик увеличения количества товара с экрана товара
+export async function handleIncreaseFromItem(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  const userId = query.from?.id;
+  const itemId = query.data?.replace('increase_from_item_', '');
+
+  if (!userId || !itemId) {
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
+    return;
+  }
+
+  try {
+    const cart = await botApiClient.getCart(userId);
+    const cartItem = cart.find((item: any) => item.menuItem.id === itemId);
+
+    if (cartItem) {
+      await botApiClient.updateCartQuantity(userId, itemId, cartItem.quantity + 1);
+
+      // Получаем обновленную информацию о корзине для уведомления
+      const cartTotal = await botApiClient.getCartTotal(userId);
+      const item = getItemById(itemId);
+
+      bot
+        .answerCallbackQuery(query.id, {
+          text: `➕ ${item?.name} добавлен! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
+        })
+        .catch(() => {});
+
+      // Обновляем экран товара
+      const updatedQuery = { ...query, data: `item_${itemId}` };
+      await handleItemSelection(bot, updatedQuery);
+    }
+  } catch (error) {
+    console.error('Error increasing quantity from item:', error);
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
+  }
+}
+
+// Обработчик уменьшения количества товара с экрана товара
+export async function handleDecreaseFromItem(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  const userId = query.from?.id;
+  const itemId = query.data?.replace('decrease_from_item_', '');
+
+  if (!userId || !itemId) {
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
+    return;
+  }
+
+  try {
+    const cart = await botApiClient.getCart(userId);
+    const cartItem = cart.find((item: any) => item.menuItem.id === itemId);
+
+    if (cartItem) {
+      const newQuantity = cartItem.quantity - 1;
+      if (newQuantity <= 0) {
+        await botApiClient.removeFromCart(userId, itemId);
+        bot.answerCallbackQuery(query.id, { text: '🗑 Товар удален из корзины' }).catch(() => {});
+      } else {
+        await botApiClient.updateCartQuantity(userId, itemId, newQuantity);
+
+        // Получаем обновленную информацию о корзине для уведомления
+        const cartTotal = await botApiClient.getCartTotal(userId);
+        const item = getItemById(itemId);
+
+        bot
+          .answerCallbackQuery(query.id, {
+            text: `➖ ${item?.name} убран! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
+          })
+          .catch(() => {});
+      }
+
+      // Обновляем экран товара
+      const updatedQuery = { ...query, data: `item_${itemId}` };
+      await handleItemSelection(bot, updatedQuery);
+    }
+  } catch (error) {
+    console.error('Error decreasing quantity from item:', error);
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
+  }
+}
+
+// Обработчик быстрого удаления всех единиц товара с экрана товара
+export async function handleRemoveAllFromItem(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  const userId = query.from?.id;
+  const itemId = query.data?.replace('remove_all_from_item_', '');
+
+  if (!userId || !itemId) {
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
+    return;
+  }
+
+  try {
+    await botApiClient.removeFromCart(userId, itemId);
+    const item = getItemById(itemId);
+
+    bot
+      .answerCallbackQuery(query.id, { text: `🗑 ${item?.name} полностью удален из корзины` })
+      .catch(() => {});
+
+    // Обновляем экран товара
+    const updatedQuery = { ...query, data: `item_${itemId}` };
+    await handleItemSelection(bot, updatedQuery);
+  } catch (error) {
+    console.error('Error removing all from item:', error);
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка при удалении товара' }).catch(() => {});
+  }
+}
+
+// Обработчик быстрого добавления товара из каталога
+export async function handleQuickAdd(bot: BotInstance, query: BotCallbackQuery): Promise<void> {
+  const userId = query.from?.id;
+  const itemId = query.data?.replace('quick_add_', '');
+
+  if (!userId || !itemId) {
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
+    return;
+  }
+
+  const item = getItemById(itemId);
+  if (!item) {
+    bot.answerCallbackQuery(query.id, { text: 'Товар не найден' }).catch(() => {});
+    return;
+  }
+
+  try {
+    await botApiClient.addToCart(userId, itemId, 1);
+    const cartTotal = await botApiClient.getCartTotal(userId);
+
+    bot
+      .answerCallbackQuery(query.id, {
+        text: `✅ ${item.name} добавлен! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
+      })
+      .catch(() => {});
+
+    // Обновляем каталог с новыми кнопками
+    const category = item.category;
+    if (category === 'shawarma') {
+      await handleShawarmaMenu(bot, {
+        chat: { id: query.message?.chat.id! },
+        from: query.from,
+      } as BotMessage);
+    } else if (category === 'drinks') {
+      await handleDrinksMenu(bot, {
+        chat: { id: query.message?.chat.id! },
+        from: query.from,
+      } as BotMessage);
+    }
+  } catch (error) {
+    console.error('Error quick adding item:', error);
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка при добавлении товара' }).catch(() => {});
+  }
+}
+
+// Обработчик быстрого увеличения количества из каталога
+export async function handleQuickIncrease(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  const userId = query.from?.id;
+  const itemId = query.data?.replace('quick_increase_', '');
+
+  if (!userId || !itemId) {
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
+    return;
+  }
+
+  try {
+    const cart = await botApiClient.getCart(userId);
+    const cartItem = cart.find((item: any) => item.menuItem.id === itemId);
+
+    if (cartItem) {
+      await botApiClient.updateCartQuantity(userId, itemId, cartItem.quantity + 1);
+
+      const cartTotal = await botApiClient.getCartTotal(userId);
+      const item = getItemById(itemId);
+
+      bot
+        .answerCallbackQuery(query.id, {
+          text: `➕ ${item?.name} добавлен! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
+        })
+        .catch(() => {});
+
+      // Обновляем каталог
+      const category = item?.category;
+      if (category === 'shawarma') {
+        await handleShawarmaMenu(bot, {
+          chat: { id: query.message?.chat.id! },
+          from: query.from,
+        } as BotMessage);
+      } else if (category === 'drinks') {
+        await handleDrinksMenu(bot, {
+          chat: { id: query.message?.chat.id! },
+          from: query.from,
+        } as BotMessage);
+      }
+    }
+  } catch (error) {
+    console.error('Error quick increasing quantity:', error);
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
+  }
+}
+
+// Обработчик быстрого уменьшения количества из каталога
+export async function handleQuickDecrease(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  const userId = query.from?.id;
+  const itemId = query.data?.replace('quick_decrease_', '');
+
+  if (!userId || !itemId) {
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
+    return;
+  }
+
+  try {
+    const cart = await botApiClient.getCart(userId);
+    const cartItem = cart.find((item: any) => item.menuItem.id === itemId);
+
+    if (cartItem) {
+      const newQuantity = cartItem.quantity - 1;
+      if (newQuantity <= 0) {
+        await botApiClient.removeFromCart(userId, itemId);
+
+        const item = getItemById(itemId);
+        bot
+          .answerCallbackQuery(query.id, { text: `🗑 ${item?.name} удален из корзины` })
+          .catch(() => {});
+      } else {
+        await botApiClient.updateCartQuantity(userId, itemId, newQuantity);
+
+        const cartTotal = await botApiClient.getCartTotal(userId);
+        const item = getItemById(itemId);
+
+        bot
+          .answerCallbackQuery(query.id, {
+            text: `➖ ${item?.name} убран! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
+          })
+          .catch(() => {});
+      }
+
+      // Обновляем каталог
+      const item = getItemById(itemId);
+      const category = item?.category;
+      if (category === 'shawarma') {
+        await handleShawarmaMenu(bot, {
+          chat: { id: query.message?.chat.id! },
+          from: query.from,
+        } as BotMessage);
+      } else if (category === 'drinks') {
+        await handleDrinksMenu(bot, {
+          chat: { id: query.message?.chat.id! },
+          from: query.from,
+        } as BotMessage);
+      }
+    }
+  } catch (error) {
+    console.error('Error quick decreasing quantity:', error);
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
+  }
 }

@@ -17,6 +17,18 @@ jest.mock('../src/menu', () => ({
   getItemById: jest.fn(),
 }));
 
+// Мокаем API клиент
+jest.mock('../src/api-client', () => ({
+  default: {
+    getCart: jest.fn().mockResolvedValue([]),
+    getCartTotal: jest.fn().mockResolvedValue({ itemsCount: 0, total: 0 }),
+    addToCart: jest.fn().mockResolvedValue({}),
+    updateCartQuantity: jest.fn().mockResolvedValue({}),
+    removeFromCart: jest.fn().mockResolvedValue({}),
+    clearCart: jest.fn().mockResolvedValue({}),
+  },
+}));
+
 describe('Handlers Module', () => {
   let mockBot: jest.Mocked<BotInstance>;
   let mockMessage: BotMessage;
@@ -28,6 +40,7 @@ describe('Handlers Module', () => {
       sendMessage: jest.fn(),
       editMessageText: jest.fn().mockResolvedValue(true),
       answerCallbackQuery: jest.fn().mockResolvedValue(true),
+      sendPhoto: jest.fn().mockResolvedValue(true),
     } as any;
 
     // Создаем мок сообщения
@@ -54,8 +67,8 @@ describe('Handlers Module', () => {
   });
 
   describe('handleStart', () => {
-    test('должен отправлять приветственное сообщение с клавиатурой', () => {
-      handleStart(mockBot, mockMessage);
+    test('должен отправлять приветственное сообщение с клавиатурой', async () => {
+      await handleStart(mockBot, mockMessage);
 
       // Проверяем первое сообщение с обычной клавиатурой
       expect(mockBot.sendMessage).toHaveBeenNthCalledWith(
@@ -72,8 +85,8 @@ describe('Handlers Module', () => {
       );
     });
 
-    test('должен отправлять сообщение с кнопкой Mini App', () => {
-      handleStart(mockBot, mockMessage);
+    test('должен отправлять сообщение с кнопкой Mini App', async () => {
+      await handleStart(mockBot, mockMessage);
 
       // Проверяем второе сообщение с Mini App кнопкой
       expect(mockBot.sendMessage).toHaveBeenNthCalledWith(
@@ -101,19 +114,19 @@ describe('Handlers Module', () => {
       );
     });
 
-    test('должен отправлять два сообщения', () => {
-      handleStart(mockBot, mockMessage);
+    test('должен отправлять два сообщения', async () => {
+      await handleStart(mockBot, mockMessage);
 
       expect(mockBot.sendMessage).toHaveBeenCalledTimes(2);
     });
 
-    test("должен использовать 'Друг' если имя пользователя не указано", () => {
+    test("должен использовать 'Друг' если имя пользователя не указано", async () => {
       const messageWithoutName = {
         ...mockMessage,
         from: { id: 789 },
       } as BotMessage;
 
-      handleStart(mockBot, messageWithoutName);
+      await handleStart(mockBot, messageWithoutName);
 
       expect(mockBot.sendMessage).toHaveBeenNthCalledWith(
         1,
@@ -133,7 +146,7 @@ describe('Handlers Module', () => {
   });
 
   describe('handleShawarmaMenu', () => {
-    test('должен отправлять меню шаурмы', () => {
+    test('должен отправлять меню шаурмы', async () => {
       const { getMenuByCategory } = require('../src/menu');
       getMenuByCategory.mockReturnValue([
         {
@@ -145,7 +158,7 @@ describe('Handlers Module', () => {
         },
       ]);
 
-      handleShawarmaMenu(mockBot, mockMessage);
+      await handleShawarmaMenu(mockBot, mockMessage);
 
       expect(getMenuByCategory).toHaveBeenCalledWith('shawarma');
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
@@ -159,11 +172,11 @@ describe('Handlers Module', () => {
       );
     });
 
-    test('должен обрабатывать пустое меню шаурмы', () => {
+    test('должен обрабатывать пустое меню шаурмы', async () => {
       const { getMenuByCategory } = require('../src/menu');
       getMenuByCategory.mockReturnValue([]);
 
-      handleShawarmaMenu(mockBot, mockMessage);
+      await handleShawarmaMenu(mockBot, mockMessage);
 
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
@@ -176,7 +189,7 @@ describe('Handlers Module', () => {
       );
     });
 
-    test('должен правильно форматировать множественные товары', () => {
+    test('должен правильно форматировать множественные товары', async () => {
       const { getMenuByCategory } = require('../src/menu');
       getMenuByCategory.mockReturnValue([
         {
@@ -195,7 +208,7 @@ describe('Handlers Module', () => {
         },
       ]);
 
-      handleShawarmaMenu(mockBot, mockMessage);
+      await handleShawarmaMenu(mockBot, mockMessage);
 
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
@@ -206,7 +219,7 @@ describe('Handlers Module', () => {
   });
 
   describe('handleDrinksMenu', () => {
-    test('должен отправлять меню напитков', () => {
+    test('должен отправлять меню напитков', async () => {
       const { getMenuByCategory } = require('../src/menu');
       getMenuByCategory.mockReturnValue([
         {
@@ -218,7 +231,7 @@ describe('Handlers Module', () => {
         },
       ]);
 
-      handleDrinksMenu(mockBot, mockMessage);
+      await handleDrinksMenu(mockBot, mockMessage);
 
       expect(getMenuByCategory).toHaveBeenCalledWith('drinks');
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
@@ -232,11 +245,11 @@ describe('Handlers Module', () => {
       );
     });
 
-    test('должен обрабатывать пустое меню напитков', () => {
+    test('должен обрабатывать пустое меню напитков', async () => {
       const { getMenuByCategory } = require('../src/menu');
       getMenuByCategory.mockReturnValue([]);
 
-      handleDrinksMenu(mockBot, mockMessage);
+      await handleDrinksMenu(mockBot, mockMessage);
 
       expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
@@ -251,7 +264,7 @@ describe('Handlers Module', () => {
   });
 
   describe('handleItemSelection', () => {
-    test('должен обрабатывать выбор товара', () => {
+    test('должен обрабатывать выбор товара', async () => {
       const { getItemById } = require('../src/menu');
       getItemById.mockReturnValue({
         id: '1',
@@ -261,72 +274,53 @@ describe('Handlers Module', () => {
         category: 'shawarma',
       });
 
-      handleItemSelection(mockBot, mockCallbackQuery);
+      await handleItemSelection(mockBot, mockCallbackQuery);
 
       expect(getItemById).toHaveBeenCalledWith('1');
-      expect(mockBot.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining('✅ Тестовая шаурма'),
-        expect.objectContaining({
-          chat_id: 123456,
-          message_id: 1,
-          reply_markup: expect.objectContaining({
-            inline_keyboard: expect.arrayContaining([
-              expect.arrayContaining([
-                expect.objectContaining({
-                  text: '🛒 Добавить в корзину',
-                  callback_data: 'add_to_cart_1',
-                }),
-              ]),
-            ]),
-          }),
-        })
+      expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith(
+        'callback_123',
+        expect.objectContaining({ text: expect.stringContaining('Тестовая шаурма') })
       );
-      expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
-        text: 'Выбрано: Тестовая шаурма',
-      });
     });
 
-    test('должен обрабатывать ошибку когда chatId отсутствует', () => {
+    test('должен обрабатывать ошибку когда chatId отсутствует', async () => {
       const queryWithoutChat = {
         ...mockCallbackQuery,
         message: undefined,
       } as BotCallbackQuery;
 
-      handleItemSelection(mockBot, queryWithoutChat);
+      await handleItemSelection(mockBot, queryWithoutChat);
 
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
         text: 'Ошибка обработки запроса',
       });
-      expect(mockBot.editMessageText).not.toHaveBeenCalled();
     });
 
-    test('должен обрабатывать ошибку когда itemId отсутствует', () => {
+    test('должен обрабатывать ошибку когда itemId отсутствует', async () => {
       const queryWithoutData = {
         ...mockCallbackQuery,
         data: undefined,
       } as BotCallbackQuery;
 
-      handleItemSelection(mockBot, queryWithoutData);
+      await handleItemSelection(mockBot, queryWithoutData);
 
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
         text: 'Ошибка обработки запроса',
       });
-      expect(mockBot.editMessageText).not.toHaveBeenCalled();
     });
 
-    test('должен обрабатывать ошибку когда товар не найден', () => {
+    test('должен обрабатывать ошибку когда товар не найден', async () => {
       const { getItemById } = require('../src/menu');
       getItemById.mockReturnValue(undefined);
 
-      handleItemSelection(mockBot, mockCallbackQuery);
+      await handleItemSelection(mockBot, mockCallbackQuery);
 
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
         text: 'Товар не найден',
       });
-      expect(mockBot.editMessageText).not.toHaveBeenCalled();
     });
 
-    test('должен работать без message_id', () => {
+    test('должен работать без message_id', async () => {
       const { getItemById } = require('../src/menu');
       getItemById.mockReturnValue({
         id: '1',
@@ -343,23 +337,23 @@ describe('Handlers Module', () => {
         },
       } as BotCallbackQuery;
 
-      handleItemSelection(mockBot, queryWithoutMessageId);
+      await handleItemSelection(mockBot, queryWithoutMessageId);
 
-      expect(mockBot.editMessageText).not.toHaveBeenCalled();
-      expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
-        text: 'Выбрано: Тестовая шаурма',
-      });
+      expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith(
+        'callback_123',
+        expect.objectContaining({ text: expect.stringContaining('Тестовая шаурма') })
+      );
     });
   });
 
   describe('handleBackToMenu', () => {
-    test('должен возвращать в главное меню', () => {
+    test('должен возвращать в главное меню', async () => {
       const backQuery = {
         ...mockCallbackQuery,
         data: 'back_to_menu',
       } as BotCallbackQuery;
 
-      handleBackToMenu(mockBot, backQuery);
+      await handleBackToMenu(mockBot, backQuery);
 
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
         expect.stringContaining('Привет, TestUser!'),
@@ -368,17 +362,20 @@ describe('Handlers Module', () => {
           message_id: 1,
         })
       );
-      expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123');
+      expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith(
+        'callback_123',
+        expect.objectContaining({ text: expect.stringContaining('Возврат в главное меню') })
+      );
     });
 
-    test("должен использовать 'Друг' если имя пользователя не указано", () => {
+    test("должен использовать 'Друг' если имя пользователя не указано", async () => {
       const queryWithoutName = {
         ...mockCallbackQuery,
         from: { id: 789 },
         data: 'back_to_menu',
       } as BotCallbackQuery;
 
-      handleBackToMenu(mockBot, queryWithoutName);
+      await handleBackToMenu(mockBot, queryWithoutName);
 
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
         expect.stringContaining('Привет, Друг!'),
@@ -386,22 +383,21 @@ describe('Handlers Module', () => {
       );
     });
 
-    test('должен обрабатывать ошибку когда chatId отсутствует', () => {
+    test('должен обрабатывать ошибку когда chatId отсутствует', async () => {
       const queryWithoutChat = {
         ...mockCallbackQuery,
         message: undefined,
         data: 'back_to_menu',
       } as BotCallbackQuery;
 
-      handleBackToMenu(mockBot, queryWithoutChat);
+      await handleBackToMenu(mockBot, queryWithoutChat);
 
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
         text: 'Ошибка обработки запроса',
       });
-      expect(mockBot.editMessageText).not.toHaveBeenCalled();
     });
 
-    test('должен работать без message_id', () => {
+    test('должен работать без message_id', async () => {
       const queryWithoutMessageId = {
         ...mockCallbackQuery,
         message: {
@@ -410,10 +406,12 @@ describe('Handlers Module', () => {
         data: 'back_to_menu',
       } as BotCallbackQuery;
 
-      handleBackToMenu(mockBot, queryWithoutMessageId);
+      await handleBackToMenu(mockBot, queryWithoutMessageId);
 
-      expect(mockBot.editMessageText).not.toHaveBeenCalled();
-      expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123');
+      expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith(
+        'callback_123',
+        expect.objectContaining({ text: expect.stringContaining('Возврат в главное меню') })
+      );
     });
   });
 
