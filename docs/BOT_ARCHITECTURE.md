@@ -1,8 +1,8 @@
 # 🤖 Архитектура Telegram Bot
 
-**Версия:** 2.5.0  
-**Дата:** 2025-05-28  
-**Тип:** Production-ready Telegram Bot
+**Версия:** 2.6.0  
+**Дата:** 2025-12-31  
+**Тип:** Production-ready Telegram Bot с упрощенным UX
 
 ---
 
@@ -83,7 +83,7 @@ const notificationService = new NotificationService(bot);
 - `callback_query` - нажатия inline кнопок
 - `polling_error` - ошибки подключения к Telegram
 
-**Роутинг сообщений:**
+**Роутинг сообщений (упрощенная архитектура v2.6):**
 
 ```typescript
 bot.on('message', (msg: BotMessage) => {
@@ -94,21 +94,25 @@ bot.on('message', (msg: BotMessage) => {
     case '🥤 Напитки':
       handleDrinksMenu(bot, msg);
       break;
-    case '🛒 Корзина':
+    case '🛒 Корзина': // с динамическим счетчиком
       handleViewCart(bot, msg);
       break;
-    case '📋 Мои заказы':
-      handleMyOrders(bot, msg);
+    case '👤 Профиль': // новый централизованный раздел
+      handleProfile(bot, msg);
       break;
-    case '📱 Mini App':
-      handleMiniApp(bot, msg);
-      break;
-    case 'ℹ️ О нас':
+    case 'ℹ️ О нас': // теперь включает Mini App
       handleAbout(bot, msg);
       break;
   }
 });
 ```
+
+**Ключевые изменения архитектуры:**
+
+- 🎯 **Упрощение:** 8 кнопок → 5 кнопок (снижение сложности на 37.5%)
+- 👤 **Новый раздел "Профиль":** объединяет Мои заказы + Избранное + Рекомендации
+- 📱 **Mini App интеграция:** перенесен в раздел "О нас" для снижения когнитивной нагрузки
+- 🛒 **Умная корзина:** динамический счетчик товаров в названии кнопки
 
 **Роутинг callback'ов:**
 
@@ -146,15 +150,23 @@ process.on('SIGINT', () => {
 
 ### Основные группы handlers
 
-#### 1. 📋 Menu Handlers
+#### 1. 📋 Menu Handlers (обновленная архитектура v2.6)
 
 ```typescript
-export function handleStart(bot: BotInstance, msg: BotMessage): void;
-export function handleShawarmaMenu(bot: BotInstance, msg: BotMessage): void;
-export function handleDrinksMenu(bot: BotInstance, msg: BotMessage): void;
-export function handleAbout(bot: BotInstance, msg: BotMessage): void;
-export function handleItemSelection(bot: BotInstance, query: BotCallbackQuery): void;
+export function handleStart(bot: BotInstance, msg: BotMessage): void; // упрощенное главное меню
+export function handleShawarmaMenu(bot: BotInstance, msg: BotMessage): void; // убраны быстрые кнопки +/-
+export function handleDrinksMenu(bot: BotInstance, msg: BotMessage): void; // убраны быстрые кнопки +/-
+export function handleAbout(bot: BotInstance, msg: BotMessage): void; // теперь включает Mini App
+export function handleProfile(bot: BotInstance, msg: BotMessage): void; // НОВЫЙ: централизованный профиль
+export function handleItemSelection(bot: BotInstance, query: BotCallbackQuery): void; // улучшенная карточка товара
 ```
+
+**Ключевые улучшения:**
+
+- 🎯 **Упрощенные каталоги:** убраны отвлекающие быстрые кнопки, фокус на выборе товара
+- 👤 **Новый профиль:** объединяет личную информацию, статистику и быстрые действия
+- 📱 **Mini App интеграция:** естественная интеграция в раздел "О нас"
+- 🛒 **Умные карточки товаров:** адаптивные кнопки в зависимости от состояния корзины
 
 #### 2. 🛒 Cart Handlers
 
@@ -179,7 +191,39 @@ export async function handleRemoveFromCart(
 export async function handleClearCart(bot: BotInstance, query: BotCallbackQuery): Promise<void>;
 ```
 
-#### 3. 📦 Order Handlers
+#### 3. 👤 Profile Handlers (НОВОЕ в v2.6)
+
+```typescript
+export async function handleProfile(
+  bot: BotInstance,
+  msg: BotMessage | BotCallbackQuery
+): Promise<void>; // централизованный профиль пользователя
+export async function handleFavorites(
+  bot: BotInstance,
+  msg: BotMessage | BotCallbackQuery
+): Promise<void>; // управление избранными товарами
+export async function handleRecommendations(
+  bot: BotInstance,
+  msg: BotMessage | BotCallbackQuery
+): Promise<void>; // персональные рекомендации
+export async function handleAddToFavorites(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void>;
+export async function handleRemoveFromFavorites(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void>;
+```
+
+**Функциональность профиля:**
+
+- 📊 **Персональная статистика:** количество заказов, потраченная сумма, средний чек, любимая категория
+- ⭐ **Избранные товары:** быстрое сохранение и доступ к любимым товарам
+- 🎯 **Умные рекомендации:** на основе истории заказов и времени суток
+- 🏠 **Единая точка входа:** все личные функции в одном месте
+
+#### 4. 📦 Order Handlers
 
 ```typescript
 export async function handleCheckout(bot: BotInstance, query: BotCallbackQuery): Promise<void>;
@@ -194,12 +238,18 @@ export async function handleAdminOrderAction(
 ): Promise<void>;
 ```
 
-#### 4. 📱 Mini App Handlers
+#### 5. 📱 Mini App Handlers (интегрированы в "О нас")
 
 ```typescript
-export function handleMiniApp(bot: BotInstance, msg: BotMessage): void;
-export function handleAboutMiniApp(bot: BotInstance, query: BotCallbackQuery): void;
+export function handleAboutMiniApp(bot: BotInstance, query: BotCallbackQuery): void; // информация о Mini App
+export function handleBackToStart(bot: BotInstance, query: BotCallbackQuery): void; // навигация в Mini App flow
 ```
+
+**Изменения в Mini App архитектуре:**
+
+- 🎯 **Упрощение доступа:** Mini App интегрирован в раздел "О нас" вместо отдельной кнопки
+- 📱 **Естественный flow:** пользователи узнают о Mini App в контексте информации о заведении
+- 🚀 **Прямой запуск:** кнопка "🌯 Открыть Шаурма App" для быстрого доступа
 
 ### Паттерн обработки
 
@@ -520,25 +570,38 @@ export function getItemById(id: string): MenuItem | undefined;
 export function getAllCategories(): string[];
 ```
 
-## 🔄 Data Flow
+## 🔄 Data Flow (упрощенная архитектура v2.6)
 
-### Типичный сценарий "Добавление в корзину"
+### Новый сценарий "Выбор и добавление товара"
 
 ```
-1. User нажимает кнопку "Добавить в корзину"
+1. User выбирает категорию (🌯 Шаурма или 🥤 Напитки)
    ↓
-2. Bot получает callback_query с item_id
+2. Bot показывает простой каталог (убраны быстрые кнопки +/-)
    ↓
-3. handleAddToCart извлекает userId, itemId
+3. User нажимает на название товара
    ↓
-4. botApiClient.addToCart() → HTTP POST /api/cart/add
+4. handleItemSelection показывает карточку товара с фото и описанием
    ↓
-5. API добавляет товар в Redis через CartService
+5. User нажимает "Добавить в корзину"
    ↓
-6. Bot получает подтверждение и обновляет UI
+6. handleAddToCart → botApiClient.addToCart() → HTTP POST /api/cart/add
    ↓
-7. User видит обновленную корзину
+7. API добавляет товар в Redis через CartService
+   ↓
+8. Bot обновляет карточку товара (кнопка становится "- NUM +")
+   ↓
+9. User видит обновленное состояние + может добавить в избранное
+   ↓
+10. Главное меню показывает счетчик корзины: "🛒 Корзина (2)"
 ```
+
+**Ключевые улучшения flow:**
+
+- 🎯 **Меньше отвлечений:** фокус на выборе качественного товара
+- 📸 **Визуальность:** товары с фотографиями вызывают больше доверия
+- 🧠 **Умное поведение:** интерфейс адаптируется под состояние корзины
+- ⭐ **Персонализация:** возможность сохранить товар в избранное
 
 ## 🛡️ Error Handling
 
