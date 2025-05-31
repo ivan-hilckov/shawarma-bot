@@ -441,64 +441,68 @@ export async function handleItemSelection(
     return;
   }
 
-  // Получаем текущее количество товара в корзине
-  const currentQuantity = await getItemQuantityInCart(userId, itemId);
+  // Быстро отвечаем на callback query чтобы убрать loading
+  const notificationText = `Загружаем ${item.name}...`;
+  bot.answerCallbackQuery(query.id, { text: notificationText }).catch(() => {});
 
-  // Формируем сообщение с подробной информацией
-  let message = `
+  try {
+    // Получаем текущее количество товара в корзине
+    const currentQuantity = await getItemQuantityInCart(userId, itemId);
+
+    // Формируем сообщение с подробной информацией
+    let message = `
 ${item.name}
 
 Цена: ${item.price} руб.
 ${item.description}
 `;
 
-  // Добавляем информацию о корзине
-  if (currentQuantity > 0) {
-    const subtotal = item.price * currentQuantity;
-    message += `\nВ корзине: ${currentQuantity} шт. (${subtotal}₽)`;
-  }
-
-  message += `\n\nВыберите действие:`;
-
-  // Создаем клавиатуру с +/- интерфейсом
-  const keyboard = {
-    inline_keyboard: await createItemKeyboardWithFavorites(itemId, currentQuantity, userId),
-  };
-
-  // Если у товара есть фотография, отправляем её
-  if (item.photo) {
-    // Формируем URL изображения вместо локального пути
-    const photoUrl = `${config.ASSETS_BASE_URL}/${item.photo.replace('assets/', '')}`;
-
-    console.log(`📸 Отправляем фото по URL: ${photoUrl}`);
-    bot
-      .sendPhoto(chatId, photoUrl, {
-        caption: message,
-        reply_markup: keyboard,
-      })
-      .catch(error => {
-        console.error('❌ Ошибка отправки фото:', error);
-        // Если не удалось отправить фото, отправляем обычное сообщение
-        bot.sendMessage(chatId, message, { reply_markup: keyboard }).catch(() => {});
-      });
-  } else {
-    // Если фото нет, отправляем/редактируем сообщение
-    if (query.message?.message_id) {
-      bot
-        .editMessageText(message, {
-          chat_id: chatId,
-          message_id: query.message.message_id,
-          reply_markup: keyboard,
-        })
-        .catch(() => {});
+    // Добавляем информацию о корзине
+    if (currentQuantity > 0) {
+      const subtotal = item.price * currentQuantity;
+      message += `\nВ корзине: ${currentQuantity} шт. (${subtotal}₽)`;
     }
+
+    message += `\n\nВыберите действие:`;
+
+    // Создаем клавиатуру с +/- интерфейсом
+    const keyboard = {
+      inline_keyboard: await createItemKeyboardWithFavorites(itemId, currentQuantity, userId),
+    };
+
+    // Если у товара есть фотография, пытаемся отправить её
+    if (item.photo) {
+      // Формируем URL изображения вместо локального пути
+      const photoUrl = `${config.ASSETS_BASE_URL}/${item.photo.replace('assets/', '')}`;
+
+      console.log(`📸 Отправляем фото по URL: ${photoUrl}`);
+
+      try {
+        await bot.sendPhoto(chatId, photoUrl, {
+          caption: message,
+          reply_markup: keyboard,
+        });
+        console.log(`✅ Фото для товара ${item.name} отправлено успешно`);
+      } catch (photoError) {
+        console.error('❌ Ошибка отправки фото:', photoError);
+        // Fallback: отправляем текстовое сообщение
+        await bot.sendMessage(chatId, `📸 ${message}`, { reply_markup: keyboard });
+        console.log(`📝 Отправлено текстовое сообщение для товара ${item.name}`);
+      }
+    } else {
+      // Если фото нет, отправляем текстовое сообщение
+      await bot.sendMessage(chatId, message, { reply_markup: keyboard });
+      console.log(`📝 Отправлено текстовое сообщение для товара ${item.name} (без фото)`);
+    }
+  } catch (error) {
+    console.error('❌ Ошибка в handleItemSelection:', error);
+    // Если произошла любая ошибка, отправляем базовое сообщение
+    await bot.sendMessage(chatId, `❌ Ошибка загрузки товара "${item.name}". Попробуйте снова.`, {
+      reply_markup: {
+        inline_keyboard: [[{ text: 'Назад к каталогу', callback_data: 'back_to_menu' }]],
+      },
+    });
   }
-
-  // Улучшенное уведомление
-  const notificationText =
-    currentQuantity > 0 ? `${item.name} • В корзине: ${currentQuantity} шт.` : item.name;
-
-  bot.answerCallbackQuery(query.id, { text: notificationText }).catch(() => {});
 }
 
 // Обработчик возврата в главное меню
