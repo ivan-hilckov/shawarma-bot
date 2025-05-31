@@ -82,34 +82,54 @@ describe('Handlers Module', () => {
   });
 
   describe('handleStart', () => {
-    test('должен отправлять приветственное сообщение с клавиатурой', async () => {
+    test('должен отправлять приветственное сообщение с упрощенной клавиатурой', async () => {
       await handleStart(mockBot, mockMessage);
 
-      // Проверяем первое сообщение с обычной клавиатурой
-      expect(mockBot.sendMessage).toHaveBeenNthCalledWith(
-        1,
+      // Проверяем сообщение с новой упрощенной клавиатурой
+      expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
         expect.stringContaining('Привет, TestUser!'),
         expect.objectContaining({
           reply_markup: expect.objectContaining({
             keyboard: expect.arrayContaining([
               expect.arrayContaining([{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }]),
-              expect.arrayContaining([{ text: '🛒 Корзина' }, { text: '📋 Мои заказы' }]),
-              expect.arrayContaining([{ text: '⭐ Избранное' }, { text: '🎯 Рекомендации' }]),
+              expect.arrayContaining([{ text: '🛒 Корзина' }, { text: '👤 Профиль' }]),
+              expect.arrayContaining([{ text: 'ℹ️ О нас' }]),
             ]),
           }),
         })
       );
     });
 
-    test('должен отправлять сообщение с кнопкой Mini App', async () => {
+    test('должен отправлять одно сообщение', async () => {
       await handleStart(mockBot, mockMessage);
 
-      // Проверяем второе сообщение с Mini App кнопкой
-      expect(mockBot.sendMessage).toHaveBeenNthCalledWith(
-        2,
+      expect(mockBot.sendMessage).toHaveBeenCalledTimes(1);
+    });
+
+    test("должен использовать 'Друг' если имя пользователя не указано", async () => {
+      const messageWithoutName = {
+        ...mockMessage,
+        from: { id: 789 },
+      } as BotMessage;
+
+      await handleStart(mockBot, messageWithoutName);
+
+      expect(mockBot.sendMessage).toHaveBeenCalledWith(
         123456,
-        expect.stringContaining('Попробуйте наше мини-приложение! 🚀'),
+        expect.stringContaining('Привет, Друг!'),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('handleAbout', () => {
+    test('должен отправлять информацию о заведении с Mini App кнопками', () => {
+      handleAbout(mockBot, mockMessage);
+
+      expect(mockBot.sendMessage).toHaveBeenCalledWith(
+        123456,
+        expect.stringContaining('О нас ℹ️'),
         expect.objectContaining({
           reply_markup: expect.objectContaining({
             inline_keyboard: expect.arrayContaining([
@@ -129,36 +149,6 @@ describe('Handlers Module', () => {
           }),
         })
       );
-    });
-
-    test('должен отправлять два сообщения', async () => {
-      await handleStart(mockBot, mockMessage);
-
-      expect(mockBot.sendMessage).toHaveBeenCalledTimes(2);
-    });
-
-    test("должен использовать 'Друг' если имя пользователя не указано", async () => {
-      const messageWithoutName = {
-        ...mockMessage,
-        from: { id: 789 },
-      } as BotMessage;
-
-      await handleStart(mockBot, messageWithoutName);
-
-      expect(mockBot.sendMessage).toHaveBeenNthCalledWith(
-        1,
-        123456,
-        expect.stringContaining('Привет, Друг!'),
-        expect.any(Object)
-      );
-    });
-  });
-
-  describe('handleAbout', () => {
-    test('должен отправлять информацию о заведении', () => {
-      handleAbout(mockBot, mockMessage);
-
-      expect(mockBot.sendMessage).toHaveBeenCalledWith(123456, expect.stringContaining('О нас ℹ️'));
     });
   });
 

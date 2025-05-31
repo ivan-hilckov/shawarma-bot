@@ -4,7 +4,7 @@ import config from './config';
 // eslint-disable-next-line import/no-named-as-default
 import databaseService from './database';
 import { getMenuByCategory, getItemById } from './menu';
-import { BotInstance, BotMessage, BotCallbackQuery, MenuItem, CartItem } from './types';
+import { BotInstance, BotMessage, BotCallbackQuery, MenuItem } from './types';
 
 // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 
@@ -20,48 +20,18 @@ async function getItemQuantityInCart(userId: number, itemId: string): Promise<nu
   }
 }
 
-// Создать каталог с быстрыми кнопками +/-
+// Создать простой каталог товаров
 async function createCatalogKeyboard(
-  items: MenuItem[],
-  userId: number
+  items: MenuItem[]
 ): Promise<Array<Array<{ text: string; callback_data: string }>>> {
   const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
 
-  // Получаем корзину пользователя один раз
-  let cart: CartItem[] = [];
-  try {
-    cart = await botApiClient.getCart(userId);
-    // Убеждаемся что cart это массив
-    if (!Array.isArray(cart)) {
-      cart = [];
-    }
-  } catch (error) {
-    console.error('Error getting cart for catalog:', error);
-    cart = [];
-  }
-
   items.forEach(item => {
-    const cartItem = cart.find(cartItem => cartItem.menuItem.id === item.id);
-    const quantity = cartItem ? cartItem.quantity : 0;
-
     const photoIcon = item.photo ? '📸 ' : '';
-
-    // Строка с товаром и быстрыми кнопками
-    if (quantity === 0) {
-      keyboard.push([
-        { text: `${photoIcon}${item.name} — ${item.price}₽`, callback_data: `item_${item.id}` },
-        { text: '+', callback_data: `quick_add_${item.id}` },
-      ]);
-    } else {
-      keyboard.push([
-        { text: `${photoIcon}${item.name} — ${item.price}₽`, callback_data: `item_${item.id}` },
-      ]);
-      keyboard.push([
-        { text: '−', callback_data: `quick_decrease_${item.id}` },
-        { text: `${quantity} шт.`, callback_data: `item_${item.id}` },
-        { text: '+', callback_data: `quick_increase_${item.id}` },
-      ]);
-    }
+    // Простая кнопка с названием и ценой
+    keyboard.push([
+      { text: `${photoIcon}${item.name} — ${item.price}₽`, callback_data: `item_${item.id}` },
+    ]);
   });
 
   // Кнопка назад
@@ -114,8 +84,8 @@ async function createItemKeyboardWithFavorites(
   return keyboard;
 }
 
-// Создать клавиатуру главного меню с рекомендациями
-async function createMainKeyboardWithRecommendations(userId: number): Promise<any> {
+// Создать упрощенную клавиатуру главного меню
+async function createMainKeyboard(userId: number): Promise<any> {
   let cartText = '🛒 Корзина';
 
   if (userId) {
@@ -132,9 +102,8 @@ async function createMainKeyboardWithRecommendations(userId: number): Promise<an
   return {
     keyboard: [
       [{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }],
-      [{ text: cartText }, { text: '📋 Мои заказы' }],
-      [{ text: '⭐ Избранное' }, { text: '🎯 Рекомендации' }],
-      [{ text: '📱 Mini App' }, { text: 'ℹ️ О нас' }],
+      [{ text: cartText }, { text: '👤 Профиль' }],
+      [{ text: 'ℹ️ О нас' }],
     ],
     resize_keyboard: true,
     one_time_keyboard: false,
@@ -271,45 +240,11 @@ export async function handleStart(bot: BotInstance, msg: BotMessage): Promise<vo
   `;
 
   // Создаем клавиатуру с индикатором корзины
-  const keyboard = await createMainKeyboardWithRecommendations(userId || 0);
+  const keyboard = await createMainKeyboard(userId || 0);
 
   // Отправляем приветствие с обновленной клавиатурой
   bot.sendMessage(chatId, welcomeMessage, {
     reply_markup: keyboard,
-  });
-
-  // Отправляем отдельное сообщение с кнопкой Mini App
-  const miniAppMessage = `
-Попробуйте наше мини-приложение! 🚀
-
-В нём доступны дополнительные возможности:
-• Полное меню с фотографиями товаров
-• Удобное управление корзиной
-• Отслеживание заказов в реальном времени
-• Персональные рекомендации
-
-Нажмите кнопку ниже, чтобы открыть приложение.
-  `;
-
-  const miniAppKeyboard = {
-    inline_keyboard: [
-      [
-        {
-          text: '🌯 Открыть Шаурма App',
-          web_app: { url: 'https://botgarden.store/' },
-        },
-      ],
-      [
-        {
-          text: '📱 Что такое Mini App?',
-          callback_data: 'about_miniapp',
-        },
-      ],
-    ],
-  };
-
-  bot.sendMessage(chatId, miniAppMessage, {
-    reply_markup: miniAppKeyboard,
   });
 }
 
@@ -333,10 +268,10 @@ export async function handleShawarmaMenu(bot: BotInstance, msg: BotMessage): Pro
     message += `${item.description}\n\n`;
   });
 
-  message += `Используйте кнопки для быстрого добавления товаров в корзину или нажмите на название для подробной информации.`;
+  message += `Нажмите на название товара для подробной информации и добавления в корзину.`;
 
-  // Создаем клавиатуру с быстрыми кнопками
-  const keyboard = await createCatalogKeyboard(items, userId);
+  // Создаем клавиатуру каталога
+  const keyboard = await createCatalogKeyboard(items);
 
   bot.sendMessage(chatId, message, {
     reply_markup: { inline_keyboard: keyboard },
@@ -362,10 +297,10 @@ export async function handleDrinksMenu(bot: BotInstance, msg: BotMessage): Promi
     message += `${item.description}\n\n`;
   });
 
-  message += `Используйте кнопки для быстрого добавления товаров в корзину или нажмите на название для подробной информации.`;
+  message += `Нажмите на название товара для подробной информации и добавления в корзину.`;
 
-  // Создаем клавиатуру с быстрыми кнопками
-  const keyboard = await createCatalogKeyboard(items, userId);
+  // Создаем клавиатуру каталога
+  const keyboard = await createCatalogKeyboard(items);
 
   bot.sendMessage(chatId, message, {
     reply_markup: { inline_keyboard: keyboard },
@@ -386,9 +321,103 @@ export function handleAbout(bot: BotInstance, msg: BotMessage): void {
 Адрес: г. Москва, ул. Примерная, д. 1
 
 Это демо-версия бота. В будущем здесь будет возможность оформления реальных заказов!
+
+📱 Также попробуйте наше мини-приложение с расширенными возможностями!
   `;
 
-  bot.sendMessage(chatId, aboutMessage);
+  const miniAppKeyboard = {
+    inline_keyboard: [
+      [
+        {
+          text: '🌯 Открыть Шаурма App',
+          web_app: { url: 'https://botgarden.store/' },
+        },
+      ],
+      [
+        {
+          text: '📱 Что такое Mini App?',
+          callback_data: 'about_miniapp',
+        },
+      ],
+    ],
+  };
+
+  bot.sendMessage(chatId, aboutMessage, {
+    reply_markup: miniAppKeyboard,
+  });
+}
+
+// Обработчик профиля пользователя
+export async function handleProfile(
+  bot: BotInstance,
+  msg: BotMessage | BotCallbackQuery
+): Promise<void> {
+  const chatId = 'chat' in msg ? msg.chat.id : msg.message?.chat.id;
+  const userId = msg.from?.id;
+  const userName = msg.from?.first_name || 'Пользователь';
+
+  if (!chatId || !userId) {
+    return;
+  }
+
+  try {
+    // Получаем статистику пользователя
+    const userStats = await databaseService.getUserStats(userId);
+
+    let message = `Профиль пользователя 👤\n\n`;
+    message += `Привет, ${userName}! 👋\n\n`;
+
+    if (userStats.totalOrders > 0) {
+      message += `📊 Ваша статистика:\n`;
+      message += `• Заказов: ${userStats.totalOrders}\n`;
+      message += `• Потрачено: ${userStats.totalSpent.toFixed(0)}₽\n`;
+      message += `• Средний чек: ${userStats.avgOrderValue.toFixed(0)}₽\n`;
+      message += `• Любимая категория: ${userStats.favoriteCategory === 'shawarma' ? 'Шаурма 🌯' : 'Напитки 🥤'}\n\n`;
+    } else {
+      message += `Добро пожаловать! 🎉\nВы еще не делали заказов.\n\n`;
+    }
+
+    message += `Выберите действие:`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: '📋 Мои заказы', callback_data: 'my_orders' },
+          { text: '⭐ Избранное', callback_data: 'favorites' },
+        ],
+        [{ text: '🎯 Рекомендации', callback_data: 'recommendations' }],
+        [{ text: 'Назад в меню', callback_data: 'back_to_menu' }],
+      ],
+    };
+
+    if ('data' in msg) {
+      // Это callback query
+      if (msg.message?.message_id) {
+        bot
+          .editMessageText(message, {
+            chat_id: chatId,
+            message_id: msg.message.message_id,
+            reply_markup: keyboard,
+          })
+          .catch(() => {});
+      }
+      bot.answerCallbackQuery(msg.id, { text: 'Профиль' }).catch(() => {});
+    } else {
+      // Это обычное сообщение
+      bot.sendMessage(chatId, message, {
+        reply_markup: keyboard,
+      });
+    }
+  } catch (error) {
+    console.error('Error viewing profile:', error);
+    const errorMessage = 'Ошибка при загрузке профиля';
+
+    if ('data' in msg) {
+      bot.answerCallbackQuery(msg.id, { text: errorMessage }).catch(() => {});
+    } else {
+      bot.sendMessage(chatId, errorMessage);
+    }
+  }
 }
 
 // Обработчик выбора товара
@@ -492,7 +521,7 @@ export async function handleBackToMenu(bot: BotInstance, query: BotCallbackQuery
   `;
 
   // Создаем клавиатуру с актуальным счетчиком корзины
-  const keyboard = await createMainKeyboardWithRecommendations(userId || 0);
+  const keyboard = await createMainKeyboard(userId || 0);
 
   if (query.message?.message_id) {
     bot

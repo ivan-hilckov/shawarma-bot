@@ -6,6 +6,7 @@ import {
   handleShawarmaMenu,
   handleDrinksMenu,
   handleAbout,
+  handleProfile,
   handleItemSelection,
   handleBackToMenu,
   handleAddToCart,
@@ -18,15 +19,11 @@ import {
   handleMyOrders,
   handleOrderDetails,
   handleAdminOrderAction,
-  handleMiniApp,
   handleAboutMiniApp,
   handleBackToStart,
   handleIncreaseFromItem,
   handleDecreaseFromItem,
   handleRemoveAllFromItem,
-  handleQuickAdd,
-  handleQuickIncrease,
-  handleQuickDecrease,
   handleFavorites,
   handleRecommendations,
   handleAddToFavorites,
@@ -85,20 +82,8 @@ bot.on('message', (msg: BotMessage) => {
       handleAbout(bot, msg);
       break;
 
-    case '📋 Мои заказы':
-      handleMyOrders(bot, msg);
-      break;
-
-    case '📱 Mini App':
-      handleMiniApp(bot, msg);
-      break;
-
-    case '⭐ Избранное':
-      handleFavorites(bot, msg);
-      break;
-
-    case '🎯 Рекомендации':
-      handleRecommendations(bot, msg);
+    case '👤 Профиль':
+      handleProfile(bot, msg);
       break;
 
     default:
@@ -139,6 +124,8 @@ bot.on('callback_query', (query: BotCallbackQuery) => {
       handleClearCart(bot, query);
     } else if (data === 'checkout') {
       handleCheckout(bot, query);
+    } else if (data === 'profile') {
+      handleProfile(bot, query);
     } else if (data === 'my_orders') {
       handleMyOrders(bot, query);
     } else if (data?.startsWith('order_details_')) {
@@ -157,12 +144,6 @@ bot.on('callback_query', (query: BotCallbackQuery) => {
       handleDecreaseFromItem(bot, query);
     } else if (data?.startsWith('remove_all_from_item_')) {
       handleRemoveAllFromItem(bot, query);
-    } else if (data?.startsWith('quick_add_')) {
-      handleQuickAdd(bot, query);
-    } else if (data?.startsWith('quick_increase_')) {
-      handleQuickIncrease(bot, query);
-    } else if (data?.startsWith('quick_decrease_')) {
-      handleQuickDecrease(bot, query);
     } else if (data === 'favorites') {
       handleFavorites(bot, query);
     } else if (data === 'recommendations') {
