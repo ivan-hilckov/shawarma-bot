@@ -1,24 +1,24 @@
-import config from "./config";
-import { createLogger } from "./logger";
-import { BotInstance, Order } from "./types";
+import config from './config';
+import { createLogger } from './logger';
+import { BotInstance, Order } from './types';
 
 class NotificationService {
   private bot: BotInstance;
   private notificationsChatId: string | undefined;
   private adminUserIds: number[];
-  private logger = createLogger("NotificationService");
+  private logger = createLogger('NotificationService');
 
   constructor(bot: BotInstance) {
     this.bot = bot;
     this.notificationsChatId = config.NOTIFICATIONS_CHAT_ID;
     this.adminUserIds = config.ADMIN_USER_IDS
-      ? config.ADMIN_USER_IDS.split(",")
-          .map((id) => parseInt(id.trim()))
-          .filter((id) => !isNaN(id))
+      ? config.ADMIN_USER_IDS.split(',')
+          .map(id => parseInt(id.trim()))
+          .filter(id => !isNaN(id))
       : [];
 
-    this.logger.info("NotificationService инициализирован", {
-      notificationsChatId: this.notificationsChatId || "не настроен",
+    this.logger.info('NotificationService инициализирован', {
+      notificationsChatId: this.notificationsChatId || 'не настроен',
       adminCount: this.adminUserIds.length,
     });
   }
@@ -33,11 +33,11 @@ class NotificationService {
       try {
         await this.bot.sendMessage(this.notificationsChatId, message, {
           reply_markup: keyboard,
-          parse_mode: "HTML",
+          parse_mode: 'HTML',
         });
-        this.logger.info("Уведомление о заказе отправлено в канал", { orderId: order.id });
+        this.logger.info('Уведомление о заказе отправлено в канал', { orderId: order.id });
       } catch (error) {
-        this.logger.error("Ошибка отправки уведомления в канал", {
+        this.logger.error('Ошибка отправки уведомления в канал', {
           orderId: order.id,
           error: error instanceof Error ? error.message : String(error),
         });
@@ -49,7 +49,7 @@ class NotificationService {
       try {
         await this.bot.sendMessage(adminId, message, {
           reply_markup: keyboard,
-          parse_mode: "HTML",
+          parse_mode: 'HTML',
         });
         console.log(`👨‍💼 Уведомление о заказе #${order.id} отправлено админу ${adminId}`);
       } catch (error) {
@@ -75,11 +75,11 @@ class NotificationService {
     if (this.notificationsChatId) {
       try {
         await this.bot.sendMessage(this.notificationsChatId, message, {
-          parse_mode: "HTML",
+          parse_mode: 'HTML',
         });
         console.log(`📢 Уведомление об изменении статуса заказа #${order.id} отправлено в канал`);
       } catch (error) {
-        console.error("❌ Ошибка отправки уведомления об изменении статуса в канал:", error);
+        console.error('❌ Ошибка отправки уведомления об изменении статуса в канал:', error);
       }
     }
 
@@ -87,7 +87,7 @@ class NotificationService {
     for (const adminId of this.adminUserIds) {
       try {
         await this.bot.sendMessage(adminId, message, {
-          parse_mode: "HTML",
+          parse_mode: 'HTML',
         });
       } catch (error) {
         console.error(
@@ -127,14 +127,14 @@ class NotificationService {
     return {
       inline_keyboard: [
         [
-          { text: "✅ Принять", callback_data: `admin_confirm_${orderId}` },
-          { text: "❌ Отклонить", callback_data: `admin_reject_${orderId}` },
+          { text: '✅ Принять', callback_data: `admin_confirm_${orderId}` },
+          { text: '❌ Отклонить', callback_data: `admin_reject_${orderId}` },
         ],
         [
-          { text: "👨‍🍳 Готовится", callback_data: `admin_preparing_${orderId}` },
-          { text: "🎉 Готово", callback_data: `admin_ready_${orderId}` },
+          { text: '👨‍🍳 Готовится', callback_data: `admin_preparing_${orderId}` },
+          { text: '🎉 Готово', callback_data: `admin_ready_${orderId}` },
         ],
-        [{ text: "📋 Детали", callback_data: `admin_details_${orderId}` }],
+        [{ text: '📋 Детали', callback_data: `admin_details_${orderId}` }],
       ],
     };
   }
@@ -142,35 +142,35 @@ class NotificationService {
   // Получение emoji для статуса заказа
   private getStatusEmoji(status: string): string {
     const statusMap: { [key: string]: string } = {
-      pending: "⏳",
-      confirmed: "✅",
-      preparing: "👨‍🍳",
-      ready: "🎉",
-      delivered: "✅",
+      pending: '⏳',
+      confirmed: '✅',
+      preparing: '👨‍🍳',
+      ready: '🎉',
+      delivered: '✅',
     };
-    return statusMap[status] || "❓";
+    return statusMap[status] || '❓';
   }
 
   // Получение текста статуса заказа
   private getStatusText(status: string): string {
     const statusMap: { [key: string]: string } = {
-      pending: "В ожидании",
-      confirmed: "Подтвержден",
-      preparing: "Готовится",
-      ready: "Готов",
-      delivered: "Доставлен",
+      pending: 'В ожидании',
+      confirmed: 'Подтвержден',
+      preparing: 'Готовится',
+      ready: 'Готов',
+      delivered: 'Доставлен',
     };
-    return statusMap[status] || "Неизвестно";
+    return statusMap[status] || 'Неизвестно';
   }
 
   // Форматирование даты для отображения
   private formatDate(date: Date): string {
-    return date.toLocaleString("ru-RU", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    return date.toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 
@@ -187,10 +187,10 @@ class NotificationService {
   // Получение информации о конфигурации
   getStatus(): string {
     if (!this.isConfigured()) {
-      return "❌ Уведомления не настроены";
+      return '❌ Уведомления не настроены';
     }
 
-    let status = "✅ Уведомления настроены:\n";
+    let status = '✅ Уведомления настроены:\n';
     if (this.notificationsChatId) {
       status += `📢 Канал: ${this.notificationsChatId}\n`;
     }

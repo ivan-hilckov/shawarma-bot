@@ -240,17 +240,19 @@ export class DatabaseService {
 
         // Добавляем элемент заказа, если он существует
         if (row.menu_item_id) {
-          const order = ordersMap.get(orderId)!;
-          order.items.push({
-            menuItem: {
-              id: row.menu_item_id.toString(),
-              name: row.item_name,
-              description: row.item_description,
-              price: parseFloat(row.item_price),
-              category: row.category === 'shawarma' ? 'shawarma' : 'drinks',
-            },
-            quantity: row.quantity,
-          });
+          const order = ordersMap.get(orderId);
+          if (order) {
+            order.items.push({
+              menuItem: {
+                id: row.menu_item_id.toString(),
+                name: row.item_name,
+                description: row.item_description,
+                price: parseFloat(row.item_price),
+                category: row.category === 'shawarma' ? 'shawarma' : 'drinks',
+              },
+              quantity: row.quantity,
+            });
+          }
         }
       }
 

@@ -17,9 +17,10 @@ class Logger {
   private logLevel: LogLevel;
   private context: string;
 
-  constructor(context: string = "App", logLevel: LogLevel = LogLevel.INFO) {
+  constructor(context: string = 'App', logLevel?: LogLevel) {
     this.context = context;
-    this.logLevel = process.env.NODE_ENV === "production" ? LogLevel.INFO : LogLevel.DEBUG;
+    this.logLevel =
+      logLevel ?? (process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG);
   }
 
   private log(level: LogLevel, message: string, metadata?: Record<string, any>): void {
@@ -35,7 +36,7 @@ class Logger {
 
     const levelName = LogLevel[level];
     const timestamp = entry.timestamp.toISOString();
-    const contextStr = this.context ? `[${this.context}]` : "";
+    const contextStr = this.context ? `[${this.context}]` : '';
 
     let logMessage = `${timestamp} ${levelName} ${contextStr} ${message}`;
 

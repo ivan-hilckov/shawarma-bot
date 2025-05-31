@@ -54,7 +54,7 @@ const healthRoutes: FastifyPluginAsync = async fastify => {
         },
       },
     },
-    async (_request, _reply) => {
+    async () => {
       // Проверяем базу данных
       let dbStatus = 'down';
       let dbResponseTime = 0;
@@ -157,7 +157,7 @@ const healthRoutes: FastifyPluginAsync = async fastify => {
           ready: true,
           timestamp: new Date().toISOString(),
         };
-      } catch (error) {
+      } catch {
         reply.code(503);
         return {
           ready: false,
@@ -186,7 +186,7 @@ const healthRoutes: FastifyPluginAsync = async fastify => {
         },
       },
     },
-    async (_request, _reply) => {
+    async () => {
       return {
         alive: true,
         timestamp: new Date().toISOString(),

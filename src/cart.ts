@@ -1,30 +1,30 @@
-import { createClient, RedisClientType } from "redis";
+import { createClient, RedisClientType } from 'redis';
 
-import config from "./config";
-import { createLogger } from "./logger";
-import { CartItem, MenuItem } from "./types";
+import config from './config';
+import { createLogger } from './logger';
+import { CartItem, MenuItem } from './types';
 
 export class CartService {
   private client: RedisClientType;
   private isConnected: boolean = false;
-  private logger = createLogger("CartService");
+  private logger = createLogger('CartService');
 
   constructor() {
     this.client = createClient({
       url: config.REDIS_URL,
     });
 
-    this.client.on("error", (err) => {
-      this.logger.error("Redis Client Error", { error: err.message });
+    this.client.on('error', err => {
+      this.logger.error('Redis Client Error', { error: err.message });
     });
 
-    this.client.on("connect", () => {
-      this.logger.info("Connected to Redis");
+    this.client.on('connect', () => {
+      this.logger.info('Connected to Redis');
       this.isConnected = true;
     });
 
-    this.client.on("disconnect", () => {
-      this.logger.info("Disconnected from Redis");
+    this.client.on('disconnect', () => {
+      this.logger.info('Disconnected from Redis');
       this.isConnected = false;
     });
   }
@@ -52,11 +52,14 @@ export class CartService {
     const existingCart = await this.getCart(userId);
 
     // Проверяем, есть ли уже этот товар в корзине
-    const existingItemIndex = existingCart.findIndex((item) => item.menuItem.id === menuItem.id);
+    const existingItemIndex = existingCart.findIndex(item => item.menuItem.id === menuItem.id);
 
     if (existingItemIndex >= 0) {
       // Увеличиваем количество существующего товара
-      existingCart[existingItemIndex]!.quantity += quantity;
+      const existingItem = existingCart[existingItemIndex];
+      if (existingItem) {
+        existingItem.quantity += quantity;
+      }
     } else {
       // Добавляем новый товар
       existingCart.push({ menuItem, quantity });
@@ -71,7 +74,7 @@ export class CartService {
     const cartKey = this.getCartKey(userId);
     const existingCart = await this.getCart(userId);
 
-    const updatedCart = existingCart.filter((item) => item.menuItem.id !== itemId);
+    const updatedCart = existingCart.filter(item => item.menuItem.id !== itemId);
 
     if (updatedCart.length === 0) {
       await this.client.del(cartKey);
@@ -91,10 +94,13 @@ export class CartService {
     const cartKey = this.getCartKey(userId);
     const existingCart = await this.getCart(userId);
 
-    const itemIndex = existingCart.findIndex((item) => item.menuItem.id === itemId);
+    const itemIndex = existingCart.findIndex(item => item.menuItem.id === itemId);
 
     if (itemIndex >= 0) {
-      existingCart[itemIndex]!.quantity = quantity;
+      const existingItem = existingCart[itemIndex];
+      if (existingItem) {
+        existingItem.quantity = quantity;
+      }
       await this.client.setEx(cartKey, 3600, JSON.stringify(existingCart));
     }
   }
@@ -112,7 +118,7 @@ export class CartService {
     try {
       return JSON.parse(cartData) as CartItem[];
     } catch (error) {
-      this.logger.error("Error parsing cart data", {
+      this.logger.error('Error parsing cart data', {
         error: error instanceof Error ? error.message : String(error),
         userId,
       });
@@ -141,7 +147,7 @@ export class CartService {
   async getActiveCartsCount(): Promise<number> {
     await this.connect();
 
-    const keys = await this.client.keys("cart:*");
+    const keys = await this.client.keys('cart:*');
     return keys.length;
   }
 }

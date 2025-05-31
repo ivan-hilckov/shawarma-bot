@@ -9,7 +9,7 @@ describe('ValidationMiddleware', () => {
         date: Date.now(),
         chat: { id: 123, type: 'private' },
         from: { id: 456, is_bot: false, first_name: 'Test' },
-        text: 'test message'
+        text: 'test message',
       };
 
       const result = ValidationMiddleware.validateMessage(msg);
@@ -23,7 +23,7 @@ describe('ValidationMiddleware', () => {
         date: Date.now(),
         chat: {},
         from: { id: 456, is_bot: false, first_name: 'Test' },
-        text: 'test message'
+        text: 'test message',
       };
 
       const result = ValidationMiddleware.validateMessage(msg);
@@ -37,7 +37,7 @@ describe('ValidationMiddleware', () => {
         date: Date.now(),
         chat: { id: 123, type: 'private' },
         from: {},
-        text: 'test message'
+        text: 'test message',
       };
 
       const result = ValidationMiddleware.validateMessage(msg);
@@ -50,7 +50,7 @@ describe('ValidationMiddleware', () => {
         message_id: 1,
         date: Date.now(),
         chat: { id: 123, type: 'private' },
-        text: 'test message'
+        text: 'test message',
       };
 
       const result = ValidationMiddleware.validateMessage(msg);
@@ -68,9 +68,9 @@ describe('ValidationMiddleware', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123, type: 'private' }
+          chat: { id: 123, type: 'private' },
         },
-        data: 'test_data'
+        data: 'test_data',
       };
 
       const result = ValidationMiddleware.validateCallbackQuery(query);
@@ -85,9 +85,9 @@ describe('ValidationMiddleware', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123, type: 'private' }
+          chat: { id: 123, type: 'private' },
         },
-        data: 'test_data'
+        data: 'test_data',
       };
 
       const result = ValidationMiddleware.validateCallbackQuery(query);
@@ -102,9 +102,9 @@ describe('ValidationMiddleware', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: {}
+          chat: {},
         },
-        data: 'test_data'
+        data: 'test_data',
       };
 
       const result = ValidationMiddleware.validateCallbackQuery(query);
@@ -116,7 +116,7 @@ describe('ValidationMiddleware', () => {
       const query: any = {
         id: 'test_id',
         from: { id: 456, is_bot: false, first_name: 'Test' },
-        data: 'test_data'
+        data: 'test_data',
       };
 
       const result = ValidationMiddleware.validateCallbackQuery(query);

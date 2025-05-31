@@ -1,8 +1,8 @@
-import dotenv from 'dotenv';
+import { config as dotenvConfig } from 'dotenv';
 
 import { Config } from './types';
 
-dotenv.config();
+dotenvConfig();
 
 const config: Config = {
   BOT_TOKEN: process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE',

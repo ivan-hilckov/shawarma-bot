@@ -1,17 +1,10 @@
+// eslint-disable-next-line import/no-named-as-default
 import botApiClient from './api-client';
 import config from './config';
+// eslint-disable-next-line import/no-named-as-default
 import databaseService from './database';
 import { getMenuByCategory, getItemById } from './menu';
-import {
-  BotInstance,
-  BotMessage,
-  BotCallbackQuery,
-  MenuItem,
-  CartItem,
-  UserFavorite,
-  Recommendation,
-  CartSummary,
-} from './types';
+import { BotInstance, BotMessage, BotCallbackQuery, MenuItem, CartItem } from './types';
 
 // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 
@@ -25,65 +18,6 @@ async function getItemQuantityInCart(userId: number, itemId: string): Promise<nu
     console.error('Error getting item quantity from cart:', error);
     return 0;
   }
-}
-
-// Создать клавиатуру с +/- для товара
-function createItemQuantityKeyboard(
-  itemId: string,
-  currentQuantity: number
-): Array<Array<{ text: string; callback_data: string }>> {
-  const keyboard = [];
-
-  if (currentQuantity === 0) {
-    // Если товара нет в корзине, показываем кнопку "Добавить в корзину"
-    keyboard.push([{ text: 'Добавить в корзину', callback_data: `add_to_cart_${itemId}` }]);
-  } else {
-    // Если товар есть в корзине, показываем +/- интерфейс
-    keyboard.push([
-      { text: '−', callback_data: `decrease_from_item_${itemId}` },
-      { text: `${currentQuantity} шт.`, callback_data: `quantity_${itemId}` },
-      { text: '+', callback_data: `increase_from_item_${itemId}` },
-    ]);
-
-    // Добавляем кнопку быстрого удаления
-    keyboard.push([
-      { text: 'Убрать все из корзины', callback_data: `remove_all_from_item_${itemId}` },
-    ]);
-  }
-
-  // Кнопки навигации
-  keyboard.push([
-    { text: 'Перейти в корзину', callback_data: 'view_cart' },
-    { text: 'Назад к каталогу', callback_data: 'back_to_menu' },
-  ]);
-
-  return keyboard;
-}
-
-// Создать главную клавиатуру с индикатором корзины
-async function createMainKeyboardWithBadge(userId?: number): Promise<any> {
-  let cartText = '🛒 Корзина';
-
-  if (userId) {
-    try {
-      const cartTotal = await botApiClient.getCartTotal(userId);
-      if (cartTotal.itemsCount > 0) {
-        cartText = `🛒 Корзина (${cartTotal.itemsCount})`;
-      }
-    } catch (error) {
-      console.error('Error getting cart total for badge:', error);
-    }
-  }
-
-  return {
-    keyboard: [
-      [{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }],
-      [{ text: cartText }, { text: '📋 Мои заказы' }],
-      [{ text: '📱 Mini App' }, { text: 'ℹ️ О нас' }],
-    ],
-    resize_keyboard: true,
-    one_time_keyboard: false,
-  };
 }
 
 // Создать каталог с быстрыми кнопками +/-
@@ -134,24 +68,6 @@ async function createCatalogKeyboard(
   keyboard.push([{ text: 'Назад в меню', callback_data: 'back_to_menu' }]);
 
   return keyboard;
-}
-
-// Обновить главное меню с актуальным счетчиком корзины
-async function updateMainKeyboard(bot: BotInstance, chatId: number, userId: number): Promise<void> {
-  try {
-    const keyboard = await createMainKeyboardWithBadge(userId || 0);
-    const message = `
-Главное меню 🏠
-
-Выберите нужное действие:
-    `;
-
-    await bot.sendMessage(chatId, message, {
-      reply_markup: keyboard,
-    });
-  } catch (error) {
-    console.error('Error updating main keyboard:', error);
-  }
 }
 
 // ===== НОВЫЕ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ЭТАПА 3 =====
@@ -329,20 +245,6 @@ async function createFavoritesMessage(userId: number): Promise<{
       message: 'Ошибка загрузки избранного\n\nПопробуйте позже.',
       keyboard: [[{ text: 'Назад в меню', callback_data: 'back_to_menu' }]],
     };
-  }
-}
-
-// Получить информацию о корзине для виджета
-async function getCartWidget(userId: number): Promise<string> {
-  try {
-    const cartTotal = await botApiClient.getCartTotal(userId);
-    if (cartTotal.itemsCount === 0) {
-      return '';
-    }
-    return `\n\nВ корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`;
-  } catch (error) {
-    console.error('Error getting cart widget:', error);
-    return '';
   }
 }
 
@@ -1509,17 +1411,20 @@ export async function handleQuickAdd(bot: BotInstance, query: BotCallbackQuery):
       .catch(() => {});
 
     // Обновляем каталог с новыми кнопками
-    const category = item.category;
-    if (category === 'shawarma') {
-      await handleShawarmaMenu(bot, {
-        chat: { id: query.message?.chat.id! },
-        from: query.from,
-      } as BotMessage);
-    } else if (category === 'drinks') {
-      await handleDrinksMenu(bot, {
-        chat: { id: query.message?.chat.id! },
-        from: query.from,
-      } as BotMessage);
+    const chatId = query.message?.chat?.id;
+    if (chatId) {
+      const category = item.category;
+      if (category === 'shawarma') {
+        await handleShawarmaMenu(bot, {
+          chat: { id: chatId },
+          from: query.from,
+        } as BotMessage);
+      } else if (category === 'drinks') {
+        await handleDrinksMenu(bot, {
+          chat: { id: chatId },
+          from: query.from,
+        } as BotMessage);
+      }
     }
   } catch (error) {
     console.error('Error quick adding item:', error);
@@ -1557,17 +1462,20 @@ export async function handleQuickIncrease(
         .catch(() => {});
 
       // Обновляем каталог
-      const category = item?.category;
-      if (category === 'shawarma') {
-        await handleShawarmaMenu(bot, {
-          chat: { id: query.message?.chat.id! },
-          from: query.from,
-        } as BotMessage);
-      } else if (category === 'drinks') {
-        await handleDrinksMenu(bot, {
-          chat: { id: query.message?.chat.id! },
-          from: query.from,
-        } as BotMessage);
+      const chatId = query.message?.chat?.id;
+      if (chatId) {
+        const category = item?.category;
+        if (category === 'shawarma') {
+          await handleShawarmaMenu(bot, {
+            chat: { id: chatId },
+            from: query.from,
+          } as BotMessage);
+        } else if (category === 'drinks') {
+          await handleDrinksMenu(bot, {
+            chat: { id: chatId },
+            from: query.from,
+          } as BotMessage);
+        }
       }
     }
   } catch (error) {
@@ -1616,18 +1524,21 @@ export async function handleQuickDecrease(
       }
 
       // Обновляем каталог
-      const item = getItemById(itemId);
-      const category = item?.category;
-      if (category === 'shawarma') {
-        await handleShawarmaMenu(bot, {
-          chat: { id: query.message?.chat.id! },
-          from: query.from,
-        } as BotMessage);
-      } else if (category === 'drinks') {
-        await handleDrinksMenu(bot, {
-          chat: { id: query.message?.chat.id! },
-          from: query.from,
-        } as BotMessage);
+      const chatId = query.message?.chat?.id;
+      if (chatId) {
+        const item = getItemById(itemId);
+        const category = item?.category;
+        if (category === 'shawarma') {
+          await handleShawarmaMenu(bot, {
+            chat: { id: chatId },
+            from: query.from,
+          } as BotMessage);
+        } else if (category === 'drinks') {
+          await handleDrinksMenu(bot, {
+            chat: { id: chatId },
+            from: query.from,
+          } as BotMessage);
+        }
       }
     }
   } catch (error) {

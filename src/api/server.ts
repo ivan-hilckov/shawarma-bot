@@ -1,4 +1,12 @@
 import Fastify from 'fastify';
+// eslint-disable-next-line import/no-named-as-default
+import fastifySwagger from '@fastify/swagger';
+// eslint-disable-next-line import/no-named-as-default
+import fastifySwaggerUi from '@fastify/swagger-ui';
+// eslint-disable-next-line import/no-named-as-default
+import fastifyCors from '@fastify/cors';
+// eslint-disable-next-line import/no-named-as-default
+import fastifyRateLimit from '@fastify/rate-limit';
 
 import config from '../config';
 import { createLogger } from '../logger';
@@ -27,7 +35,7 @@ async function buildServer() {
 
   try {
     // Регистрируем Swagger
-    await fastify.register(require('@fastify/swagger'), {
+    await fastify.register(fastifySwagger, {
       swagger: {
         info: {
           title: 'Shawarma Bot API',
@@ -64,7 +72,7 @@ async function buildServer() {
     });
 
     // Регистрируем Swagger UI
-    await fastify.register(require('@fastify/swagger-ui'), {
+    await fastify.register(fastifySwaggerUi, {
       routePrefix: '/api/docs',
       uiConfig: {
         docExpansion: 'list',
@@ -79,14 +87,14 @@ async function buildServer() {
     });
 
     // Регистрируем CORS
-    await fastify.register(require('@fastify/cors'), {
+    await fastify.register(fastifyCors, {
       origin: config.CORS_ORIGINS,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     });
 
     // Регистрируем Rate Limiting
-    await fastify.register(require('@fastify/rate-limit'), {
+    await fastify.register(fastifyRateLimit, {
       max: config.RATE_LIMIT_PUBLIC,
       timeWindow: '1 minute',
       skipOnError: true,

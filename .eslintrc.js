@@ -3,7 +3,8 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
-    project: './tsconfig.json',
+    project: true,
+    tsconfigRootDir: __dirname,
   },
   plugins: ['@typescript-eslint', 'import', 'security'],
   extends: [
@@ -37,6 +38,7 @@ module.exports = {
     '@typescript-eslint/no-unsafe-return': 'off',
     '@typescript-eslint/no-floating-promises': 'off',
     '@typescript-eslint/no-misused-promises': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'error',
 
     // Import rules
     'import/no-cycle': 'error',
@@ -73,6 +75,14 @@ module.exports = {
       files: ['jest.config.js'],
       parserOptions: {
         project: null, // Отключаем TypeScript проверку для jest.config.js
+      },
+    },
+    {
+      files: ['__tests__/**/*.ts', '**/*.test.ts', '**/*.spec.ts'],
+      rules: {
+        '@typescript-eslint/no-require-imports': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/no-non-null-assertion': 'off',
       },
     },
   ],

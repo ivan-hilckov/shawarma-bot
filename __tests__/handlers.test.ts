@@ -93,7 +93,9 @@ describe('Handlers Module', () => {
         expect.objectContaining({
           reply_markup: expect.objectContaining({
             keyboard: expect.arrayContaining([
-              expect.arrayContaining([{ text: 'Шаурма' }, { text: 'Напитки' }]),
+              expect.arrayContaining([{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }]),
+              expect.arrayContaining([{ text: '🛒 Корзина' }, { text: '📋 Мои заказы' }]),
+              expect.arrayContaining([{ text: '⭐ Избранное' }, { text: '🎯 Рекомендации' }]),
             ]),
           }),
         })

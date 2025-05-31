@@ -1,11 +1,6 @@
 import { z } from 'zod';
 
-import {
-  SuccessResponseSchema,
-  PaginationSchema,
-  PaginationMetaSchema,
-  DateRangeSchema,
-} from './common';
+import { SuccessResponseSchema, PaginationSchema, PaginationMetaSchema } from './common';
 
 // Схема пользователя в заказе
 export const OrderUserSchema = z.object({
