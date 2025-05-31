@@ -94,12 +94,17 @@ describe('Async Handlers', () => {
       createdAt: new Date(),
     };
 
-    // Настраиваем глобальный notificationService
-    (global as any).notificationService = {
+    // Настраиваем serviceRegistry с мок notificationService
+    const { serviceRegistry } = require('../src/services');
+    const mockNotificationService = {
       notifyNewOrder: jest.fn().mockResolvedValue(undefined),
       notifyStatusChange: jest.fn().mockResolvedValue(undefined),
       isAdmin: jest.fn().mockReturnValue(false),
     };
+
+    // Очищаем и регистрируем мок
+    serviceRegistry.services = {};
+    serviceRegistry.register('notifications', mockNotificationService);
   });
 
   afterEach(() => {
@@ -500,7 +505,9 @@ describe('Async Handlers', () => {
   describe('handleAdminOrderAction', () => {
     beforeEach(() => {
       // Делаем пользователя администратором
-      (global as any).notificationService.isAdmin.mockReturnValue(true);
+      const { serviceRegistry } = require('../src/services');
+      const mockNotificationService = serviceRegistry.get('notifications');
+      mockNotificationService.isAdmin.mockReturnValue(true);
     });
 
     it('должен подтверждать заказ', async () => {
@@ -523,7 +530,9 @@ describe('Async Handlers', () => {
     });
 
     it('должен отклонять доступ для не-админов', async () => {
-      (global as any).notificationService.isAdmin.mockReturnValue(false);
+      const { serviceRegistry } = require('../src/services');
+      const mockNotificationService = serviceRegistry.get('notifications');
+      mockNotificationService.isAdmin.mockReturnValue(false);
 
       const query = {
         ...mockCallbackQuery,
@@ -596,7 +605,9 @@ describe('Async Handlers', () => {
     });
 
     it('должен запрещать доступ не-администраторам', async () => {
-      (global as any).notificationService.isAdmin.mockReturnValue(false);
+      const { serviceRegistry } = require('../src/services');
+      const mockNotificationService = serviceRegistry.get('notifications');
+      mockNotificationService.isAdmin.mockReturnValue(false);
 
       const query = {
         ...mockCallbackQuery,

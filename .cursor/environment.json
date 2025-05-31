@@ -1,0 +1,27 @@
+{
+  "user": "root",
+  "install": "./.cursor/install.sh",
+  "start": "sudo service docker start",
+  "terminals": [
+    {
+      "name": "docker-services",
+      "command": "npm run docker:up && echo '🐳 Docker services started. Checking status...' && sleep 5 && docker-compose ps",
+      "description": "Starts PostgreSQL, Redis, and other Docker services required for development"
+    },
+    {
+      "name": "api-dev",
+      "command": "sleep 30 && echo '🚀 Starting API development server...' && npm run dev:api:watch",
+      "description": "Runs the REST API server in development mode with auto-reload on file changes"
+    },
+    {
+      "name": "bot-dev",
+      "command": "sleep 35 && echo '🤖 Starting Telegram Bot in development mode...' && npm run dev:watch",
+      "description": "Runs the Telegram Bot in development mode with auto-reload on file changes"
+    },
+    {
+      "name": "test-runner",
+      "command": "sleep 10 && echo '🧪 Test runner ready. Use: npm test, npm run test:watch, npm run test:coverage' && bash",
+      "description": "Terminal for running tests and debugging. Services will be available after Docker startup."
+    }
+  ]
+}

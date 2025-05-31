@@ -4,12 +4,13 @@ import config from './config';
 // eslint-disable-next-line import/no-named-as-default
 import databaseService from './database';
 import { getMenuByCategory, getItemById } from './menu';
+import { serviceRegistry } from './services';
 import { BotInstance, BotMessage, BotCallbackQuery, MenuItem } from './types';
 
 // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 
 // Получить количество товара в корзине пользователя
-async function getItemQuantityInCart(userId: number, itemId: string): Promise<number> {
+export async function getItemQuantityInCart(userId: number, itemId: string): Promise<number> {
   try {
     const cart = await botApiClient.getCart(userId);
     const cartItem = cart.find(item => item.menuItem.id === itemId);
@@ -17,6 +18,138 @@ async function getItemQuantityInCart(userId: number, itemId: string): Promise<nu
   } catch (error) {
     console.error('Error getting item quantity from cart:', error);
     return 0;
+  }
+}
+
+// ===== УЛУЧШЕННЫЕ HELPER ФУНКЦИИ ДЛЯ ИСПРАВЛЕНИЯ БАГОВ =====
+
+// Результат операции с корзиной
+interface CartOperationResult {
+  success: boolean;
+  newQuantity?: number;
+  cartTotal?: { total: number; itemsCount: number };
+  error?: string;
+}
+
+// Атомарное обновление товара в корзине с optimistic updates
+async function updateCartItemAtomically(
+  userId: number,
+  itemId: string,
+  operation: 'increase' | 'decrease' | 'remove'
+): Promise<CartOperationResult> {
+  try {
+    // Шаг 1: Получаем текущее состояние корзины
+    const cart = await botApiClient.getCart(userId);
+    const cartItem = cart.find(item => item.menuItem.id === itemId);
+
+    if (!cartItem && operation !== 'increase') {
+      return { success: false, error: 'Товар не найден в корзине' };
+    }
+
+    // Шаг 2: Вычисляем новое количество
+    let newQuantity: number;
+    switch (operation) {
+      case 'increase':
+        newQuantity = cartItem ? cartItem.quantity + 1 : 1;
+        break;
+      case 'decrease':
+        if (!cartItem) return { success: false, error: 'Товар не найден в корзине' };
+        newQuantity = cartItem.quantity - 1;
+        break;
+      case 'remove':
+        newQuantity = 0;
+        break;
+    }
+
+    // Шаг 3: Выполняем операцию
+    if (newQuantity <= 0) {
+      await botApiClient.removeFromCart(userId, itemId);
+    } else {
+      if (cartItem) {
+        await botApiClient.updateCartQuantity(userId, itemId, newQuantity);
+      } else {
+        await botApiClient.addToCart(userId, itemId, newQuantity);
+      }
+    }
+
+    // Шаг 4: Получаем обновленные данные корзины
+    const cartTotal = await botApiClient.getCartTotal(userId);
+
+    return {
+      success: true,
+      newQuantity: newQuantity > 0 ? newQuantity : 0,
+      cartTotal,
+    };
+  } catch (error) {
+    console.error('Error in updateCartItemAtomically:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Неизвестная ошибка',
+    };
+  }
+}
+
+// Обновление отображения товара без ручного создания query
+async function refreshItemDisplay(
+  bot: BotInstance,
+  originalQuery: BotCallbackQuery,
+  itemId: string
+): Promise<void> {
+  const chatId = originalQuery.message?.chat.id;
+  const userId = originalQuery.from?.id;
+
+  if (!chatId || !userId) {
+    console.error('Missing chatId or userId for refreshItemDisplay');
+    return;
+  }
+
+  try {
+    // Получаем актуальную информацию о товаре и корзине
+    const item = getItemById(itemId);
+    if (!item) {
+      console.error(`Item ${itemId} not found for refresh`);
+      return;
+    }
+
+    const currentQuantity = await getItemQuantityInCart(userId, itemId);
+    const keyboard = await createItemKeyboardWithFavorites(itemId, currentQuantity, userId);
+
+    // Формируем сообщение
+    let message = `
+${item.name}
+
+Цена: ${item.price} руб.
+${item.description}
+`;
+
+    if (currentQuantity > 0) {
+      const subtotal = item.price * currentQuantity;
+      message += `\nВ корзине: ${currentQuantity} шт. (${subtotal}₽)`;
+    }
+
+    message += `\n\nВыберите действие:`;
+
+    // Обновляем сообщение
+    if (originalQuery.message?.message_id) {
+      await bot.editMessageText(message, {
+        chat_id: chatId,
+        message_id: originalQuery.message.message_id,
+        reply_markup: { inline_keyboard: keyboard },
+      });
+    }
+  } catch (error) {
+    console.error('Error refreshing item display:', error);
+    // Если не можем обновить - отправляем новое сообщение
+    try {
+      const item = getItemById(itemId);
+      await bot.sendMessage(chatId, `❌ Ошибка обновления. Товар: ${item?.name || 'Неизвестный'}`, {
+        reply_markup: {
+          inline_keyboard: [[{ text: 'Назад к каталогу', callback_data: 'back_to_menu' }]],
+        },
+      });
+    } catch (fallbackError) {
+      console.error('Error in fallback message:', fallbackError);
+    }
   }
 }
 
@@ -43,7 +176,7 @@ async function createCatalogKeyboard(
 // ===== НОВЫЕ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ЭТАПА 3 =====
 
 // Создать клавиатуру для товара с кнопкой избранного
-async function createItemKeyboardWithFavorites(
+export async function createItemKeyboardWithFavorites(
   itemId: string,
   currentQuantity: number,
   userId: number
@@ -420,7 +553,62 @@ export async function handleProfile(
   }
 }
 
-// Обработчик выбора товара
+// Результат отправки сообщения с товаром
+interface ItemDisplayResult {
+  success: boolean;
+  method: 'photo' | 'text' | 'error';
+  error?: string;
+}
+
+// Единая функция для отправки информации о товаре
+async function sendItemMessage(
+  bot: BotInstance,
+  chatId: number,
+  item: MenuItem,
+  message: string,
+  keyboard: any
+): Promise<ItemDisplayResult> {
+  // Если у товара есть фотография, пытаемся отправить её
+  if (item.photo) {
+    try {
+      const photoUrl = `${config.ASSETS_BASE_URL}/${item.photo.replace('assets/', '')}`;
+
+      await bot.sendPhoto(chatId, photoUrl, {
+        caption: message,
+        reply_markup: keyboard,
+      });
+
+      return { success: true, method: 'photo' };
+    } catch (photoError) {
+      console.warn(`Не удалось отправить фото для товара ${item.name}:`, photoError);
+      // Fallback: отправляем текстовое сообщение с emoji фото
+      try {
+        await bot.sendMessage(chatId, `📸 ${message}`, { reply_markup: keyboard });
+        return { success: true, method: 'text' };
+      } catch (textError) {
+        return {
+          success: false,
+          method: 'error',
+          error: `Ошибка отправки текста: ${textError instanceof Error ? textError.message : textError}`,
+        };
+      }
+    }
+  } else {
+    // Если фото нет, отправляем текстовое сообщение
+    try {
+      await bot.sendMessage(chatId, message, { reply_markup: keyboard });
+      return { success: true, method: 'text' };
+    } catch (textError) {
+      return {
+        success: false,
+        method: 'error',
+        error: `Ошибка отправки текста: ${textError instanceof Error ? textError.message : textError}`,
+      };
+    }
+  }
+}
+
+// Обработчик выбора товара (УЛУЧШЕННЫЙ - без дублирования сообщений)
 export async function handleItemSelection(
   bot: BotInstance,
   query: BotCallbackQuery
@@ -435,15 +623,10 @@ export async function handleItemSelection(
   }
 
   const item = getItemById(itemId);
-
   if (!item) {
     bot.answerCallbackQuery(query.id, { text: 'Товар не найден' }).catch(() => {});
     return;
   }
-
-  // Быстро отвечаем на callback query чтобы убрать loading
-  const notificationText = `Загружаем ${item.name}...`;
-  bot.answerCallbackQuery(query.id, { text: notificationText }).catch(() => {});
 
   try {
     // Получаем текущее количество товара в корзине
@@ -470,38 +653,48 @@ ${item.description}
       inline_keyboard: await createItemKeyboardWithFavorites(itemId, currentQuantity, userId),
     };
 
-    // Если у товара есть фотография, пытаемся отправить её
-    if (item.photo) {
-      // Формируем URL изображения вместо локального пути
-      const photoUrl = `${config.ASSETS_BASE_URL}/${item.photo.replace('assets/', '')}`;
+    // ЕДИНСТВЕННАЯ точка отправки сообщения - решает проблему дублирования
+    const result = await sendItemMessage(bot, chatId, item, message, keyboard);
 
-      console.log(`📸 Отправляем фото по URL: ${photoUrl}`);
-
-      try {
-        await bot.sendPhoto(chatId, photoUrl, {
-          caption: message,
-          reply_markup: keyboard,
-        });
-        console.log(`✅ Фото для товара ${item.name} отправлено успешно`);
-      } catch (photoError) {
-        console.error('❌ Ошибка отправки фото:', photoError);
-        // Fallback: отправляем текстовое сообщение
-        await bot.sendMessage(chatId, `📸 ${message}`, { reply_markup: keyboard });
-        console.log(`📝 Отправлено текстовое сообщение для товара ${item.name}`);
-      }
+    if (result.success) {
+      // Успех: отвечаем на callback query с информацией о методе отправки
+      const methodText =
+        result.method === 'photo' ? '📸 Фото загружено' : '📝 Информация загружена';
+      bot.answerCallbackQuery(query.id, { text: methodText }).catch(() => {});
     } else {
-      // Если фото нет, отправляем текстовое сообщение
-      await bot.sendMessage(chatId, message, { reply_markup: keyboard });
-      console.log(`📝 Отправлено текстовое сообщение для товара ${item.name} (без фото)`);
+      // Ошибка отправки: отправляем базовое сообщение об ошибке
+      console.error('Ошибка отправки сообщения о товаре:', result.error);
+
+      await bot.sendMessage(chatId, `❌ Ошибка загрузки товара "${item.name}". Попробуйте снова.`, {
+        reply_markup: {
+          inline_keyboard: [[{ text: 'Назад к каталогу', callback_data: 'back_to_menu' }]],
+        },
+      });
+
+      bot.answerCallbackQuery(query.id, { text: 'Ошибка загрузки товара' }).catch(() => {});
     }
   } catch (error) {
-    console.error('❌ Ошибка в handleItemSelection:', error);
-    // Если произошла любая ошибка, отправляем базовое сообщение
-    await bot.sendMessage(chatId, `❌ Ошибка загрузки товара "${item.name}". Попробуйте снова.`, {
-      reply_markup: {
-        inline_keyboard: [[{ text: 'Назад к каталогу', callback_data: 'back_to_menu' }]],
-      },
-    });
+    console.error('Критическая ошибка в handleItemSelection:', error);
+
+    // Fallback: минимальный ответ пользователю
+    bot
+      .answerCallbackQuery(query.id, { text: 'Ошибка загрузки. Попробуйте снова.' })
+      .catch(() => {});
+
+    // Попытка отправить сообщение об ошибке
+    try {
+      await bot.sendMessage(
+        chatId,
+        `❌ Критическая ошибка при загрузке товара. Попробуйте снова.`,
+        {
+          reply_markup: {
+            inline_keyboard: [[{ text: 'Назад к каталогу', callback_data: 'back_to_menu' }]],
+          },
+        }
+      );
+    } catch (fallbackError) {
+      console.error('Не удалось отправить даже fallback сообщение:', fallbackError);
+    }
   }
 }
 
@@ -720,9 +913,10 @@ export async function handleCheckout(bot: BotInstance, query: BotCallbackQuery):
     const order = await databaseService.getOrderById(orderId);
 
     // Отправляем уведомление персоналу (будет импортировано из bot.ts)
-    if (order && (global as any).notificationService) {
+    if (order) {
       try {
-        await (global as any).notificationService.notifyNewOrder(order);
+        const notificationService = serviceRegistry.get('notifications');
+        await notificationService.notifyNewOrder(order);
       } catch (error) {
         console.error('Ошибка отправки уведомления:', error);
       }
@@ -962,7 +1156,7 @@ export async function handleAdminOrderAction(
   }
 
   // Проверяем права администратора через глобальный сервис
-  const notificationService = (global as any).notificationService;
+  const notificationService = serviceRegistry.get('notifications');
   if (!notificationService || !notificationService.isAdmin(userId)) {
     bot.answerCallbackQuery(query.id, { text: '❌ Доступ запрещен' }).catch(() => {});
     return;
@@ -1301,7 +1495,7 @@ export async function handleClearCart(bot: BotInstance, query: BotCallbackQuery)
   }
 }
 
-// Обработчик увеличения количества товара с экрана товара
+// Обработчик увеличения количества товара с экрана товара (УЛУЧШЕННЫЙ)
 export async function handleIncreaseFromItem(
   bot: BotInstance,
   query: BotCallbackQuery
@@ -1314,34 +1508,41 @@ export async function handleIncreaseFromItem(
     return;
   }
 
+  const item = getItemById(itemId);
+  if (!item) {
+    bot.answerCallbackQuery(query.id, { text: 'Товар не найден' }).catch(() => {});
+    return;
+  }
+
   try {
-    const cart = await botApiClient.getCart(userId);
-    const cartItem = cart.find((item: any) => item.menuItem.id === itemId);
+    // Выполняем атомарную операцию с корзиной
+    const result = await updateCartItemAtomically(userId, itemId, 'increase');
 
-    if (cartItem) {
-      await botApiClient.updateCartQuantity(userId, itemId, cartItem.quantity + 1);
-
-      // Получаем обновленную информацию о корзине для уведомления
-      const cartTotal = await botApiClient.getCartTotal(userId);
-      const item = getItemById(itemId);
-
+    if (result.success && result.cartTotal) {
+      // Успех: показываем пользователю результат
       bot
         .answerCallbackQuery(query.id, {
-          text: `${item?.name} добавлен! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
+          text: `${item.name} добавлен! В корзине: ${result.cartTotal.itemsCount} товаров на ${result.cartTotal.total}₽`,
         })
         .catch(() => {});
 
-      // Обновляем экран товара
-      const updatedQuery = { ...query, data: `item_${itemId}` };
-      await handleItemSelection(bot, updatedQuery);
+      // Обновляем отображение товара
+      await refreshItemDisplay(bot, query, itemId);
+    } else {
+      // Ошибка: показываем пользователю
+      bot
+        .answerCallbackQuery(query.id, {
+          text: result.error || 'Ошибка при добавлении товара',
+        })
+        .catch(() => {});
     }
   } catch (error) {
-    console.error('Error increasing quantity from item:', error);
+    console.error('Error in handleIncreaseFromItem:', error);
     bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
   }
 }
 
-// Обработчик уменьшения количества товара с экрана товара
+// Обработчик уменьшения количества товара с экрана товара (УЛУЧШЕННЫЙ)
 export async function handleDecreaseFromItem(
   bot: BotInstance,
   query: BotCallbackQuery
@@ -1354,40 +1555,45 @@ export async function handleDecreaseFromItem(
     return;
   }
 
+  const item = getItemById(itemId);
+  if (!item) {
+    bot.answerCallbackQuery(query.id, { text: 'Товар не найден' }).catch(() => {});
+    return;
+  }
+
   try {
-    const cart = await botApiClient.getCart(userId);
-    const cartItem = cart.find((item: any) => item.menuItem.id === itemId);
+    // Выполняем атомарную операцию с корзиной
+    const result = await updateCartItemAtomically(userId, itemId, 'decrease');
 
-    if (cartItem) {
-      const newQuantity = cartItem.quantity - 1;
-      if (newQuantity <= 0) {
-        await botApiClient.removeFromCart(userId, itemId);
+    if (result.success) {
+      // Успех: показываем пользователю результат
+      if (result.newQuantity === 0) {
         bot.answerCallbackQuery(query.id, { text: 'Товар удален из корзины' }).catch(() => {});
-      } else {
-        await botApiClient.updateCartQuantity(userId, itemId, newQuantity);
-
-        // Получаем обновленную информацию о корзине для уведомления
-        const cartTotal = await botApiClient.getCartTotal(userId);
-        const item = getItemById(itemId);
-
+      } else if (result.cartTotal) {
         bot
           .answerCallbackQuery(query.id, {
-            text: `${item?.name} убран! В корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`,
+            text: `${item.name} убран! В корзине: ${result.cartTotal.itemsCount} товаров на ${result.cartTotal.total}₽`,
           })
           .catch(() => {});
       }
 
-      // Обновляем экран товара
-      const updatedQuery = { ...query, data: `item_${itemId}` };
-      await handleItemSelection(bot, updatedQuery);
+      // Обновляем отображение товара
+      await refreshItemDisplay(bot, query, itemId);
+    } else {
+      // Ошибка: показываем пользователю
+      bot
+        .answerCallbackQuery(query.id, {
+          text: result.error || 'Ошибка при изменении количества',
+        })
+        .catch(() => {});
     }
   } catch (error) {
-    console.error('Error decreasing quantity from item:', error);
+    console.error('Error in handleDecreaseFromItem:', error);
     bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
   }
 }
 
-// Обработчик быстрого удаления всех единиц товара с экрана товара
+// Обработчик быстрого удаления всех единиц товара с экрана товара (УЛУЧШЕННЫЙ)
 export async function handleRemoveAllFromItem(
   bot: BotInstance,
   query: BotCallbackQuery
@@ -1400,19 +1606,34 @@ export async function handleRemoveAllFromItem(
     return;
   }
 
+  const item = getItemById(itemId);
+  if (!item) {
+    bot.answerCallbackQuery(query.id, { text: 'Товар не найден' }).catch(() => {});
+    return;
+  }
+
   try {
-    await botApiClient.removeFromCart(userId, itemId);
-    const item = getItemById(itemId);
+    // Выполняем атомарную операцию с корзиной
+    const result = await updateCartItemAtomically(userId, itemId, 'remove');
 
-    bot
-      .answerCallbackQuery(query.id, { text: `${item?.name} полностью удален из корзины` })
-      .catch(() => {});
+    if (result.success) {
+      // Успех: показываем пользователю результат
+      bot
+        .answerCallbackQuery(query.id, { text: `${item.name} полностью удален из корзины` })
+        .catch(() => {});
 
-    // Обновляем экран товара
-    const updatedQuery = { ...query, data: `item_${itemId}` };
-    await handleItemSelection(bot, updatedQuery);
+      // Обновляем отображение товара
+      await refreshItemDisplay(bot, query, itemId);
+    } else {
+      // Ошибка: показываем пользователю
+      bot
+        .answerCallbackQuery(query.id, {
+          text: result.error || 'Ошибка при удалении товара',
+        })
+        .catch(() => {});
+    }
   } catch (error) {
-    console.error('Error removing all from item:', error);
+    console.error('Error in handleRemoveAllFromItem:', error);
     bot.answerCallbackQuery(query.id, { text: 'Ошибка при удалении товара' }).catch(() => {});
   }
 }

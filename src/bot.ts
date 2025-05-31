@@ -46,8 +46,17 @@ const bot: BotInstance = new TelegramBot(config.BOT_TOKEN, { polling: true });
 // Создаем сервис уведомлений
 const notificationService = new NotificationService(bot);
 
-// Делаем сервис доступным глобально для handlers
-(global as any).notificationService = notificationService;
+// Регистрируем сервисы в ServiceRegistry
+import { serviceRegistry } from './services';
+import { databaseService } from './database';
+import { cartService } from './cart';
+import { createLogger } from './logger';
+
+serviceRegistry.register('bot', bot);
+serviceRegistry.register('notifications', notificationService);
+serviceRegistry.register('database', databaseService);
+serviceRegistry.register('cart', cartService);
+serviceRegistry.register('logger', createLogger('Bot'));
 
 console.log('🤖 Шаурма Бот запускается...');
 

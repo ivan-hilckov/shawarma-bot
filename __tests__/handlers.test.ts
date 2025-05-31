@@ -286,7 +286,7 @@ describe('Handlers Module', () => {
       expect(getItemById).toHaveBeenCalledWith('1');
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith(
         'callback_123',
-        expect.objectContaining({ text: expect.stringContaining('Тестовая шаурма') })
+        expect.objectContaining({ text: '📝 Информация загружена' })
       );
     });
 
@@ -348,7 +348,7 @@ describe('Handlers Module', () => {
 
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith(
         'callback_123',
-        expect.objectContaining({ text: expect.stringContaining('Тестовая шаурма') })
+        expect.objectContaining({ text: '📝 Информация загружена' })
       );
     });
   });
