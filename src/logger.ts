@@ -41,7 +41,12 @@ class Logger {
     let logMessage = `${timestamp} ${levelName} ${contextStr} ${message}`;
 
     if (metadata) {
-      logMessage += ` ${JSON.stringify(metadata)}`;
+      try {
+        logMessage += ` ${JSON.stringify(metadata)}`;
+      } catch {
+        // Handle circular references and other JSON.stringify errors
+        logMessage += ` [Circular or invalid JSON object]`;
+      }
     }
 
     switch (level) {
