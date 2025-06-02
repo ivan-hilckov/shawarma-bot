@@ -10,6 +10,8 @@ import {
   handleItemSelection,
   handleBackToMenu,
   handleBackToProfile,
+  handleBackToShawarma,
+  handleBackToDrinks,
   handleAddToCart,
   handleViewCart,
   handleIncreaseQuantity,
@@ -26,7 +28,9 @@ import {
   handleDecreaseFromItem,
   handleRemoveAllFromItem,
   handleRecommendations,
+  getItemQuantityInCart,
 } from './handlers';
+import { getItemById } from './menu';
 import NotificationService from './notifications';
 import { BotInstance, BotMessage, BotCallbackQuery } from './types';
 
@@ -143,6 +147,10 @@ bot.on('callback_query', (query: BotCallbackQuery) => {
       handleBackToMenu(bot, query);
     } else if (data === 'back_to_profile') {
       handleBackToProfile(bot, query);
+    } else if (data === 'back_to_shawarma') {
+      handleBackToShawarma(bot, query);
+    } else if (data === 'back_to_drinks') {
+      handleBackToDrinks(bot, query);
     } else if (data === 'about_miniapp') {
       handleAboutMiniApp(bot, query);
     } else if (data === 'back_to_start') {
@@ -153,6 +161,23 @@ bot.on('callback_query', (query: BotCallbackQuery) => {
       handleDecreaseFromItem(bot, query);
     } else if (data?.startsWith('remove_all_from_item_')) {
       handleRemoveAllFromItem(bot, query);
+    } else if (data?.startsWith('quantity_')) {
+      // Клик на количество товара - показываем текущее количество
+      const itemId = data.replace('quantity_', '');
+      const item = getItemById(itemId);
+      getItemQuantityInCart(query.from?.id || 0, itemId)
+        .then(currentQuantity => {
+          bot
+            .answerCallbackQuery(query.id, {
+              text: `В корзине: ${currentQuantity} шт. ${item?.name || ''}`,
+            })
+            .catch(() => {});
+        })
+        .catch(() => {
+          bot
+            .answerCallbackQuery(query.id, { text: 'Ошибка получения количества' })
+            .catch(() => {});
+        });
     } else if (data === 'recommendations') {
       handleRecommendations(bot, query);
     } else {

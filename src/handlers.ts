@@ -112,7 +112,7 @@ async function refreshItemDisplay(
     }
 
     const currentQuantity = await getItemQuantityInCart(userId, itemId);
-    const keyboard = await createItemKeyboard(itemId, currentQuantity);
+    const keyboard = await createItemKeyboard(itemId, currentQuantity, item.category);
 
     // Формируем сообщение
     let message = `
@@ -178,7 +178,8 @@ async function createCatalogKeyboard(
 // Создать клавиатуру для товара
 export async function createItemKeyboard(
   itemId: string,
-  currentQuantity: number
+  currentQuantity: number,
+  category?: 'shawarma' | 'drinks'
 ): Promise<Array<Array<{ text: string; callback_data: string }>>> {
   const keyboard = [];
 
@@ -193,16 +194,27 @@ export async function createItemKeyboard(
       { text: '+', callback_data: `increase_from_item_${itemId}` },
     ]);
 
-    // Добавляем кнопку быстрого удаления
-    keyboard.push([
-      { text: 'Убрать все из корзины', callback_data: `remove_all_from_item_${itemId}` },
-    ]);
+    // Добавляем кнопку быстрого удаления только если количество больше 1
+    if (currentQuantity > 1) {
+      keyboard.push([
+        { text: 'Убрать все из корзины', callback_data: `remove_all_from_item_${itemId}` },
+      ]);
+    }
   }
 
-  // Кнопки навигации
+  // Кнопки навигации с контекстным возвратом
+  const backText =
+    category === 'shawarma' ? 'К шаурме' : category === 'drinks' ? 'К напиткам' : 'К каталогу';
+  const backAction =
+    category === 'shawarma'
+      ? 'back_to_shawarma'
+      : category === 'drinks'
+        ? 'back_to_drinks'
+        : 'back_to_menu';
+
   keyboard.push([
     { text: 'Перейти в корзину', callback_data: 'view_cart' },
-    { text: 'Назад к каталогу', callback_data: 'back_to_menu' },
+    { text: backText, callback_data: backAction },
   ]);
 
   return keyboard;
@@ -593,7 +605,7 @@ ${item.description}
 
     // Создаем клавиатуру с +/- интерфейсом
     const keyboard = {
-      inline_keyboard: await createItemKeyboard(itemId, currentQuantity),
+      inline_keyboard: await createItemKeyboard(itemId, currentQuantity, item.category),
     };
 
     // ЕДИНСТВЕННАЯ точка отправки сообщения - решает проблему дублирования
@@ -647,6 +659,41 @@ export async function handleBackToProfile(
   query: BotCallbackQuery
 ): Promise<void> {
   await handleProfile(bot, query);
+}
+
+// Обработчик возврата к шаурме
+export async function handleBackToShawarma(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  const mockMessage = {
+    chat: { id: query.message?.chat.id || 0 },
+    from: query.from,
+  } as BotMessage;
+
+  try {
+    await handleShawarmaMenu(bot, mockMessage);
+    bot.answerCallbackQuery(query.id, { text: 'Возврат к шаурме' }).catch(() => {});
+  } catch (error) {
+    console.error('Error returning to shawarma menu:', error);
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка возврата' }).catch(() => {});
+  }
+}
+
+// Обработчик возврата к напиткам
+export async function handleBackToDrinks(bot: BotInstance, query: BotCallbackQuery): Promise<void> {
+  const mockMessage = {
+    chat: { id: query.message?.chat.id || 0 },
+    from: query.from,
+  } as BotMessage;
+
+  try {
+    await handleDrinksMenu(bot, mockMessage);
+    bot.answerCallbackQuery(query.id, { text: 'Возврат к напиткам' }).catch(() => {});
+  } catch (error) {
+    console.error('Error returning to drinks menu:', error);
+    bot.answerCallbackQuery(query.id, { text: 'Ошибка возврата' }).catch(() => {});
+  }
 }
 
 // Обработчик возврата в главное меню

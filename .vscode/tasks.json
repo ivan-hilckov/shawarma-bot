@@ -28,6 +28,61 @@
         "panel": "shared"
       }
     },
+    {
+      "label": "🔨 Docker: Rebuild All",
+      "type": "shell",
+      "command": "docker-compose",
+      "args": ["build", "--no-cache"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🔄 Docker: Rebuild & Up",
+      "type": "shell",
+      "command": "docker-compose",
+      "args": ["up", "-d", "--build", "--force-recreate"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new"
+      },
+      "dependsOn": "🛑 Docker: Down",
+      "problemMatcher": []
+    },
+    {
+      "label": "🤖 Docker: Rebuild Bot Only",
+      "type": "shell",
+      "command": "docker-compose",
+      "args": ["build", "--no-cache", "bot"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 Docker: Logs Bot",
+      "type": "shell",
+      "command": "docker-compose",
+      "args": ["logs", "-f", "bot"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
 
     // ==========================================
     // ТЕСТИРОВАНИЕ
