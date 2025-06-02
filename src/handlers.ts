@@ -37,12 +37,17 @@ async function updateCartItemAtomically(
   itemId: string,
   operation: 'increase' | 'decrease' | 'remove'
 ): Promise<CartOperationResult> {
+  console.log(`🛒 Атомарная операция ${operation} для товара ${itemId}, пользователь ${userId}`);
+
   try {
     // Шаг 1: Получаем текущее состояние корзины
     const cart = await botApiClient.getCart(userId);
     const cartItem = cart.find(item => item.menuItem.id === itemId);
 
+    console.log(`📊 Текущее количество товара в корзине: ${cartItem ? cartItem.quantity : 0}`);
+
     if (!cartItem && operation !== 'increase') {
+      console.log(`❌ Товар ${itemId} не найден в корзине для операции ${operation}`);
       return { success: false, error: 'Товар не найден в корзине' };
     }
 
@@ -61,19 +66,33 @@ async function updateCartItemAtomically(
         break;
     }
 
+    console.log(`🔢 Новое количество: ${newQuantity}`);
+
     // Шаг 3: Выполняем операцию
     if (newQuantity <= 0) {
+      console.log(`🗑️ Удаляем товар ${itemId} из корзины`);
       await botApiClient.removeFromCart(userId, itemId);
     } else {
       if (cartItem) {
+        console.log(`📝 Обновляем количество товара ${itemId} до ${newQuantity}. Вызываем API...`);
+        console.log(`📡 API Call: updateCartQuantity(${userId}, "${itemId}", ${newQuantity})`);
         await botApiClient.updateCartQuantity(userId, itemId, newQuantity);
+        console.log(`✅ API Call завершен успешно`);
       } else {
+        console.log(
+          `➕ Добавляем товар ${itemId} в корзину с количеством ${newQuantity}. Вызываем API...`
+        );
+        console.log(`📡 API Call: addToCart(${userId}, "${itemId}", ${newQuantity})`);
         await botApiClient.addToCart(userId, itemId, newQuantity);
+        console.log(`✅ API Call завершен успешно`);
       }
     }
 
     // Шаг 4: Получаем обновленные данные корзины
     const cartTotal = await botApiClient.getCartTotal(userId);
+    console.log(
+      `✅ Операция завершена. Итого в корзине: ${cartTotal.itemsCount} товаров на ${cartTotal.total}₽`
+    );
 
     return {
       success: true,
@@ -81,7 +100,14 @@ async function updateCartItemAtomically(
       cartTotal,
     };
   } catch (error) {
-    console.error('Error in updateCartItemAtomically:', error);
+    console.error(`❌ КРИТИЧЕСКАЯ ОШИБКА в updateCartItemAtomically для товара ${itemId}:`, error);
+    console.error(`🔍 Детали ошибки:`, {
+      message: error instanceof Error ? error.message : 'Неизвестная ошибка',
+      stack: error instanceof Error ? error.stack : undefined,
+      userId,
+      itemId,
+      operation,
+    });
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Неизвестная ошибка',
@@ -95,6 +121,8 @@ async function refreshItemDisplay(
   originalQuery: BotCallbackQuery,
   itemId: string
 ): Promise<void> {
+  console.log(`🔄 Обновляем отображение товара ${itemId}`);
+
   const chatId = originalQuery.message?.chat.id;
   const userId = originalQuery.from?.id;
 
@@ -129,26 +157,42 @@ ${item.description}
 
     message += `\n\nВыберите действие:`;
 
-    // Обновляем сообщение
+    // Обновляем сообщение - проверяем есть ли фото
     if (originalQuery.message?.message_id) {
-      await bot.editMessageText(message, {
-        chat_id: chatId,
-        message_id: originalQuery.message.message_id,
-        reply_markup: { inline_keyboard: keyboard },
-      });
+      if (originalQuery.message.photo) {
+        console.log(`📸 Обновляем caption фото товара ${itemId}`);
+        // Если это сообщение с фото, редактируем caption
+        await bot.editMessageCaption(message, {
+          chat_id: chatId,
+          message_id: originalQuery.message.message_id,
+          reply_markup: { inline_keyboard: keyboard },
+        });
+      } else {
+        console.log(`📝 Обновляем текст сообщения товара ${itemId}`);
+        // Если это текстовое сообщение, редактируем text
+        await bot.editMessageText(message, {
+          chat_id: chatId,
+          message_id: originalQuery.message.message_id,
+          reply_markup: { inline_keyboard: keyboard },
+        });
+      }
+      console.log(`✅ Интерфейс товара ${itemId} успешно обновлен`);
     }
   } catch (error) {
-    console.error('Error refreshing item display:', error);
+    console.error(`❌ Ошибка обновления интерфейса товара ${itemId}:`, error);
+
     // Если не можем обновить - отправляем новое сообщение
     try {
       const item = getItemById(itemId);
+      console.log(`🔧 Отправляем fallback сообщение для товара ${itemId}`);
+
       await bot.sendMessage(chatId, `❌ Ошибка обновления. Товар: ${item?.name || 'Неизвестный'}`, {
         reply_markup: {
           inline_keyboard: [[{ text: 'Назад к каталогу', callback_data: 'back_to_menu' }]],
         },
       });
     } catch (fallbackError) {
-      console.error('Error in fallback message:', fallbackError);
+      console.error('❌ Критическая ошибка в fallback сообщении:', fallbackError);
     }
   }
 }
@@ -193,13 +237,6 @@ export async function createItemKeyboard(
       { text: `${currentQuantity} шт.`, callback_data: `quantity_${itemId}` },
       { text: '+', callback_data: `increase_from_item_${itemId}` },
     ]);
-
-    // Добавляем кнопку быстрого удаления только если количество больше 1
-    if (currentQuantity > 1) {
-      keyboard.push([
-        { text: 'Убрать все из корзины', callback_data: `remove_all_from_item_${itemId}` },
-      ]);
-    }
   }
 
   // Кнопки навигации с контекстным возвратом
@@ -221,24 +258,11 @@ export async function createItemKeyboard(
 }
 
 // Создать упрощенную клавиатуру главного меню
-async function createMainKeyboard(userId: number): Promise<any> {
-  let cartText = '🛒 Корзина';
-
-  if (userId) {
-    try {
-      const cartTotal = await botApiClient.getCartTotal(userId);
-      if (cartTotal.itemsCount > 0) {
-        cartText = `🛒 Корзина (${cartTotal.itemsCount})`;
-      }
-    } catch (error) {
-      console.error('Error getting cart total for badge:', error);
-    }
-  }
-
+async function createMainKeyboard(): Promise<any> {
   return {
     keyboard: [
       [{ text: '🌯 Шаурма' }, { text: '🥤 Напитки' }],
-      [{ text: cartText }, { text: '👤 Профиль' }],
+      [{ text: '🛒 Корзина' }, { text: '👤 Профиль' }],
       [{ text: 'ℹ️ О нас' }],
     ],
     resize_keyboard: true,
@@ -246,75 +270,11 @@ async function createMainKeyboard(userId: number): Promise<any> {
   };
 }
 
-// Создать сообщение с рекомендациями
-async function createRecommendationsMessage(userId: number): Promise<{
-  message: string;
-  keyboard: Array<Array<{ text: string; callback_data: string }>>;
-}> {
-  try {
-    const recommendations = await databaseService.getUserRecommendations(userId);
-    const userStats = await databaseService.getUserStats(userId);
-
-    let message = 'Персональные рекомендации 🎯\n\n';
-
-    if (userStats.totalOrders > 0) {
-      message += `Ваша статистика:\n`;
-      message += `• Заказов: ${userStats.totalOrders}\n`;
-      message += `• Потрачено: ${userStats.totalSpent.toFixed(0)}₽\n`;
-      message += `• Средний чек: ${userStats.avgOrderValue.toFixed(0)}₽\n\n`;
-    }
-
-    if (recommendations.length === 0) {
-      message +=
-        'Пока нет персональных рекомендаций.\n\nСделайте несколько заказов, чтобы мы могли предложить что-то особенное!';
-
-      return {
-        message,
-        keyboard: [[{ text: 'Назад к профилю', callback_data: 'back_to_profile' }]],
-      };
-    }
-
-    message += 'Специально для вас:\n\n';
-
-    const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
-
-    recommendations.forEach((rec, index) => {
-      const typeEmoji =
-        {
-          frequent: '🔥',
-          time_based: '⏰',
-          popular: '⭐',
-          new: '🆕',
-        }[rec.type as 'frequent' | 'time_based' | 'popular' | 'new'] || '💡';
-
-      message += `${index + 1}. ${typeEmoji} ${rec.menuItem.name} — ${rec.menuItem.price}₽\n`;
-      message += `${rec.reason}\n\n`;
-
-      // Кнопка для каждой рекомендации
-      keyboard.push([
-        { text: rec.menuItem.name, callback_data: `item_${rec.menuItem.id}` },
-        { text: 'Добавить', callback_data: `quick_add_${rec.menuItem.id}` },
-      ]);
-    });
-
-    keyboard.push([{ text: 'Назад к профилю', callback_data: 'back_to_profile' }]);
-
-    return { message, keyboard };
-  } catch (error) {
-    console.error('Error creating recommendations message:', error);
-    return {
-      message: 'Ошибка загрузки рекомендаций\n\nПопробуйте позже.',
-      keyboard: [[{ text: 'Назад к профилю', callback_data: 'back_to_profile' }]],
-    };
-  }
-}
-
 // ===== ОБРАБОТЧИКИ =====
 
 // Обработчик команды /start
 export async function handleStart(bot: BotInstance, msg: BotMessage): Promise<void> {
   const chatId = msg.chat.id;
-  const userId = msg.from?.id;
   const userName = msg.from?.first_name || 'Друг';
 
   const welcomeMessage = `
@@ -331,8 +291,8 @@ export async function handleStart(bot: BotInstance, msg: BotMessage): Promise<vo
 Выберите нужное действие в меню ниже.
   `;
 
-  // Создаем клавиатуру с индикатором корзины
-  const keyboard = await createMainKeyboard(userId || 0);
+  // Создаем клавиатуру
+  const keyboard = await createMainKeyboard();
 
   // Отправляем приветствие с обновленной клавиатурой
   bot.sendMessage(chatId, welcomeMessage, {
@@ -473,7 +433,6 @@ export async function handleProfile(
     const keyboard = {
       inline_keyboard: [
         [{ text: '📋 Мои заказы', callback_data: 'my_orders' }],
-        [{ text: '🎯 Рекомендации', callback_data: 'recommendations' }],
         [{ text: 'Назад в меню', callback_data: 'back_to_menu' }],
       ],
     };
@@ -715,8 +674,8 @@ export async function handleBackToMenu(bot: BotInstance, query: BotCallbackQuery
 Выберите нужную категорию из меню ниже.
   `;
 
-  // Создаем клавиатуру с актуальным счетчиком корзины
-  const keyboard = await createMainKeyboard(userId || 0);
+  // Создаем клавиатуру
+  const keyboard = await createMainKeyboard();
 
   if (query.message?.message_id) {
     bot
@@ -766,15 +725,8 @@ export async function handleAddToCart(bot: BotInstance, query: BotCallbackQuery)
       })
       .catch(() => {});
 
-    // Вместо смены интерфейса, обновляем тот же экран товара
-    // Создаем новый query объект для вызова handleItemSelection
-    const updatedQuery = {
-      ...query,
-      data: `item_${itemId}`,
-    };
-
-    // Вызываем обработчик выбора товара для обновления интерфейса
-    await handleItemSelection(bot, updatedQuery);
+    // Обновляем отображение товара
+    await refreshItemDisplay(bot, query, itemId);
   } catch (error) {
     console.error('Error adding to cart:', error);
     bot.answerCallbackQuery(query.id, { text: 'Ошибка при добавлении в корзину' }).catch(() => {});
@@ -786,23 +738,34 @@ export async function handleViewCart(
   bot: BotInstance,
   msg: BotMessage | BotCallbackQuery
 ): Promise<void> {
+  console.log(`🛒 ВХОД В handleViewCart! Тип сообщения: ${'data' in msg ? 'callback' : 'message'}`);
+
   const chatId = 'chat' in msg ? msg.chat.id : msg.message?.chat.id;
   const userId = msg.from?.id;
 
+  console.log(`🛒 chatId: ${chatId}, userId: ${userId}`);
+
   if (!chatId || !userId) {
+    console.log(`❌ Ошибка в handleViewCart: отсутствует chatId или userId`);
     return;
   }
 
   try {
+    console.log(`🛒 Получаем данные корзины для пользователя ${userId}`);
     const cart = await botApiClient.getCart(userId);
+    console.log(`🛒 Корзина получена, товаров: ${cart.length}`);
+
     const cartTotal = await botApiClient.getCartTotal(userId);
+    console.log(`🛒 Итого корзины получено: ${cartTotal.total}₽`);
     const total = cartTotal.total;
 
     if (cart.length === 0) {
+      console.log(`🛒 Корзина пуста, отправляем сообщение об этом`);
       const message = 'Ваша корзина пуста 🛒\n\nВыберите товары из меню для заказа.';
 
       if ('data' in msg) {
         // Это callback query
+        console.log(`🛒 Отправляем пустую корзину через callback`);
         if (msg.message?.message_id) {
           bot
             .editMessageText(message, {
@@ -815,13 +778,16 @@ export async function handleViewCart(
             .catch(() => {});
         }
         bot.answerCallbackQuery(msg.id, { text: 'Корзина пуста' }).catch(() => {});
+        console.log(`🛒 Ответ на callback отправлен`);
       } else {
         // Это обычное сообщение
+        console.log(`🛒 Отправляем пустую корзину через обычное сообщение`);
         bot.sendMessage(chatId, message);
       }
       return;
     }
 
+    console.log(`🛒 Формируем сообщение с корзиной, товаров: ${cart.length}`);
     let message = 'Ваша корзина 🛒\n\n';
     const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
 
@@ -850,20 +816,65 @@ export async function handleViewCart(
     ]);
     keyboard.push([{ text: 'Назад к меню', callback_data: 'back_to_menu' }]);
 
+    console.log(`🛒 Сообщение сформировано, отправляем пользователю`);
+
     if ('data' in msg) {
       // Это callback query
+      console.log(`🛒 Отправляем заполненную корзину через callback`);
       if (msg.message?.message_id) {
-        bot
-          .editMessageText(message, {
-            chat_id: chatId,
-            message_id: msg.message.message_id,
-            reply_markup: { inline_keyboard: keyboard },
-          })
-          .catch(() => {});
+        console.log(`🛒 Определяем тип сообщения для редактирования`);
+
+        // Проверяем, есть ли фото в сообщении
+        if (msg.message?.photo && msg.message.photo.length > 0) {
+          console.log(`📸 Сообщение с фото - используем editMessageCaption`);
+          bot
+            .editMessageCaption(message, {
+              chat_id: chatId,
+              message_id: msg.message.message_id,
+              reply_markup: { inline_keyboard: keyboard },
+            })
+            .then(() => {
+              console.log(`✅ editMessageCaption успешно выполнен - корзина показана`);
+            })
+            .catch(error => {
+              console.error(`❌ ОШИБКА editMessageCaption:`, error);
+              console.error(`❌ Детали ошибки:`, {
+                chatId,
+                messageId: msg.message?.message_id,
+                messageLength: message.length,
+                keyboardLength: keyboard.length,
+                hasPhoto: !!msg.message?.photo,
+              });
+            });
+        } else {
+          console.log(`📝 Текстовое сообщение - используем editMessageText`);
+          bot
+            .editMessageText(message, {
+              chat_id: chatId,
+              message_id: msg.message.message_id,
+              reply_markup: { inline_keyboard: keyboard },
+            })
+            .then(() => {
+              console.log(`✅ editMessageText успешно выполнен - корзина показана`);
+            })
+            .catch(error => {
+              console.error(`❌ ОШИБКА editMessageText:`, error);
+              console.error(`❌ Детали ошибки:`, {
+                chatId,
+                messageId: msg.message?.message_id,
+                messageLength: message.length,
+                keyboardLength: keyboard.length,
+                hasPhoto: !!msg.message?.photo,
+              });
+            });
+        }
       }
+      console.log(`🛒 Отвечаем на callback query`);
       bot.answerCallbackQuery(msg.id).catch(() => {});
+      console.log(`🛒 Ответ на callback отправлен`);
     } else {
       // Это обычное сообщение
+      console.log(`🛒 Отправляем заполненную корзину через обычное сообщение`);
       bot.sendMessage(chatId, message, {
         reply_markup: { inline_keyboard: keyboard },
       });
@@ -886,6 +897,8 @@ export async function handleCheckout(bot: BotInstance, query: BotCallbackQuery):
   const userId = query.from?.id;
   const userName = query.from?.first_name;
 
+  console.log(`🛒 CHECKOUT: Начало оформления заказа для пользователя ${userId}`);
+
   if (!chatId || !userId) {
     bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
     return;
@@ -895,6 +908,10 @@ export async function handleCheckout(bot: BotInstance, query: BotCallbackQuery):
     const cart = await botApiClient.getCart(userId);
     const cartTotal = await botApiClient.getCartTotal(userId);
     const total = cartTotal.total;
+
+    console.log(
+      `🛒 CHECKOUT: Корзина пользователя ${userId} содержит ${cart.length} товаров на сумму ${total}₽`
+    );
 
     if (cart.length === 0) {
       bot.answerCallbackQuery(query.id, { text: 'Корзина пуста' }).catch(() => {});
@@ -906,15 +923,17 @@ export async function handleCheckout(bot: BotInstance, query: BotCallbackQuery):
 
     // Создаем заказ в БД
     const orderId = await databaseService.createOrder(userId, cart, total);
+    console.log(`🛒 CHECKOUT: Заказ #${orderId} создан в базе данных`);
 
     // Получаем созданный заказ для уведомления
     const order = await databaseService.getOrderById(orderId);
 
-    // Отправляем уведомление персоналу (будет импортировано из bot.ts)
+    // Отправляем уведомление персоналу
     if (order) {
       try {
         const notificationService = serviceRegistry.get('notifications');
         await notificationService.notifyNewOrder(order);
+        console.log(`📢 CHECKOUT: Уведомление персонала о заказе #${orderId} отправлено`);
       } catch (error) {
         console.error('Ошибка отправки уведомления:', error);
       }
@@ -922,40 +941,89 @@ export async function handleCheckout(bot: BotInstance, query: BotCallbackQuery):
 
     // Очищаем корзину после успешного заказа
     await botApiClient.clearCart(userId);
+    console.log(`🛒 CHECKOUT: Корзина пользователя ${userId} очищена`);
 
-    const message = `
-Заказ успешно оформлен! ✅
+    const successMessage = `
+✅ **Заказ успешно оформлен!**
 
-Номер заказа: #${orderId}
-Сумма заказа: ${total}₽
+📦 Номер заказа: #${orderId}
+💰 Сумма заказа: ${total}₽
 
-Ваш заказ принят в обработку.
-Текущий статус: В ожидании
+⏳ Ваш заказ принят в обработку
+📋 Текущий статус: В ожидании
 
-Спасибо за заказ!
+🙏 Спасибо за заказ! Вы будете уведомлены об изменении статуса.
     `;
 
     const keyboard = {
       inline_keyboard: [
-        [{ text: 'Мои заказы', callback_data: 'my_orders' }],
-        [{ text: 'Главное меню', callback_data: 'back_to_menu' }],
+        [{ text: '📋 Мои заказы', callback_data: 'my_orders' }],
+        [{ text: '🏠 Главное меню', callback_data: 'back_to_menu' }],
       ],
     };
 
-    if (query.message?.message_id) {
-      bot
-        .editMessageText(message, {
+    console.log(`📝 CHECKOUT: Отправляем сообщение об успешном заказе пользователю ${userId}`);
+
+    // Попытка редактирования сообщения
+    try {
+      if (query.message?.message_id) {
+        await bot.editMessageText(successMessage, {
           chat_id: chatId,
           message_id: query.message.message_id,
           reply_markup: keyboard,
-        })
-        .catch(() => {});
+        });
+        console.log(`✅ CHECKOUT: Сообщение об успешном заказе отредактировано`);
+      } else {
+        // Fallback: отправляем новое сообщение
+        await bot.sendMessage(chatId, successMessage, {
+          reply_markup: keyboard,
+        });
+        console.log(`✅ CHECKOUT: Новое сообщение об успешном заказе отправлено`);
+      }
+    } catch (editError) {
+      console.error(`❌ CHECKOUT: Ошибка редактирования сообщения:`, editError);
+      // Fallback: отправляем новое сообщение
+      try {
+        await bot.sendMessage(chatId, successMessage, {
+          reply_markup: keyboard,
+        });
+        console.log(`✅ CHECKOUT: Fallback сообщение об успешном заказе отправлено`);
+      } catch (sendError) {
+        console.error(`❌ CHECKOUT: Критическая ошибка отправки сообщения:`, sendError);
+      }
     }
 
-    bot.answerCallbackQuery(query.id, { text: `Заказ #${orderId} оформлен!` }).catch(() => {});
+    // Отвечаем на callback query с подробной информацией
+    bot
+      .answerCallbackQuery(query.id, {
+        text: `🎉 Заказ #${orderId} оформлен! Переходим к заказам...`,
+      })
+      .catch(() => {});
+
+    console.log(`✅ CHECKOUT: Оформление заказа #${orderId} завершено успешно`);
+
+    // Сразу переходим к "Мои заказы"
+    try {
+      console.log(`🔄 CHECKOUT: Переход к списку заказов для пользователя ${userId}`);
+      // Создаем новый query для перехода к заказам с тем же message_id
+      const ordersQuery = {
+        ...query,
+        data: 'my_orders',
+      } as BotCallbackQuery;
+      await handleMyOrders(bot, ordersQuery);
+    } catch (autoRedirectError) {
+      console.error(`❌ CHECKOUT: Ошибка перехода к заказам:`, autoRedirectError);
+    }
   } catch (error) {
-    console.error('Error during checkout:', error);
+    console.error('❌ CHECKOUT: Критическая ошибка при оформлении заказа:', error);
     bot.answerCallbackQuery(query.id, { text: 'Ошибка при оформлении заказа' }).catch(() => {});
+
+    // Отправляем сообщение об ошибке
+    try {
+      await bot.sendMessage(chatId, '❌ Произошла ошибка при оформлении заказа. Попробуйте снова.');
+    } catch (errorMessageError) {
+      console.error('Не удалось отправить сообщение об ошибке:', errorMessageError);
+    }
   }
 }
 
@@ -1000,7 +1068,6 @@ export async function handleMyOrders(
     }
 
     let message = 'Ваши заказы 📋\n\n';
-    const keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
 
     orders.forEach((order, index) => {
       const statusEmoji =
@@ -1016,12 +1083,11 @@ export async function handleMyOrders(
       message += `${statusEmoji} Статус: ${getStatusText(order.status)}\n`;
       message += `Сумма: ${order.totalPrice}₽\n`;
       message += `Дата: ${formatDate(order.createdAt)}\n\n`;
-
-      // Кнопка для просмотра деталей заказа
-      keyboard.push([{ text: `Заказ #${order.id}`, callback_data: `order_details_${order.id}` }]);
     });
 
-    keyboard.push([{ text: 'Назад к профилю', callback_data: 'back_to_profile' }]);
+    const keyboard: Array<Array<{ text: string; callback_data: string }>> = [
+      [{ text: 'Назад к профилю', callback_data: 'back_to_profile' }],
+    ];
 
     if ('data' in msg) {
       // Это callback query
@@ -1050,71 +1116,6 @@ export async function handleMyOrders(
     } else {
       bot.sendMessage(chatId, errorMessage);
     }
-  }
-}
-
-// Обработчик просмотра деталей заказа
-export async function handleOrderDetails(bot: BotInstance, query: BotCallbackQuery): Promise<void> {
-  const chatId = query.message?.chat.id;
-  const userId = query.from?.id;
-  const orderId = query.data?.replace('order_details_', '');
-
-  if (!chatId || !userId || !orderId) {
-    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
-    return;
-  }
-
-  try {
-    const order = await databaseService.getOrderById(orderId);
-
-    if (!order || order.userId !== userId) {
-      bot.answerCallbackQuery(query.id, { text: 'Заказ не найден' }).catch(() => {});
-      return;
-    }
-
-    const statusEmoji =
-      {
-        pending: '⏳',
-        confirmed: '✅',
-        preparing: '👨‍🍳',
-        ready: '🎉',
-        delivered: '✅',
-      }[order.status] || '❓';
-
-    let message = `Заказ #${order.id} 📦\n\n`;
-    message += `${statusEmoji} Статус: ${getStatusText(order.status)}\n`;
-    message += `Дата: ${formatDate(order.createdAt)}\n\n`;
-    message += `Состав заказа:\n`;
-
-    order.items.forEach((item, index) => {
-      const subtotal = item.menuItem.price * item.quantity;
-      message += `${index + 1}. ${item.menuItem.name}\n`;
-      message += `${item.menuItem.price}₽ × ${item.quantity} = ${subtotal}₽\n`;
-    });
-
-    message += `\nОбщая сумма: ${order.totalPrice}₽`;
-
-    const keyboard = {
-      inline_keyboard: [
-        [{ text: 'Все заказы', callback_data: 'my_orders' }],
-        [{ text: 'Главное меню', callback_data: 'back_to_menu' }],
-      ],
-    };
-
-    if (query.message?.message_id) {
-      bot
-        .editMessageText(message, {
-          chat_id: chatId,
-          message_id: query.message.message_id,
-          reply_markup: keyboard,
-        })
-        .catch(() => {});
-    }
-
-    bot.answerCallbackQuery(query.id).catch(() => {});
-  } catch (error) {
-    console.error('Error viewing order details:', error);
-    bot.answerCallbackQuery(query.id, { text: 'Ошибка при загрузке заказа' }).catch(() => {});
   }
 }
 
@@ -1498,16 +1499,24 @@ export async function handleIncreaseFromItem(
   bot: BotInstance,
   query: BotCallbackQuery
 ): Promise<void> {
+  console.log(
+    `🚀 ВХОД В handleIncreaseFromItem! query.data: ${query.data}, userId: ${query.from?.id}`
+  );
+
   const userId = query.from?.id;
   const itemId = query.data?.replace('increase_from_item_', '');
 
+  console.log(`🔄 Увеличение товара ${itemId} для пользователя ${userId}`);
+
   if (!userId || !itemId) {
+    console.error('Missing userId or itemId in handleIncreaseFromItem');
     bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
     return;
   }
 
   const item = getItemById(itemId);
   if (!item) {
+    console.error(`Item ${itemId} not found in handleIncreaseFromItem`);
     bot.answerCallbackQuery(query.id, { text: 'Товар не найден' }).catch(() => {});
     return;
   }
@@ -1517,6 +1526,8 @@ export async function handleIncreaseFromItem(
     const result = await updateCartItemAtomically(userId, itemId, 'increase');
 
     if (result.success && result.cartTotal) {
+      console.log(`✅ Товар ${itemId} успешно увеличен для пользователя ${userId}`);
+
       // Успех: показываем пользователю результат
       bot
         .answerCallbackQuery(query.id, {
@@ -1527,6 +1538,8 @@ export async function handleIncreaseFromItem(
       // Обновляем отображение товара
       await refreshItemDisplay(bot, query, itemId);
     } else {
+      console.error(`❌ Ошибка увеличения товара ${itemId}:`, result.error);
+
       // Ошибка: показываем пользователю
       bot
         .answerCallbackQuery(query.id, {
@@ -1548,13 +1561,17 @@ export async function handleDecreaseFromItem(
   const userId = query.from?.id;
   const itemId = query.data?.replace('decrease_from_item_', '');
 
+  console.log(`🔄 Уменьшение товара ${itemId} для пользователя ${userId}`);
+
   if (!userId || !itemId) {
+    console.error('Missing userId or itemId in handleDecreaseFromItem');
     bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
     return;
   }
 
   const item = getItemById(itemId);
   if (!item) {
+    console.error(`Item ${itemId} not found in handleDecreaseFromItem`);
     bot.answerCallbackQuery(query.id, { text: 'Товар не найден' }).catch(() => {});
     return;
   }
@@ -1564,6 +1581,8 @@ export async function handleDecreaseFromItem(
     const result = await updateCartItemAtomically(userId, itemId, 'decrease');
 
     if (result.success) {
+      console.log(`✅ Товар ${itemId} успешно уменьшен для пользователя ${userId}`);
+
       // Успех: показываем пользователю результат
       if (result.newQuantity === 0) {
         bot.answerCallbackQuery(query.id, { text: 'Товар удален из корзины' }).catch(() => {});
@@ -1578,6 +1597,8 @@ export async function handleDecreaseFromItem(
       // Обновляем отображение товара
       await refreshItemDisplay(bot, query, itemId);
     } else {
+      console.error(`❌ Ошибка уменьшения товара ${itemId}:`, result.error);
+
       // Ошибка: показываем пользователю
       bot
         .answerCallbackQuery(query.id, {
@@ -1588,51 +1609,6 @@ export async function handleDecreaseFromItem(
   } catch (error) {
     console.error('Error in handleDecreaseFromItem:', error);
     bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
-  }
-}
-
-// Обработчик быстрого удаления всех единиц товара с экрана товара (УЛУЧШЕННЫЙ)
-export async function handleRemoveAllFromItem(
-  bot: BotInstance,
-  query: BotCallbackQuery
-): Promise<void> {
-  const userId = query.from?.id;
-  const itemId = query.data?.replace('remove_all_from_item_', '');
-
-  if (!userId || !itemId) {
-    bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки запроса' }).catch(() => {});
-    return;
-  }
-
-  const item = getItemById(itemId);
-  if (!item) {
-    bot.answerCallbackQuery(query.id, { text: 'Товар не найден' }).catch(() => {});
-    return;
-  }
-
-  try {
-    // Выполняем атомарную операцию с корзиной
-    const result = await updateCartItemAtomically(userId, itemId, 'remove');
-
-    if (result.success) {
-      // Успех: показываем пользователю результат
-      bot
-        .answerCallbackQuery(query.id, { text: `${item.name} полностью удален из корзины` })
-        .catch(() => {});
-
-      // Обновляем отображение товара
-      await refreshItemDisplay(bot, query, itemId);
-    } else {
-      // Ошибка: показываем пользователю
-      bot
-        .answerCallbackQuery(query.id, {
-          text: result.error || 'Ошибка при удалении товара',
-        })
-        .catch(() => {});
-    }
-  } catch (error) {
-    console.error('Error in handleRemoveAllFromItem:', error);
-    bot.answerCallbackQuery(query.id, { text: 'Ошибка при удалении товара' }).catch(() => {});
   }
 }
 
@@ -1796,50 +1772,5 @@ export async function handleQuickDecrease(
   } catch (error) {
     console.error('Error quick decreasing quantity:', error);
     bot.answerCallbackQuery(query.id, { text: 'Ошибка при изменении количества' }).catch(() => {});
-  }
-}
-
-// Обработчик рекомендаций
-export async function handleRecommendations(
-  bot: BotInstance,
-  msg: BotMessage | BotCallbackQuery
-): Promise<void> {
-  const chatId = 'chat' in msg ? msg.chat.id : msg.message?.chat.id;
-  const userId = msg.from?.id;
-
-  if (!chatId || !userId) {
-    return;
-  }
-
-  try {
-    const { message, keyboard } = await createRecommendationsMessage(userId);
-
-    if ('data' in msg) {
-      // Это callback query
-      if (msg.message?.message_id) {
-        bot
-          .editMessageText(message, {
-            chat_id: chatId,
-            message_id: msg.message.message_id,
-            reply_markup: { inline_keyboard: keyboard },
-          })
-          .catch(() => {});
-      }
-      bot.answerCallbackQuery(msg.id, { text: 'Рекомендации' }).catch(() => {});
-    } else {
-      // Это обычное сообщение
-      bot.sendMessage(chatId, message, {
-        reply_markup: { inline_keyboard: keyboard },
-      });
-    }
-  } catch (error) {
-    console.error('Error viewing recommendations:', error);
-    const errorMessage = 'Ошибка при загрузке рекомендаций';
-
-    if ('data' in msg) {
-      bot.answerCallbackQuery(msg.id, { text: errorMessage }).catch(() => {});
-    } else {
-      bot.sendMessage(chatId, errorMessage);
-    }
   }
 }

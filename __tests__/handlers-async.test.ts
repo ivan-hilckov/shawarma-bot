@@ -7,7 +7,6 @@ import {
   handleClearCart,
   handleCheckout,
   handleMyOrders,
-  handleOrderDetails,
   handleAdminOrderAction,
 } from '../src/handlers';
 import { BotInstance, BotMessage, BotCallbackQuery, MenuItem, CartItem, Order } from '../src/types';
@@ -358,14 +357,14 @@ describe('Async Handlers', () => {
       expect(databaseService.createOrder).toHaveBeenCalledWith(789, [mockCartItem], 500);
       expect(botApiClient.clearCart).toHaveBeenCalledWith(789);
       expect(mockBot.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining('Заказ успешно оформлен! ✅'),
+        expect.stringContaining('✅ **Заказ успешно оформлен!**'),
         expect.objectContaining({
           chat_id: 123456,
           message_id: 1,
         })
       );
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
-        text: 'Заказ #42 оформлен!',
+        text: expect.stringContaining('🎉 Заказ #42 оформлен!'),
       });
     });
 
@@ -435,69 +434,6 @@ describe('Async Handlers', () => {
       );
       expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
         text: 'Заказов нет',
-      });
-    });
-  });
-
-  describe('handleOrderDetails', () => {
-    it('должен показывать детали заказа', async () => {
-      const databaseService = require('../src/database');
-
-      databaseService.getOrderById.mockResolvedValue(mockOrder);
-
-      const query = {
-        ...mockCallbackQuery,
-        data: 'order_details_42',
-      };
-
-      await handleOrderDetails(mockBot, query);
-
-      expect(databaseService.getOrderById).toHaveBeenCalledWith('42');
-      expect(mockBot.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining('Заказ #42 📦'),
-        expect.objectContaining({
-          chat_id: 123456,
-          message_id: 1,
-        })
-      );
-    });
-
-    it('должен обрабатывать несуществующий заказ', async () => {
-      const databaseService = require('../src/database');
-
-      databaseService.getOrderById.mockResolvedValue(null);
-
-      const query = {
-        ...mockCallbackQuery,
-        data: 'order_details_999',
-      };
-
-      await handleOrderDetails(mockBot, query);
-
-      expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
-        text: 'Заказ не найден',
-      });
-    });
-
-    it('должен проверять права доступа к заказу', async () => {
-      const databaseService = require('../src/database');
-
-      const otherUserOrder = {
-        ...mockOrder,
-        userId: 999, // Другой пользователь
-      };
-
-      databaseService.getOrderById.mockResolvedValue(otherUserOrder);
-
-      const query = {
-        ...mockCallbackQuery,
-        data: 'order_details_42',
-      };
-
-      await handleOrderDetails(mockBot, query);
-
-      expect(mockBot.answerCallbackQuery).toHaveBeenCalledWith('callback_123', {
-        text: 'Заказ не найден',
       });
     });
   });

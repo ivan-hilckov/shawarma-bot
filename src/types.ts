@@ -67,13 +67,6 @@ export interface UserAnalytics {
   frequencyLevel: 'frequent' | 'regular' | 'occasional';
 }
 
-export interface Recommendation {
-  type: 'frequent' | 'popular' | 'new' | 'time_based';
-  menuItem: MenuItem;
-  reason: string;
-  priority: number;
-}
-
 export interface CartSummary {
   itemsCount: number;
   total: number;

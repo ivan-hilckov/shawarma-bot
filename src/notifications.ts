@@ -60,7 +60,8 @@ class NotificationService {
 
   // Уведомление об изменении статуса заказа
   async notifyStatusChange(order: Order, oldStatus: string): Promise<void> {
-    const message = `
+    // Техническое сообщение для персонала
+    const adminMessage = `
 🔄 <b>Статус заказа изменен</b>
 
 📦 Заказ: #${order.id}
@@ -71,10 +72,28 @@ class NotificationService {
 <i>Статус: ${this.getStatusText(oldStatus)} → ${this.getStatusText(order.status)}</i>
     `;
 
-    // Отправляем в канал уведомлений
+    // Пользовательское сообщение (более дружелюбное)
+    const userMessage = this.formatUserStatusMessage(order);
+
+    // 1. ОТПРАВЛЯЕМ ПОЛЬЗОВАТЕЛЮ
+    try {
+      await this.bot.sendMessage(order.userId, userMessage, {
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [[{ text: '📋 Мои заказы', callback_data: 'my_orders' }]],
+        },
+      });
+      console.log(
+        `👤 Уведомление об изменении статуса заказа #${order.id} отправлено пользователю ${order.userId}`
+      );
+    } catch (error) {
+      console.error(`❌ Ошибка отправки уведомления пользователю ${order.userId}:`, error);
+    }
+
+    // 2. Отправляем в канал уведомлений (персонал)
     if (this.notificationsChatId) {
       try {
-        await this.bot.sendMessage(this.notificationsChatId, message, {
+        await this.bot.sendMessage(this.notificationsChatId, adminMessage, {
           parse_mode: 'HTML',
         });
         console.log(`📢 Уведомление об изменении статуса заказа #${order.id} отправлено в канал`);
@@ -83,10 +102,10 @@ class NotificationService {
       }
     }
 
-    // Отправляем админам
+    // 3. Отправляем админам
     for (const adminId of this.adminUserIds) {
       try {
-        await this.bot.sendMessage(adminId, message, {
+        await this.bot.sendMessage(adminId, adminMessage, {
           parse_mode: 'HTML',
         });
       } catch (error) {
@@ -96,6 +115,31 @@ class NotificationService {
         );
       }
     }
+  }
+
+  // Форматирование пользовательского сообщения об изменении статуса
+  private formatUserStatusMessage(order: Order): string {
+    const statusMessages: { [key: string]: string } = {
+      confirmed: '✅ Ваш заказ подтвержден! Мы приступили к приготовлению.',
+      preparing: '👨‍🍳 Готовим ваш заказ! Это займет немного времени.',
+      ready: '🎉 Ваш заказ готов! Можете забирать.',
+      delivered: '✅ Заказ доставлен! Спасибо за выбор нашего сервиса!',
+    };
+
+    const customMessage =
+      statusMessages[order.status] ||
+      `Статус заказа изменен на "${this.getStatusText(order.status)}".`;
+
+    return `
+${customMessage}
+
+📦 <b>Заказ #${order.id}</b>
+💰 Сумма: ${order.totalPrice}₽
+📊 Статус: ${this.getStatusEmoji(order.status)} ${this.getStatusText(order.status)}
+
+${order.status === 'ready' ? '🏃‍♂️ Ждем вас за заказом!' : ''}
+${order.status === 'delivered' ? '⭐ Будем рады видеть вас снова!' : ''}
+    `.trim();
   }
 
   // Форматирование сообщения о новом заказе

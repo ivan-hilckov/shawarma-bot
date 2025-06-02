@@ -20,14 +20,11 @@ import {
   handleClearCart,
   handleCheckout,
   handleMyOrders,
-  handleOrderDetails,
   handleAdminOrderAction,
   handleAboutMiniApp,
   handleBackToStart,
   handleIncreaseFromItem,
   handleDecreaseFromItem,
-  handleRemoveAllFromItem,
-  handleRecommendations,
   getItemQuantityInCart,
 } from './handlers';
 import { getItemById } from './menu';
@@ -125,6 +122,10 @@ bot.on('callback_query', (query: BotCallbackQuery) => {
       handleAddToCart(bot, query);
     } else if (data === 'view_cart') {
       handleViewCart(bot, query);
+    } else if (data?.startsWith('increase_from_item_')) {
+      handleIncreaseFromItem(bot, query);
+    } else if (data?.startsWith('decrease_from_item_')) {
+      handleDecreaseFromItem(bot, query);
     } else if (data?.startsWith('increase_')) {
       handleIncreaseQuantity(bot, query);
     } else if (data?.startsWith('decrease_')) {
@@ -139,8 +140,6 @@ bot.on('callback_query', (query: BotCallbackQuery) => {
       handleProfile(bot, query);
     } else if (data === 'my_orders') {
       handleMyOrders(bot, query);
-    } else if (data?.startsWith('order_details_')) {
-      handleOrderDetails(bot, query);
     } else if (data?.startsWith('admin_')) {
       handleAdminOrderAction(bot, query);
     } else if (data === 'back_to_menu') {
@@ -155,12 +154,6 @@ bot.on('callback_query', (query: BotCallbackQuery) => {
       handleAboutMiniApp(bot, query);
     } else if (data === 'back_to_start') {
       handleBackToStart(bot, query);
-    } else if (data?.startsWith('increase_from_item_')) {
-      handleIncreaseFromItem(bot, query);
-    } else if (data?.startsWith('decrease_from_item_')) {
-      handleDecreaseFromItem(bot, query);
-    } else if (data?.startsWith('remove_all_from_item_')) {
-      handleRemoveAllFromItem(bot, query);
     } else if (data?.startsWith('quantity_')) {
       // Клик на количество товара - показываем текущее количество
       const itemId = data.replace('quantity_', '');
@@ -178,8 +171,6 @@ bot.on('callback_query', (query: BotCallbackQuery) => {
             .answerCallbackQuery(query.id, { text: 'Ошибка получения количества' })
             .catch(() => {});
         });
-    } else if (data === 'recommendations') {
-      handleRecommendations(bot, query);
     } else {
       bot.answerCallbackQuery(query.id, { text: 'Неизвестная команда' }).catch(() => {});
     }

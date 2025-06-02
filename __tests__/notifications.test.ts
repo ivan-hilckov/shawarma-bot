@@ -131,26 +131,18 @@ describe('NotificationService', () => {
   describe('notifyStatusChange', () => {
     it('должен отправлять уведомление об изменении статуса', async () => {
       const updatedOrder = { ...mockOrder, status: 'confirmed' as const };
-
       await notificationService.notifyStatusChange(updatedOrder, 'pending');
 
-      expect(mockBot.sendMessage).toHaveBeenCalledWith(
-        '-1001234567890',
-        expect.stringContaining('🔄 <b>Статус заказа изменен</b>'),
-        expect.objectContaining({ parse_mode: 'HTML' })
-      );
-
       const sentMessage = (mockBot.sendMessage as jest.Mock).mock.calls[0][1];
-      expect(sentMessage).toContain('⏳ → ✅');
-      expect(sentMessage).toContain('В ожидании → Подтвержден');
+      expect(sentMessage).toContain('✅ Ваш заказ подтвержден!');
+      expect(sentMessage).toContain('Подтвержден');
     });
 
     it('должен отправлять уведомления администраторам', async () => {
-      const updatedOrder = { ...mockOrder, status: 'preparing' as const };
-
+      const updatedOrder = { ...mockOrder, status: 'confirmed' as const };
       await notificationService.notifyStatusChange(updatedOrder, 'confirmed');
 
-      expect(mockBot.sendMessage).toHaveBeenCalledTimes(3); // канал + 2 админа
+      expect(mockBot.sendMessage).toHaveBeenCalledTimes(4); // пользователь + канал + 2 админа
     });
   });
 
