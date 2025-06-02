@@ -325,103 +325,6 @@ export class DatabaseService {
 
   // ===== МЕТОДЫ ДЛЯ ЭТАПА 3: ПРОДВИНУТЫЕ УЛУЧШЕНИЯ =====
 
-  // ===== СИСТЕМА ИЗБРАННОГО =====
-
-  // Добавление товара в избранное
-  async addToFavorites(userId: number, menuItemId: string): Promise<void> {
-    const client = await this.getClient();
-    try {
-      await client.query(
-        `
-        INSERT INTO user_favorites (user_id, menu_item_id)
-        VALUES ($1, $2)
-        ON CONFLICT (user_id, menu_item_id) DO NOTHING
-      `,
-        [userId, menuItemId]
-      );
-    } finally {
-      client.release();
-    }
-  }
-
-  // Удаление товара из избранного
-  async removeFromFavorites(userId: number, menuItemId: string): Promise<void> {
-    const client = await this.getClient();
-    try {
-      await client.query(
-        `
-        DELETE FROM user_favorites
-        WHERE user_id = $1 AND menu_item_id = $2
-      `,
-        [userId, menuItemId]
-      );
-    } finally {
-      client.release();
-    }
-  }
-
-  // Получение избранных товаров пользователя
-  async getUserFavorites(userId: number): Promise<any[]> {
-    const client = await this.getClient();
-    try {
-      const result = await client.query(
-        `
-        SELECT
-          uf.id,
-          uf.created_at,
-          mi.id as menu_item_id,
-          mi.name,
-          mi.description,
-          mi.price,
-          c.name as category,
-          mi.image_url
-        FROM user_favorites uf
-        JOIN menu_items mi ON uf.menu_item_id = mi.id
-        JOIN categories c ON mi.category_id = c.id
-        WHERE uf.user_id = $1 AND mi.is_available = true
-        ORDER BY uf.created_at DESC
-      `,
-        [userId]
-      );
-
-      return result.rows.map(row => ({
-        id: row.id.toString(),
-        userId,
-        menuItem: {
-          id: row.menu_item_id.toString(),
-          name: row.name,
-          description: row.description,
-          price: parseFloat(row.price),
-          category: row.category === 'shawarma' ? 'shawarma' : 'drinks',
-          photo: row.image_url,
-        },
-        createdAt: row.created_at,
-      }));
-    } finally {
-      client.release();
-    }
-  }
-
-  // Проверка, добавлен ли товар в избранное
-  async isInFavorites(userId: number, menuItemId: string): Promise<boolean> {
-    const client = await this.getClient();
-    try {
-      const result = await client.query(
-        `
-        SELECT EXISTS(
-          SELECT 1 FROM user_favorites
-          WHERE user_id = $1 AND menu_item_id = $2
-        )
-      `,
-        [userId, menuItemId]
-      );
-
-      return result.rows[0].exists;
-    } finally {
-      client.release();
-    }
-  }
-
   // ===== ПЕРСОНАЛЬНЫЕ РЕКОМЕНДАЦИИ =====
 
   // Получение часто заказываемых товаров пользователя
@@ -561,7 +464,6 @@ export class DatabaseService {
   async getUserStats(userId: number): Promise<{
     totalOrders: number;
     totalSpent: number;
-    favoriteCategory: string;
     avgOrderValue: number;
   }> {
     const client = await this.getClient();
@@ -578,27 +480,11 @@ export class DatabaseService {
         [userId]
       );
 
-      const categoryResult = await client.query(
-        `
-        SELECT c.name, COUNT(*) as category_count
-        FROM user_analytics ua
-        JOIN menu_items mi ON ua.menu_item_id = mi.id
-        JOIN categories c ON mi.category_id = c.id
-        WHERE ua.user_id = $1
-        GROUP BY c.name
-        ORDER BY category_count DESC
-        LIMIT 1
-      `,
-        [userId]
-      );
-
       const stats = result.rows[0];
-      const favoriteCategory = categoryResult.rows[0]?.name || 'shawarma';
 
       return {
         totalOrders: parseInt(stats.total_orders),
         totalSpent: parseFloat(stats.total_spent),
-        favoriteCategory,
         avgOrderValue: parseFloat(stats.avg_order_value),
       };
     } finally {

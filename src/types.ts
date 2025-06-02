@@ -57,13 +57,6 @@ export interface Order {
 
 // Новые типы для Этапа 3
 
-export interface UserFavorite {
-  id: string;
-  userId: number;
-  menuItem: MenuItem;
-  createdAt: Date;
-}
-
 export interface UserAnalytics {
   id: string;
   userId: number;

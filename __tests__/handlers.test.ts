@@ -31,15 +31,10 @@ jest.mock('../src/api-client', () => ({
 
 // Мокаем database service
 jest.mock('../src/database', () => ({
-  isInFavorites: jest.fn().mockResolvedValue(false),
-  addToFavorites: jest.fn().mockResolvedValue(undefined),
-  removeFromFavorites: jest.fn().mockResolvedValue(undefined),
-  getUserFavorites: jest.fn().mockResolvedValue([]),
   getUserRecommendations: jest.fn().mockResolvedValue([]),
   getUserStats: jest.fn().mockResolvedValue({
     totalOrders: 0,
     totalSpent: 0,
-    favoriteCategory: 'shawarma',
     avgOrderValue: 0,
   }),
 }));

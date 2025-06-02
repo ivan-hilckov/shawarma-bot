@@ -25,10 +25,7 @@ import {
   handleIncreaseFromItem,
   handleDecreaseFromItem,
   handleRemoveAllFromItem,
-  handleFavorites,
   handleRecommendations,
-  handleAddToFavorites,
-  handleRemoveFromFavorites,
 } from './handlers';
 import NotificationService from './notifications';
 import { BotInstance, BotMessage, BotCallbackQuery } from './types';
@@ -156,18 +153,8 @@ bot.on('callback_query', (query: BotCallbackQuery) => {
       handleDecreaseFromItem(bot, query);
     } else if (data?.startsWith('remove_all_from_item_')) {
       handleRemoveAllFromItem(bot, query);
-    } else if (data === 'favorites') {
-      handleFavorites(bot, query);
     } else if (data === 'recommendations') {
       handleRecommendations(bot, query);
-    } else if (data === 'add_to_favorites') {
-      handleAddToFavorites(bot, query);
-    } else if (data === 'remove_from_favorites') {
-      handleRemoveFromFavorites(bot, query);
-    } else if (data?.startsWith('add_favorite_')) {
-      handleAddToFavorites(bot, query);
-    } else if (data?.startsWith('remove_favorite_')) {
-      handleRemoveFromFavorites(bot, query);
     } else {
       bot.answerCallbackQuery(query.id, { text: 'Неизвестная команда' }).catch(() => {});
     }

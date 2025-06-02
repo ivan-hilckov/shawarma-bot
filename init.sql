@@ -63,14 +63,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
     UNIQUE(user_id, menu_item_id)
 );
 
--- Создание таблицы избранного
-CREATE TABLE IF NOT EXISTS user_favorites (
-    id SERIAL PRIMARY KEY,
-    user_id BIGINT REFERENCES users(id),
-    menu_item_id INTEGER REFERENCES menu_items(id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, menu_item_id)
-);
+
 
 -- Создание таблицы для аналитики пользователей
 CREATE TABLE IF NOT EXISTS user_analytics (
@@ -137,8 +130,6 @@ CREATE INDEX IF NOT EXISTS idx_cart_items_user_id ON cart_items(user_id);
 CREATE INDEX IF NOT EXISTS idx_menu_items_category_id ON menu_items(category_id);
 
 -- Индексы для новых таблиц
-CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_favorites_menu_item_id ON user_favorites(menu_item_id);
 CREATE INDEX IF NOT EXISTS idx_user_analytics_user_id ON user_analytics(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_analytics_menu_item_id ON user_analytics(menu_item_id);
 CREATE INDEX IF NOT EXISTS idx_user_analytics_order_count ON user_analytics(order_count DESC);
