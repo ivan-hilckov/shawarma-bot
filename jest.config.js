@@ -7,7 +7,6 @@ module.exports = {
     '/node_modules/',
     '/coverage/',
     '__tests__/setupJest.ts',
-    '__tests__/apiSetupJest.ts',
     '__tests__/test-utils.ts',
   ],
   transform: {

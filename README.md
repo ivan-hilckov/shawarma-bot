@@ -354,13 +354,20 @@ npm test __tests__/api/cart.test.ts
 
 ### Структура тестов
 
-- `__tests__/api/` - тесты API endpoints
+- `__tests__/api/` - тесты API endpoints (с локальными моками)
   - `cart.test.ts` - тесты корзины (покрытие: 61.72%)
   - `orders.test.ts` - тесты заказов (покрытие: 39.13%)
-  - `health.test.ts` - тесты health checks
-  - `menu.test.ts` - тесты меню
+  - `health.test.ts` - тесты health checks ✅
+  - `menu.test.ts` - тесты меню ✅
 - `__tests__/unit/` - юнит-тесты сервисов
-- `__tests__/mocks/` - моки для тестов
+- `__tests__/setupJest.ts` - глобальные настройки Jest
+
+**Улучшения архитектуры тестов:**
+
+- ✅ Убрано дублирование моков (`apiSetupJest.ts` удален)
+- ✅ Локальные моки в каждом API тесте для полной изоляции
+- ✅ Решены проблемы с зависающими тестами orders API
+- ✅ Чистые логи тестирования без засорения
 
 ### Покрытие тестами
 

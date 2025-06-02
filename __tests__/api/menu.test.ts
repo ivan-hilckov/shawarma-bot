@@ -1,4 +1,28 @@
-import '../apiSetupJest';
+// Локальные моки для menu API тестов
+
+// Мок database plugin
+jest.mock('../../src/api/plugins/database', () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(async (fastify: any) => {
+    const mockPool = {
+      query: jest.fn().mockResolvedValue({ rows: [] }),
+      end: jest.fn().mockResolvedValue(undefined),
+    };
+    fastify.decorate('db', mockPool);
+    return Promise.resolve();
+  }),
+}));
+
+// Мок для логгера
+jest.mock('../../src/logger', () => ({
+  createLogger: jest.fn(() => ({
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  })),
+}));
+
 import { buildServer } from '../../src/api/server';
 
 describe('Menu API Contract Tests', () => {
