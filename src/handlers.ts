@@ -267,7 +267,7 @@ async function createRecommendationsMessage(userId: number): Promise<{
 
       return {
         message,
-        keyboard: [[{ text: 'Назад в меню', callback_data: 'back_to_menu' }]],
+        keyboard: [[{ text: 'Назад к профилю', callback_data: 'back_to_profile' }]],
       };
     }
 
@@ -294,14 +294,14 @@ async function createRecommendationsMessage(userId: number): Promise<{
       ]);
     });
 
-    keyboard.push([{ text: 'Назад в меню', callback_data: 'back_to_menu' }]);
+    keyboard.push([{ text: 'Назад к профилю', callback_data: 'back_to_profile' }]);
 
     return { message, keyboard };
   } catch (error) {
     console.error('Error creating recommendations message:', error);
     return {
       message: 'Ошибка загрузки рекомендаций\n\nПопробуйте позже.',
-      keyboard: [[{ text: 'Назад в меню', callback_data: 'back_to_menu' }]],
+      keyboard: [[{ text: 'Назад к профилю', callback_data: 'back_to_profile' }]],
     };
   }
 }
@@ -318,7 +318,7 @@ async function createFavoritesMessage(userId: number): Promise<{
       return {
         message:
           'Избранное пусто ⭐\n\nДобавьте товары в избранное, нажав соответствующую кнопку на экране товара!',
-        keyboard: [[{ text: 'Назад в меню', callback_data: 'back_to_menu' }]],
+        keyboard: [[{ text: 'Назад к профилю', callback_data: 'back_to_profile' }]],
       };
     }
 
@@ -338,14 +338,14 @@ async function createFavoritesMessage(userId: number): Promise<{
       ]);
     });
 
-    keyboard.push([{ text: 'Назад в меню', callback_data: 'back_to_menu' }]);
+    keyboard.push([{ text: 'Назад к профилю', callback_data: 'back_to_profile' }]);
 
     return { message, keyboard };
   } catch (error) {
     console.error('Error creating favorites message:', error);
     return {
       message: 'Ошибка загрузки избранного\n\nПопробуйте позже.',
-      keyboard: [[{ text: 'Назад в меню', callback_data: 'back_to_menu' }]],
+      keyboard: [[{ text: 'Назад к профилю', callback_data: 'back_to_profile' }]],
     };
   }
 }
@@ -698,6 +698,14 @@ ${item.description}
   }
 }
 
+// Обработчик возврата к профилю
+export async function handleBackToProfile(
+  bot: BotInstance,
+  query: BotCallbackQuery
+): Promise<void> {
+  await handleProfile(bot, query);
+}
+
 // Обработчик возврата в главное меню
 export async function handleBackToMenu(bot: BotInstance, query: BotCallbackQuery): Promise<void> {
   const chatId = query.message?.chat.id;
@@ -988,7 +996,7 @@ export async function handleMyOrders(
               chat_id: chatId,
               message_id: msg.message.message_id,
               reply_markup: {
-                inline_keyboard: [[{ text: 'Назад к меню', callback_data: 'back_to_menu' }]],
+                inline_keyboard: [[{ text: 'Назад к профилю', callback_data: 'back_to_profile' }]],
               },
             })
             .catch(() => {});
@@ -1023,7 +1031,7 @@ export async function handleMyOrders(
       keyboard.push([{ text: `Заказ #${order.id}`, callback_data: `order_details_${order.id}` }]);
     });
 
-    keyboard.push([{ text: 'Назад к меню', callback_data: 'back_to_menu' }]);
+    keyboard.push([{ text: 'Назад к профилю', callback_data: 'back_to_profile' }]);
 
     if ('data' in msg) {
       // Это callback query

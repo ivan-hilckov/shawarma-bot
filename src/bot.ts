@@ -9,6 +9,7 @@ import {
   handleProfile,
   handleItemSelection,
   handleBackToMenu,
+  handleBackToProfile,
   handleAddToCart,
   handleViewCart,
   handleIncreaseQuantity,
@@ -143,6 +144,8 @@ bot.on('callback_query', (query: BotCallbackQuery) => {
       handleAdminOrderAction(bot, query);
     } else if (data === 'back_to_menu') {
       handleBackToMenu(bot, query);
+    } else if (data === 'back_to_profile') {
+      handleBackToProfile(bot, query);
     } else if (data === 'about_miniapp') {
       handleAboutMiniApp(bot, query);
     } else if (data === 'back_to_start') {
