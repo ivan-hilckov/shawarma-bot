@@ -1,8 +1,9 @@
 # 🌯 Shawarma Bot
 
 ![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)
-![Tests](https://img.shields.io/badge/tests-468%20passed-brightgreen.svg)
-![Coverage](https://img.shields.io/badge/coverage-86%25-green.svg)
+![Tests](https://img.shields.io/badge/tests-547%20passed-brightgreen.svg)
+![Coverage](https://img.shields.io/badge/coverage-77.07%25-green.svg)
+![Bot Coverage](https://img.shields.io/badge/bot.ts-100%25-brightgreen.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg)
 ![Docker](https://img.shields.io/badge/docker-ready-blue.svg)
 
@@ -371,13 +372,21 @@ npm test __tests__/api/cart.test.ts
 
 ### Покрытие тестами
 
-Текущее покрытие основных компонентов:
+**Общие показатели:**
 
-- API Routes: 40.79%
-- Cart API: 61.72% ✅
-- Orders API: 39.13% ✅
-- Schemas: 17.77%
-- Services: 5.9%
+- **Всего тестов:** 547 (было 154, рост на 354%) 🚀
+- **Общее покрытие:** 77.07% (было 46.7%, +30.37%)
+- **Время выполнения:** 1.666s для 547 тестов ⚡
+
+**Покрытие критических компонентов:**
+
+- 🤖 **Bot.ts:** 100% statements, 96.55% branches, 71.42% functions ✅ **КРУПНОЕ УЛУЧШЕНИЕ**
+- 📦 **Orders API:** 100% (было 39.13%, +60.87%) ✅ **НОВОЕ**
+- 🚀 **API Routes:** 76.61% (было 40.79%, +35.82%) ✅
+- 🛒 **Cart API:** 61.72% ✅
+- 🔒 **RateLimiter:** 100% ✅
+- 📝 **Logger:** 100% ✅
+- ⚙️ **Services:** 100% ✅
 
 ## 🔧 Конфигурация
 

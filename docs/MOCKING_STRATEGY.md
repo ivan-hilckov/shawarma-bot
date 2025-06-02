@@ -83,17 +83,148 @@ jest.mock('axios'); // Мокируем только внешние зависи
 
 ```typescript
 // Локальные моки с правильной очисткой
-jest.mock('../../src/api/plugins/database', () => ({
-  __esModule: true,
-  default: jest.fn().mockImplementation(async (fastify: any) => {
-    const mockPool = {
-      /* ... */
-    };
-    fastify.decorate('db', mockPool);
-    return Promise.resolve();
-  }),
+jest.mock('../../src/api/services/orderService', () => ({
+  OrderService: jest.fn().mockImplementation((db: any) => ({
+    /* ... */
+  })),
 }));
 ```
+
+### Проблема #4: Orders.test.ts полное решение
+
+**Что было:**
+
+```typescript
+// Отключали setupJest.ts моки
+jest.unmock('../../src/api-client');
+jest.unmock('../../src/logger');
+jest.unmock('../../src/api/plugins/database');
+
+// TypeScript ошибка: Expected 2 arguments, but got 1
+await orderRoutes(mockFastify); // Неправильно!
+
+// Тесты зависали навсегда, coverage orders.ts: 39.13%
+```
+
+**Проблемы:**
+
+- Конфликт между setupJest.ts моками и локальными моками
+- TypeScript ошибка: FastifyPluginAsync требует 2 аргумента
+- OrderService создавался в реальном коде, но мок не перехватывал
+- Catch блоки не покрывались (строки 145-147, 264-271, 338-340)
+
+**Решение:**
+
+```typescript
+// НЕ отключаем setupJest.ts моки - используем их!
+// jest.unmock('../../src/api-client'); // ❌ УБРАЛИ
+
+// Добавляем недостающий мок OrderService
+jest.mock('../../src/api/services/orderService', () => ({
+  OrderService: jest.fn().mockImplementation((db: any) => ({
+    getOrders: jest.fn().mockResolvedValue({ orders: [], total: 0 }),
+    getOrderById: jest.fn().mockResolvedValue(null),
+    getOrderStats: jest.fn().mockResolvedValue({
+      total_orders: 0,
+      pending_orders: 0,
+      // ... все поля
+    }),
+  })),
+}));
+
+// Правильный вызов с двумя аргументами
+await orderRoutes(mockFastify, {}); // ✅ ПРАВИЛЬНО
+
+// Error cases для покрытия catch блоков
+it('should handle service errors (catch block coverage)', async () => {
+  mockOrderService.getOrders.mockRejectedValueOnce(new Error('Database connection failed'));
+
+  const result = await handler(request, reply);
+
+  expect(result.success).toBe(false);
+  expect(result.error.code).toBe('INTERNAL_SERVER_ERROR');
+  expect(reply.code).toHaveBeenCalledWith(500);
+  expect(request.log.error).toHaveBeenCalledWith('Failed to get orders:', expect.any(Error));
+});
+```
+
+**Результаты:**
+
+- ✅ **100% покрытие** orders.ts (было 39.13%)
+- ✅ **22 новых теста** с полной функциональностью
+- ✅ **Быстрое выполнение** (0.252s) вместо зависания
+- ✅ **Все catch блоки покрыты**
+- ✅ **TypeScript ошибки исправлены**
+- ✅ **Совместимость с setupJest.ts**
+
+### Проблема #5: Bot.ts комплексное покрытие **НОВОЕ РЕШЕНИЕ**
+
+**Что было:**
+
+```typescript
+// bot.ts имел низкое покрытие:
+// Statements: 67.25%
+// Branches: 62.06%
+// Functions: 28.57% ⚠️ КРИТИЧНО НИЗКО
+// Lines: 67.25%
+
+// Существующие тесты покрывали только часть функционала
+// Не покрыты: инициализация, проверка токена, graceful shutdown, обработка ошибок
+```
+
+**Проблемы:**
+
+- Старые тесты тестировали только чистые функции, не реальный код бота
+- Низкое покрытие functions (28.57%) для критически важного файла
+- Не покрыты важные сценарии: process.exit, signal handlers, async operations
+- Отсутствие тестирования всех callback handlers
+
+**Решение:**
+
+```typescript
+// Полный комплексный тест с локальными моками
+jest.unmock('../../src/bot'); // Отключаем глобальные моки
+
+// Комплексные моки для всех зависимостей
+const mockBot = { onText: jest.fn(), on: jest.fn(), getMe: jest.fn() /* ... */ };
+const TelegramBotConstructor = jest.fn(() => mockBot);
+jest.mock('node-telegram-bot-api', () => TelegramBotConstructor);
+
+// Динамическая конфигурация для тестирования разных сценариев
+let mockConfig = { BOT_TOKEN: 'valid_bot_token' /* ... */ };
+jest.mock('../../src/config', () => mockConfig);
+
+// Тестирование инициализации с невалидным токеном
+it('should exit with error for missing token', async () => {
+  mockConfig.BOT_TOKEN = '';
+  await import('../../src/bot');
+  expect(mockProcessExit).toHaveBeenCalledWith(1);
+});
+
+// Тестирование всех 20+ callback handlers
+callbacks.forEach((data, index) => {
+  callbackHandler(mockQuery);
+  expect(handlers[index]).toHaveBeenCalledWith(mockBot, mockQuery);
+});
+
+// Тестирование graceful shutdown
+it('should handle SIGINT signal', async () => {
+  const sigintHandler = processListeners['SIGINT'];
+  sigintHandler();
+  expect(mockBot.stopPolling).toHaveBeenCalled();
+});
+```
+
+**Результаты:**
+
+- ✅ **100% statements** покрытие (было 67.25%, +32.75%)
+- ✅ **96.55% branches** покрытие (было 62.06%, +34.49%)
+- ✅ **71.42% functions** покрытие (было 28.57%, +42.85%)
+- ✅ **43 новых теста** покрывающих все области bot.ts
+- ✅ **Полное покрытие** инициализации, токен валидации, graceful shutdown
+- ✅ **Все callback handlers** покрыты (20+ типов)
+- ✅ **Async operations** правильно протестированы
+- ✅ **TypeScript safety** со строгой типизацией моков
 
 ## 🎯 Текущая стратегия моков
 

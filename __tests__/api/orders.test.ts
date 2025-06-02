@@ -1,8 +1,14 @@
-// Локальные моки для orders API тестов
+// Отключаем глобальные моки из setupJest.ts которые мешают
+jest.unmock('../../src/api-client');
+jest.unmock('../../src/logger');
+jest.unmock('../../src/api/plugins/database');
 
-// Мок OrderService
+// Устанавливаем короткий timeout
+jest.setTimeout(5000);
+
+// Добавляем недостающий мок OrderService (setupJest.ts уже содержит другие моки)
 jest.mock('../../src/api/services/orderService', () => ({
-  OrderService: jest.fn().mockImplementation(() => ({
+  OrderService: jest.fn().mockImplementation((db: any) => ({
     getOrders: jest.fn().mockResolvedValue({ orders: [], total: 0 }),
     getOrderById: jest.fn().mockResolvedValue(null),
     getOrderStats: jest.fn().mockResolvedValue({
@@ -21,130 +27,183 @@ jest.mock('../../src/api/services/orderService', () => ({
   })),
 }));
 
-// Мок database plugin
-jest.mock('../../src/api/plugins/database', () => ({
+// Мокируем config для тестирования аутентификации
+jest.mock('../../src/config', () => ({
   __esModule: true,
-  default: jest.fn().mockImplementation(async (fastify: any) => {
-    const mockPool = {
-      query: jest.fn().mockResolvedValue({ rows: [] }),
-      end: jest.fn().mockResolvedValue(undefined),
-    };
-    fastify.decorate('db', mockPool);
-    return Promise.resolve();
-  }),
+  default: {
+    API_KEYS: ['admin-key-dev', 'test-key'],
+  },
 }));
 
-// Мок для логгера
-jest.mock('../../src/logger', () => ({
-  createLogger: jest.fn(() => ({
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn(),
-  })),
-}));
+import orderRoutes from '../../src/api/routes/orders';
+import { OrderService } from '../../src/api/services/orderService';
 
-import { buildServer } from '../../src/api/server';
-
-describe('Orders API Routes Tests', () => {
-  let server: any;
+describe('Orders Routes - Complete Coverage Tests', () => {
+  let mockFastify: any;
   let mockOrderService: any;
-  const validApiKey = 'admin-key-dev';
+  let mockGet: jest.Mock;
+  const routes: { [key: string]: any } = {};
 
   beforeAll(async () => {
-    server = await buildServer();
-    await server.ready();
+    // Создаем mock функцию отдельно
+    mockGet = jest.fn().mockImplementation((path, config, handler) => {
+      routes[path] = { config, handler };
+    });
 
-    // Получаем мок сервиса для манипуляций
-    const { OrderService } = require('../../src/api/services/orderService');
-    mockOrderService = new OrderService();
-  });
+    // Создаем mock Fastify instance с database из setupJest.ts
+    mockFastify = {
+      db: {
+        query: jest.fn().mockResolvedValue({ rows: [] }),
+        end: jest.fn().mockResolvedValue(undefined),
+      },
+      get: mockGet,
+    };
 
-  afterAll(async () => {
-    await server.close();
+    // Получаем mock OrderService instance перед регистрацией routes
+    const MockOrderService = OrderService as jest.MockedClass<typeof OrderService>;
+
+    // Регистрируем routes с правильными аргументами (fastify, options)
+    await orderRoutes(mockFastify, {});
+
+    // Получаем созданный instance
+    mockOrderService =
+      MockOrderService.mock.results[MockOrderService.mock.results.length - 1]?.value;
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Authentication', () => {
-    it('should require authorization header for orders endpoint', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders',
-      });
+  describe('Route Registration', () => {
+    it('should register all three GET routes', () => {
+      // Проверяем что routes зарегистрированы (это важно для coverage)
+      expect(routes['/orders']).toBeDefined();
+      expect(routes['/orders/:id']).toBeDefined();
+      expect(routes['/orders/stats']).toBeDefined();
 
-      expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      // Не проверяем конкретный код ошибки из-за проблем с моками
-      expect(body.error).toBeDefined();
+      // Проверяем что у каждого route есть handler и config
+      expect(routes['/orders'].handler).toBeInstanceOf(Function);
+      expect(routes['/orders/:id'].handler).toBeInstanceOf(Function);
+      expect(routes['/orders/stats'].handler).toBeInstanceOf(Function);
     });
 
-    it('should reject invalid API key', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders',
-        headers: {
-          authorization: 'Bearer invalid-key',
-        },
-      });
-
-      expect(response.statusCode).toBe(403);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      expect(body.error.code).toBe('FORBIDDEN');
+    it('should configure routes with preHandler authenticateAdmin', () => {
+      expect(routes['/orders'].config.preHandler).toBeDefined();
+      expect(routes['/orders/:id'].config.preHandler).toBeDefined();
+      expect(routes['/orders/stats'].config.preHandler).toBeDefined();
     });
 
-    it('should reject missing Bearer prefix', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders',
-        headers: {
-          authorization: 'invalid-format',
-        },
-      });
-
-      expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      // Не проверяем конкретный код ошибки из-за проблем с моками
-      expect(body.error).toBeDefined();
+    it('should configure routes with correct schemas', () => {
+      expect(routes['/orders'].config.schema.description).toContain('Получение заказов');
+      expect(routes['/orders/:id'].config.schema.description).toContain('детальной информации');
+      expect(routes['/orders/stats'].config.schema.description).toContain('Получение статистики');
     });
   });
 
-  describe('GET /api/orders', () => {
-    it('should validate status parameter', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders?status=invalid_status',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      expect(body.error.code).toBe('FST_ERR_VALIDATION');
+  describe('AuthenticateAdmin Middleware', () => {
+    const mockRequest = (authHeader?: string) => ({
+      headers: { authorization: authHeader },
+      log: { error: jest.fn() },
     });
 
-    it('should return orders successfully with valid filters', async () => {
+    const mockReply = () => {
+      const reply = {
+        code: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      return reply;
+    };
+
+    it('should reject request without authorization header', () => {
+      const authenticateAdmin = routes['/orders'].config.preHandler;
+      const request = mockRequest();
+      const reply = mockReply();
+
+      authenticateAdmin(request, reply);
+
+      expect(reply.code).toHaveBeenCalledWith(401);
+      expect(reply.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: expect.objectContaining({
+            code: 'UNAUTHORIZED',
+          }),
+        })
+      );
+    });
+
+    it('should reject request with invalid Bearer format', () => {
+      const authenticateAdmin = routes['/orders'].config.preHandler;
+      const request = mockRequest('InvalidFormat');
+      const reply = mockReply();
+
+      authenticateAdmin(request, reply);
+
+      expect(reply.code).toHaveBeenCalledWith(401);
+    });
+
+    it('should reject request with invalid API key', () => {
+      const authenticateAdmin = routes['/orders'].config.preHandler;
+      const request = mockRequest('Bearer invalid-key');
+      const reply = mockReply();
+
+      authenticateAdmin(request, reply);
+
+      expect(reply.code).toHaveBeenCalledWith(403);
+      expect(reply.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: expect.objectContaining({
+            code: 'FORBIDDEN',
+          }),
+        })
+      );
+    });
+
+    it('should allow request with valid API key', () => {
+      const authenticateAdmin = routes['/orders'].config.preHandler;
+      const request = mockRequest('Bearer admin-key-dev');
+      const reply = mockReply();
+
+      authenticateAdmin(request, reply);
+
+      expect(reply.code).not.toHaveBeenCalled();
+      expect(reply.send).not.toHaveBeenCalled();
+    });
+
+    it('should allow request with test API key', () => {
+      const authenticateAdmin = routes['/orders'].config.preHandler;
+      const request = mockRequest('Bearer test-key');
+      const reply = mockReply();
+
+      authenticateAdmin(request, reply);
+
+      expect(reply.code).not.toHaveBeenCalled();
+      expect(reply.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /orders handler', () => {
+    const createMockRequest = (query: any = {}) => ({
+      query,
+      log: { error: jest.fn() },
+    });
+
+    const createMockReply = () => {
+      const reply = {
+        code: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      return reply;
+    };
+
+    it('should handle successful orders request', async () => {
       const mockOrders = [
         {
           id: 1,
-          user: {
-            id: 123,
-            first_name: 'John',
-            last_name: 'Doe',
-            username: 'johndoe',
-          },
+          user: { id: 123, first_name: 'John' },
           status: 'pending',
           total_price: 500,
-          items_count: 2,
-          created_at: '2024-01-01T10:00:00Z',
-          updated_at: '2024-01-01T10:00:00Z',
         },
       ];
 
@@ -153,269 +212,228 @@ describe('Orders API Routes Tests', () => {
         total: 1,
       });
 
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders?status=pending&user_id=123&limit=10&offset=0',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(true);
-      expect(body.data).toEqual(mockOrders);
-      expect(body.meta).toEqual({
-        total: 1,
+      const handler = routes['/orders'].handler;
+      const request = createMockRequest({
+        status: 'pending',
         limit: 10,
         offset: 0,
-        has_more: false,
-        filters: {
-          status: 'pending',
-          user_id: 123,
-        },
+      });
+      const reply = createMockReply();
+
+      const result = await handler(request, reply);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockOrders);
+      expect(result.meta.total).toBe(1);
+      expect(result.meta.has_more).toBe(false);
+    });
+
+    it('should handle service errors (catch block coverage)', async () => {
+      // Заставляем OrderService.getOrders бросить ошибку для покрытия catch блока
+      mockOrderService.getOrders.mockRejectedValueOnce(new Error('Database connection failed'));
+
+      const handler = routes['/orders'].handler;
+      const request = createMockRequest({});
+      const reply = createMockReply();
+
+      const result = await handler(request, reply);
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe('INTERNAL_SERVER_ERROR');
+      expect(result.error.message).toBe('Failed to fetch orders');
+      expect(reply.code).toHaveBeenCalledWith(500);
+      expect(request.log.error).toHaveBeenCalledWith('Failed to get orders:', expect.any(Error));
+    });
+
+    it('should build filters correctly', async () => {
+      mockOrderService.getOrders.mockResolvedValueOnce({ orders: [], total: 0 });
+
+      const handler = routes['/orders'].handler;
+      const request = createMockRequest({
+        status: 'pending',
+        user_id: 123,
+        date_from: '2024-01-01T00:00:00Z',
+        limit: 5,
+      });
+      const reply = createMockReply();
+
+      await handler(request, reply);
+
+      expect(mockOrderService.getOrders).toHaveBeenCalledWith({
+        status: 'pending',
+        user_id: 123,
+        date_from: '2024-01-01T00:00:00Z',
+        date_to: undefined,
+        limit: 5,
+        offset: 0,
       });
     });
 
-    it('should return orders with date filters', async () => {
-      const mockOrders: any[] = [];
-      mockOrderService.getOrders.mockResolvedValueOnce({
-        orders: mockOrders,
-        total: 0,
-      });
+    it('should use default values for limit and offset', async () => {
+      mockOrderService.getOrders.mockResolvedValueOnce({ orders: [], total: 0 });
 
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders?date_from=2024-01-01T00:00:00Z&date_to=2024-01-31T23:59:59Z',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
+      const handler = routes['/orders'].handler;
+      const request = createMockRequest({ status: 'pending' });
+      const reply = createMockReply();
 
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(true);
-      expect(body.meta.filters).toEqual({
+      await handler(request, reply);
+
+      expect(mockOrderService.getOrders).toHaveBeenCalledWith(
+        expect.objectContaining({
+          limit: 20,
+          offset: 0,
+        })
+      );
+    });
+
+    it('should calculate has_more correctly', async () => {
+      mockOrderService.getOrders.mockResolvedValueOnce({ orders: [], total: 25 });
+
+      const handler = routes['/orders'].handler;
+      const request = createMockRequest({ limit: 10, offset: 5 });
+      const reply = createMockReply();
+
+      const result = await handler(request, reply);
+
+      expect(result.meta.has_more).toBe(true); // 5 + 10 = 15 < 25
+    });
+
+    it('should handle conditional filters properly', async () => {
+      mockOrderService.getOrders.mockResolvedValueOnce({ orders: [], total: 0 });
+
+      const handler = routes['/orders'].handler;
+      const request = createMockRequest({
+        status: 'confirmed',
+        user_id: 456,
+        date_from: '2024-01-01T00:00:00Z',
+        date_to: '2024-01-31T23:59:59Z',
+      });
+      const reply = createMockReply();
+
+      const result = await handler(request, reply);
+
+      expect(result.meta.filters).toEqual({
+        status: 'confirmed',
+        user_id: 456,
         date_from: '2024-01-01T00:00:00Z',
         date_to: '2024-01-31T23:59:59Z',
       });
     });
-
-    it('should handle default pagination values', async () => {
-      mockOrderService.getOrders.mockResolvedValueOnce({
-        orders: [] as any[],
-        total: 0,
-      });
-
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(true);
-      expect(body.meta.limit).toBe(20);
-      expect(body.meta.offset).toBe(0);
-    });
-
-    it('should calculate has_more correctly', async () => {
-      const mockOrders = Array(10)
-        .fill({})
-        .map((_, i) => ({ id: i + 1 }));
-      mockOrderService.getOrders.mockResolvedValueOnce({
-        orders: mockOrders,
-        total: 25,
-      });
-
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders?limit=10&offset=5',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      expect(body.meta.has_more).toBe(true); // 5 + 10 = 15 < 25
-    });
-
-    it('should handle service errors', async () => {
-      mockOrderService.getOrders.mockRejectedValueOnce(new Error('Database error'));
-
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
-
-      expect(response.statusCode).toBe(500);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      expect(body.error.code).toBe('INTERNAL_SERVER_ERROR');
-      expect(body.error.message).toBe('Failed to fetch orders');
-    });
   });
 
-  describe('GET /api/orders/:id', () => {
-    it('should require authentication', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders/1',
-      });
-
-      expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      expect(body.error).toBeDefined();
+  describe('GET /orders/:id handler', () => {
+    const createMockRequest = (paramId: string) => ({
+      params: { id: paramId },
+      log: { error: jest.fn() },
     });
+
+    const createMockReply = () => {
+      const reply = {
+        code: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      return reply;
+    };
 
     it('should validate order ID parameter', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders/invalid',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
+      const handler = routes['/orders/:id'].handler;
+      const request = createMockRequest('invalid');
+      const reply = createMockReply();
 
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      expect(body.error.code).toBe('FST_ERR_VALIDATION');
+      const result = await handler(request, reply);
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe('INVALID_PARAMETER');
+      expect(reply.code).toHaveBeenCalledWith(400);
     });
 
-    it('should validate negative order ID', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders/-1',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
+    it('should reject negative order ID', async () => {
+      const handler = routes['/orders/:id'].handler;
+      const request = createMockRequest('-1');
+      const reply = createMockReply();
 
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      expect(body.error.code).toBe('INVALID_PARAMETER');
-      expect(body.error.message).toBe('Invalid order ID');
+      const result = await handler(request, reply);
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe('INVALID_PARAMETER');
     });
 
-    it('should validate zero order ID', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders/0',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
+    it('should reject zero order ID', async () => {
+      const handler = routes['/orders/:id'].handler;
+      const request = createMockRequest('0');
+      const reply = createMockReply();
 
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      expect(body.error.code).toBe('INVALID_PARAMETER');
+      const result = await handler(request, reply);
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe('INVALID_PARAMETER');
     });
 
     it('should return 404 for non-existent order', async () => {
       mockOrderService.getOrderById.mockResolvedValueOnce(null);
 
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders/999',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
+      const handler = routes['/orders/:id'].handler;
+      const request = createMockRequest('999');
+      const reply = createMockReply();
 
-      expect(response.statusCode).toBe(404);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      expect(body.error.code).toBe('NOT_FOUND');
-      expect(body.error.message).toBe('Order with id 999 not found');
+      const result = await handler(request, reply);
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe('NOT_FOUND');
+      expect(result.error.message).toBe('Order with id 999 not found');
+      expect(reply.code).toHaveBeenCalledWith(404);
     });
 
     it('should return order successfully', async () => {
       const mockOrder = {
         id: 1,
-        user: {
-          id: 123,
-          first_name: 'John',
-          last_name: 'Doe',
-          username: 'johndoe',
-        },
+        user: { id: 123, first_name: 'John' },
         status: 'pending',
         total_price: 500,
-        items_count: 2,
-        items: [
-          {
-            id: 1,
-            menu_item: {
-              id: 1,
-              name: 'Шаурма Классик',
-              price: 220,
-            },
-            quantity: 2,
-            price: 220,
-            subtotal: 440,
-          },
-        ],
-        created_at: '2024-01-01T10:00:00Z',
-        updated_at: '2024-01-01T10:00:00Z',
       };
 
       mockOrderService.getOrderById.mockResolvedValueOnce(mockOrder);
 
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders/1',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
+      const handler = routes['/orders/:id'].handler;
+      const request = createMockRequest('1');
+      const reply = createMockReply();
 
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(true);
-      expect(body.data).toEqual(mockOrder);
+      const result = await handler(request, reply);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockOrder);
     });
 
-    it('should handle service errors', async () => {
-      mockOrderService.getOrderById.mockRejectedValueOnce(new Error('Database error'));
+    it('should handle service errors (catch block coverage)', async () => {
+      // Заставляем OrderService.getOrderById бросить ошибку для покрытия catch блока
+      mockOrderService.getOrderById.mockRejectedValueOnce(new Error('Database timeout'));
 
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders/1',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
+      const handler = routes['/orders/:id'].handler;
+      const request = createMockRequest('1');
+      const reply = createMockReply();
 
-      expect(response.statusCode).toBe(500);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      expect(body.error.code).toBe('INTERNAL_SERVER_ERROR');
-      expect(body.error.message).toBe('Failed to fetch order');
+      const result = await handler(request, reply);
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe('INTERNAL_SERVER_ERROR');
+      expect(result.error.message).toBe('Failed to fetch order');
+      expect(reply.code).toHaveBeenCalledWith(500);
+      expect(request.log.error).toHaveBeenCalledWith('Failed to get order:', expect.any(Error));
     });
   });
 
-  describe('GET /api/orders/stats', () => {
-    it('should require authentication', async () => {
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders/stats',
-      });
-
-      expect(response.statusCode).toBe(401);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      expect(body.error).toBeDefined();
+  describe('GET /orders/stats handler', () => {
+    const createMockRequest = () => ({
+      log: { error: jest.fn() },
     });
+
+    const createMockReply = () => {
+      const reply = {
+        code: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
+      return reply;
+    };
 
     it('should return statistics successfully', async () => {
       const mockStats = {
@@ -436,47 +454,39 @@ describe('Orders API Routes Tests', () => {
             total_ordered: 120,
             revenue: 26400,
           },
-          {
-            item_id: 2,
-            name: 'Шаурма Острая',
-            total_ordered: 85,
-            revenue: 18700,
-          },
         ],
       };
 
       mockOrderService.getOrderStats.mockResolvedValueOnce(mockStats);
 
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders/stats',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
+      const handler = routes['/orders/stats'].handler;
+      const request = createMockRequest();
+      const reply = createMockReply();
 
-      expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(true);
-      expect(body.data).toEqual(mockStats);
+      const result = await handler(request, reply);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockStats);
     });
 
-    it('should handle service errors', async () => {
-      mockOrderService.getOrderStats.mockRejectedValueOnce(new Error('Database error'));
+    it('should handle service errors (catch block coverage)', async () => {
+      // Заставляем OrderService.getOrderStats бросить ошибку для покрытия catch блока
+      mockOrderService.getOrderStats.mockRejectedValueOnce(new Error('Query execution failed'));
 
-      const response = await server.inject({
-        method: 'GET',
-        url: '/api/orders/stats',
-        headers: {
-          authorization: `Bearer ${validApiKey}`,
-        },
-      });
+      const handler = routes['/orders/stats'].handler;
+      const request = createMockRequest();
+      const reply = createMockReply();
 
-      expect(response.statusCode).toBe(500);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(false);
-      expect(body.error.code).toBe('INTERNAL_SERVER_ERROR');
-      expect(body.error.message).toBe('Failed to fetch order statistics');
+      const result = await handler(request, reply);
+
+      expect(result.success).toBe(false);
+      expect(result.error.code).toBe('INTERNAL_SERVER_ERROR');
+      expect(result.error.message).toBe('Failed to fetch order statistics');
+      expect(reply.code).toHaveBeenCalledWith(500);
+      expect(request.log.error).toHaveBeenCalledWith(
+        'Failed to get order stats:',
+        expect.any(Error)
+      );
     });
   });
 });
