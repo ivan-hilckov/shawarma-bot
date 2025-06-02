@@ -29,7 +29,7 @@
       }
     },
     {
-      "label": "🔨 Docker: Rebuild All",
+      "label": "🔨 Docker: Rebuild",
       "type": "shell",
       "command": "docker-compose",
       "args": ["build", "--no-cache"],
@@ -40,21 +40,6 @@
         "focus": true,
         "panel": "new"
       },
-      "problemMatcher": []
-    },
-    {
-      "label": "🔄 Docker: Rebuild & Up",
-      "type": "shell",
-      "command": "docker-compose",
-      "args": ["up", "-d", "--build", "--force-recreate"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": true,
-        "panel": "new"
-      },
-      "dependsOn": "🛑 Docker: Down",
       "problemMatcher": []
     },
     {
@@ -70,19 +55,6 @@
       },
       "problemMatcher": []
     },
-    {
-      "label": "📊 Docker: Logs Bot",
-      "type": "shell",
-      "command": "docker-compose",
-      "args": ["logs", "-f", "bot"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": []
-    },
 
     // ==========================================
     // ТЕСТИРОВАНИЕ
@@ -91,7 +63,7 @@
       "label": "🧪 Test",
       "type": "shell",
       "command": "npm",
-      "args": ["test"],
+      "args": ["test", "--", "--coverage"],
       "group": {
         "kind": "test",
         "isDefault": true
