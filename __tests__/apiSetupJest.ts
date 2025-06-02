@@ -1,5 +1,38 @@
 // Setup для API тестов
 
+// Мок для CartApiService
+jest.mock('../src/api/services/cartApiService', () => ({
+  CartApiService: jest.fn().mockImplementation(() => ({
+    getCart: jest.fn().mockResolvedValue({ items: [], total: 0, itemsCount: 0 }),
+    addToCart: jest.fn().mockResolvedValue(undefined),
+    updateQuantity: jest.fn().mockResolvedValue(undefined),
+    removeFromCart: jest.fn().mockResolvedValue(undefined),
+    clearCart: jest.fn().mockResolvedValue(undefined),
+    getCartTotal: jest.fn().mockResolvedValue({ total: 0, itemsCount: 0 }),
+  })),
+}));
+
+// Мок для OrderService
+jest.mock('../src/api/services/orderService', () => ({
+  OrderService: jest.fn().mockImplementation(() => ({
+    getOrders: jest.fn().mockResolvedValue({ orders: [], total: 0 }),
+    getOrderById: jest.fn().mockResolvedValue(null),
+    getOrderStats: jest.fn().mockResolvedValue({
+      total_orders: 0,
+      pending_orders: 0,
+      confirmed_orders: 0,
+      preparing_orders: 0,
+      ready_orders: 0,
+      delivered_orders: 0,
+      total_revenue: 0,
+      avg_order_value: 0,
+      orders_today: 0,
+      revenue_today: 0,
+      popular_items: [],
+    }),
+  })),
+}));
+
 // Мок для database plugin
 jest.mock('../src/api/plugins/database', () => {
   const mockPool = {
